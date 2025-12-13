@@ -16,6 +16,8 @@ import { auth } from "@/lib/firebase"
 
 type LoginType = "patient" | "staff"
 
+//  ***Login Accounts for testing: testid@gmail.com / 11032005***
+
 export default function LoginPage() {
   const [loginType, setLoginType] = useState<LoginType>("patient")
   const [email, setEmail] = useState("")
@@ -50,7 +52,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1 flex items-center justify-center py-12 px-4 bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <main className="flex-1 flex items-center justify-center py-12 px-4 bg-linear-to-br from-blue-50 via-white to-blue-50">
         <div className="w-full max-w-md">
           {/* Logo Section */}
           <div className="text-center mb-8">
