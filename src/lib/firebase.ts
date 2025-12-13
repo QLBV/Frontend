@@ -1,0 +1,20 @@
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+
+// Your Firebase config (replace with your project's values from Firebase Console)
+const firebaseConfig = {
+  apiKey: "AIzaSyBaFW0sNAgrO-agT8FtEqeNGKh-pyNksNM",
+  authDomain: "heathcare-b42b7.firebaseapp.com",
+  projectId: "heathcare-b42b7",
+  storageBucket: "heathcare-b42b7.firebasestorage.app",
+  messagingSenderId: "770518473138",
+  appId: "1:770518473138:web:888acca71f8124f3936cab",
+  measurementId: "G-F6V3KR4XRW"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig)
+
+// Initialize Firebase Authentication
+export const auth = getAuth(app)
+export default app
