@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-muted/50 to-background py-20 lg:py-32">
+    <section className="relative overflow-hidden bg-linear-to-b from-muted/50 to-background py-20 lg:py-32">
       <div className="container mx-auto px-4">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col justify-center">
@@ -67,8 +67,8 @@ export function Hero() {
               </div>
             </div>
           </div>
-          <div className="relative lg:h-[600px]">
-            <div className="absolute inset-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10">
+          <div className="relative lg:h-150">
+            <div className="absolute inset-0 overflow-hidden rounded-2xl bg-linear-to-br from-primary/10 to-secondary/10">
               <img
                 src="/professional-healthcare-doctor-with-patient-in-mod.jpg"
                 alt="Healthcare professional with patient"

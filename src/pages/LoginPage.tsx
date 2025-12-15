@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (loginType === "patient") {
         navigate("/") // Route to landing page
       } else if (loginType === "staff") {
-        navigate("/staff-dashboard") // Route to staff dashboard
+        navigate("/recep/dashboard") // Route to staff dashboard
       }
     } catch (err: any) {
       setError(err.message || "Login failed")
