@@ -4,6 +4,7 @@ import BookAppointmentPage from "@/pages/patient/BookAppointmentPage"
 import LoginPage from "@/pages/LoginPage"
 import SignUpPage from "@/pages/patient/SignupPage"
 import RecepDashboard from "@/pages/recep/dashboard"
+import RecepPatientsPage from "@/pages/recep/patient_list"
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<SignUpPage />} />
       <Route path="/recep/dashboard" element={<RecepDashboard />} />
+      <Route path="/recep/patients" element={<RecepPatientsPage />} />
     </Routes>
   )
 }
