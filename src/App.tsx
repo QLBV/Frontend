@@ -5,7 +5,7 @@ import LoginPage from "@/pages/LoginPage"
 import SignUpPage from "@/pages/patient/SignupPage"
 import RecepDashboard from "@/pages/recep/dashboard"
 import RecepPatientsPage from "@/pages/recep/patient_list"
-
+import PatientDetailPage from "@/pages/recep/patient_detail"
 function App() {
   return (
     <Routes>
@@ -15,6 +15,7 @@ function App() {
       <Route path="/register" element={<SignUpPage />} />
       <Route path="/recep/dashboard" element={<RecepDashboard />} />
       <Route path="/recep/patients" element={<RecepPatientsPage />} />
+      <Route path="/recep/patients/:id" element={<PatientDetailPage />} />
     </Routes>
   )
 }

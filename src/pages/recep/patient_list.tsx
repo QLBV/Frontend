@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Link } from "react-router-dom";
 
 // --- Interfaces & Data ---
 interface Patient {
@@ -244,10 +245,17 @@ export default function RecepPatients() {
                           )}
                         </td>
                         <td className="py-4 px-6">
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
-                            View
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            asChild 
+                        >
+                            <Link to={`${patient.id}`}>
+                            View Details
                             <ChevronRight className="h-4 w-4 ml-1" />
-                          </Button>
+                            </Link>
+                        </Button>
                         </td>
                       </tr>
                     ))
