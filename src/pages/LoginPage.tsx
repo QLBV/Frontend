@@ -1,6 +1,20 @@
 "use client"
 
-import Login from "@/components/form/Login"
+import type React from "react"
+
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Lock, Mail, Heart } from "lucide-react"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/lib/firebase" 
+
+type LoginType = "patient" | "staff"
 
 //  ***Login Accounts for testing: testid@gmail.com / 11032005***
 
