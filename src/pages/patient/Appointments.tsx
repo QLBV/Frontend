@@ -157,18 +157,16 @@ export default function PatientAppointmentsPage() {
   // Handlers
   const initiateCancel = (id: string) => {
     setAppointmentToCancel(id)
-    setCancelReason("") // Reset lý do mỗi lần mở dialog
+    setCancelReason("") 
     setIsCancelDialogOpen(true)
   }
 
   const confirmCancel = () => {
     if (appointmentToCancel && cancelReason.trim()) {
       setData(prev => {
-        // Tìm cuộc hẹn đang bị hủy
         const appointment = prev.upcoming.find(a => a.id === appointmentToCancel);
         if (!appointment) return prev;
 
-        // Tạo bản sao với trạng thái mới và ghi chú lý do
         const cancelledAppointment = {
           ...appointment,
           status: "Cancelled",
@@ -176,9 +174,7 @@ export default function PatientAppointmentsPage() {
         };
 
         return {
-          // Xóa khỏi danh sách Upcoming
           upcoming: prev.upcoming.filter(apt => apt.id !== appointmentToCancel),
-          // Thêm vào đầu danh sách Past
           past: [cancelledAppointment, ...prev.past]
         };
       });
@@ -635,7 +631,7 @@ export default function PatientAppointmentsPage() {
             <Button 
               variant="destructive" 
               onClick={confirmCancel}
-              disabled={!cancelReason.trim()} // Bắt buộc nhập lý do
+              disabled={!cancelReason.trim()}
             >
               Yes, Cancel Appointment
             </Button>
