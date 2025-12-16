@@ -5,13 +5,15 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon, Clock, Search, User, CheckCircle2, Stethoscope } from "lucide-react"
+import { CalendarIcon, Clock, Search, User, CheckCircle2, Stethoscope, FileText, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Link } from "react-router-dom"
 
 const specialties = [
   { id: "cardiology", name: "Cardiology", icon: "❤️" },
@@ -78,8 +80,13 @@ export function BookingForm() {
   const [date, setDate] = useState<Date>()
   const [selectedTime, setSelectedTime] = useState<string>("")
   const [step, setStep] = useState(1)
+  
+  // Patient Info States
   const [patientName, setPatientName] = useState("")
   const [patientPhone, setPatientPhone] = useState("")
+  const [patientEmail, setPatientEmail] = useState("")
+  const [symptoms, setSymptoms] = useState("")
+  
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   const filteredDoctors = doctors.filter((doctor) => {
@@ -154,14 +161,38 @@ export function BookingForm() {
                   <p className="font-semibold">{selectedTime}</p>
                 </div>
               </div>
+              
+              {/* Chỉ hiện Email nếu người dùng có nhập */}
+              {patientEmail && (
+                <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-semibold">{patientEmail}</p>
+                    </div>
+                </div>
+              )}
+              
+              {symptoms && (
+                <div className="flex items-start gap-3 border-t border-border/50 pt-3 mt-3">
+                    <FileText className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                    <p className="text-sm text-muted-foreground">Symptoms</p>
+                    <p className="font-semibold text-sm">{symptoms}</p>
+                    </div>
+                </div>
+              )}
             </div>
           </div>
           <p className="text-sm text-muted-foreground mb-6">
             A confirmation has been sent to your phone number: {patientPhone}
+            {patientEmail && ` and email: ${patientEmail}`}.
           </p>
-          <Button onClick={() => window.location.reload()} size="lg">
-            Book Another Appointment
-          </Button>
+          <Link to ="/">
+            <Button size="lg">
+             Go back 
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     )
@@ -373,6 +404,36 @@ export function BookingForm() {
                   required
                 />
               </div>
+
+              {/* Email - Optional */}
+              <div className="md:col-span-2">
+                <Label htmlFor="email" className="mb-2 block">
+                  Email Address (Optional)
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email address (optional)"
+                  value={patientEmail}
+                  onChange={(e) => setPatientEmail(e.target.value)}
+                  disabled={!selectedTime}
+                />
+              </div>
+              
+              {/* Symptoms - Optional */}
+              <div className="md:col-span-2">
+                <Label htmlFor="symptoms" className="mb-2 block">
+                  Describe Symptoms (Optional)
+                </Label>
+                <Textarea
+                  id="symptoms"
+                  placeholder="Briefly describe your symptoms or reason for visit..."
+                  value={symptoms}
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  disabled={!selectedTime}
+                  className="min-h-[100px]"
+                />
+              </div>
             </div>
 
             <div className="mt-8 flex gap-4">
@@ -380,6 +441,7 @@ export function BookingForm() {
                 type="submit"
                 size="lg"
                 className="px-8"
+                // Đã xóa check !patientEmail để nó thành optional
                 disabled={!selectedDoctor || !date || !selectedTime || !patientName || !patientPhone}
               >
                 Confirm Appointment
@@ -395,6 +457,8 @@ export function BookingForm() {
                   setSelectedTime("")
                   setPatientName("")
                   setPatientPhone("")
+                  setPatientEmail("") // Reset email
+                  setSymptoms("")
                   setStep(1)
                 }}
               >

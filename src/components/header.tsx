@@ -101,7 +101,7 @@ export function Header() {
                         <Home size={20} /> Home
                       </Link>
                       <Link 
-                        to="/appointments" 
+                        to="/patient/appointments" 
                         onClick={() => setIsProfileOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                       >
