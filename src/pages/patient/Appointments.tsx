@@ -25,9 +25,11 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Header } from "@/components/header"
 
-// Mock Data (Synchronized with booking_form.tsx)
+// Mock Data
 const initialAppointmentData = {
   upcoming: [
     {
@@ -35,7 +37,7 @@ const initialAppointmentData = {
       date: "2025-12-20",
       time: "10:00 AM",
       doctor: {
-        id: 1, // Matches Dr. Sarah Johnson in booking_form
+        id: 1,
         name: "Dr. Sarah Johnson",
         specialty: "Cardiology",
         image: "/female-doctor.png",
@@ -51,7 +53,7 @@ const initialAppointmentData = {
       date: "2026-01-05",
       time: "11:00 AM",
       doctor: {
-        id: 2, // Matches Dr. Michael Chen in booking_form
+        id: 2,
         name: "Dr. Michael Chen",
         specialty: "Orthopedics",
         image: "/male-doctor.png",
@@ -69,7 +71,7 @@ const initialAppointmentData = {
       date: "2025-11-28",
       time: "10:00 AM",
       doctor: {
-        id: 1, // Matches Dr. Sarah Johnson
+        id: 1,
         name: "Dr. Sarah Johnson",
         specialty: "Cardiology",
         image: "/female-doctor.png",
@@ -87,7 +89,7 @@ const initialAppointmentData = {
       date: "2025-10-20",
       time: "11:30 AM",
       doctor: {
-        id: 3, // Matches Dr. Emily Williams
+        id: 3,
         name: "Dr. Emily Williams",
         specialty: "Pediatrics",
         image: "/female-pediatrician.png",
@@ -105,7 +107,7 @@ const initialAppointmentData = {
       date: "2025-08-10",
       time: "9:00 AM",
       doctor: {
-        id: 4, // Matches Dr. James Martinez
+        id: 4,
         name: "Dr. James Martinez",
         specialty: "General Medicine",
         image: "/male-doctor-smiling.jpg",
@@ -129,6 +131,7 @@ export default function PatientAppointmentsPage() {
   // Cancel Dialog States
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
   const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState("") // State lưu lý do hủy
 
   // Helpers
   const getStatusColor = (status: string) => {
@@ -154,22 +157,39 @@ export default function PatientAppointmentsPage() {
   // Handlers
   const initiateCancel = (id: string) => {
     setAppointmentToCancel(id)
+    setCancelReason("") // Reset lý do mỗi lần mở dialog
     setIsCancelDialogOpen(true)
   }
 
   const confirmCancel = () => {
-    if (appointmentToCancel) {
-      setData(prev => ({
-        ...prev,
-        upcoming: prev.upcoming.filter(apt => apt.id !== appointmentToCancel)
-      }))
+    if (appointmentToCancel && cancelReason.trim()) {
+      setData(prev => {
+        // Tìm cuộc hẹn đang bị hủy
+        const appointment = prev.upcoming.find(a => a.id === appointmentToCancel);
+        if (!appointment) return prev;
+
+        // Tạo bản sao với trạng thái mới và ghi chú lý do
+        const cancelledAppointment = {
+          ...appointment,
+          status: "Cancelled",
+          notes: `Cancelled by patient: ${cancelReason}`
+        };
+
+        return {
+          // Xóa khỏi danh sách Upcoming
+          upcoming: prev.upcoming.filter(apt => apt.id !== appointmentToCancel),
+          // Thêm vào đầu danh sách Past
+          past: [cancelledAppointment, ...prev.past]
+        };
+      });
+
       setIsCancelDialogOpen(false)
       setAppointmentToCancel(null)
+      setCancelReason("")
     }
   }
 
   const handleBookFollowUp = (doctorId: number) => {
-    // Navigate to booking page with pre-selected doctor ID
     navigate("/book-appointment", { state: { selectedDoctorId: doctorId } })
   }
 
@@ -595,11 +615,28 @@ export default function PatientAppointmentsPage() {
               Are you sure you want to cancel this appointment? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="cancel-reason">Reason for cancellation <span className="text-destructive">*</span></Label>
+              <Textarea
+                id="cancel-reason"
+                placeholder="Please tell us why you are cancelling..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            </div>
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
               No, Keep It
             </Button>
-            <Button variant="destructive" onClick={confirmCancel}>
+            <Button 
+              variant="destructive" 
+              onClick={confirmCancel}
+              disabled={!cancelReason.trim()} // Bắt buộc nhập lý do
+            >
               Yes, Cancel Appointment
             </Button>
           </DialogFooter>
