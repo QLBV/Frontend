@@ -5,11 +5,11 @@ import {
   Settings,
   X,         
 } from 'lucide-react';
-import Topbar from '@/components/topbar'; // Ensure this matches your file path
+import Topbar from '@/components/topbar'; 
 
 interface SidebarLayoutProps {
-  children: ReactNode;      // Used for Sidebar Menu Items
-  pageContent?: ReactNode;  // Used for Main Dashboard Content
+  children: ReactNode;     
+  pageContent?: ReactNode;  
   logoText?: string; 
   userName?: string;
 }
@@ -103,13 +103,12 @@ const SidebarLayout = ({
           </div>
 
           {/* === CHILD CONTENT (Menu Items) === */}
-          {/* Note: Ensure your menu items handle the collapsed width (e.g. hide text) or they will overflow */}
           <div className="space-y-6">
              {children}
           </div>
         </div>
 
-        {/* Bottom Section (Fixed) */}
+        {/* Bottom Section */}
         <div className={`
           bg-white mt-auto border-t md:border-none border-gray-100 transition-all
           ${isCollapsed ? 'p-4 flex flex-col items-center' : 'p-6 pb-8'}
@@ -140,18 +139,14 @@ const SidebarLayout = ({
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT AREA (Includes Topbar) --- */}
+      {/* --- MAIN CONTENT AREA  --- */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="flex-1 overflow-y-auto p-4 md:p-6 md:pl-0"> 
-          {/* md:pl-0 because the sidebar has margin, keeping visual balance */}
-          
-          {/* Integrate Topbar here */}
           <Topbar 
             onMenuClick={handleMenuClick} 
             userName={userName}
           />
 
-          {/* Render the actual Dashboard/Page Content */}
           <div className="mt-2">
             {pageContent}
           </div>

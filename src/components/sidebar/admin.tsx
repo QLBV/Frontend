@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 
 const ReceptionistSidebar = () => {
-  // Dữ liệu menu đã được cập nhật đúng theo yêu cầu
   const receptionistMenu = [
     {
       title: "Dashboard",
