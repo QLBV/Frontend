@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 
 const PatientSidebar = () => {
-  // Dữ liệu menu đã được cập nhật đúng theo yêu cầu
   const DoctorMenu = [
     {
       title: "Dashboard",

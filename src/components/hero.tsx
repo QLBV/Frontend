@@ -8,13 +8,6 @@ export function Hero() {
       <div className="container mx-auto px-4">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col justify-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-1 text-sm font-medium text-secondary">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary"></span>
-              </span>
-              Now accepting new patients
-            </div>
             <h1 className="mb-6 text-balance text-4xl font-bold tracking-tight lg:text-6xl">
               Your Health, Our Priority
             </h1>
@@ -44,16 +37,6 @@ export function Hero() {
                   />
                 </svg>
                 Same-day appointments
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="h-5 w-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Telehealth available
               </div>
               <div className="flex items-center gap-2">
                 <svg className="h-5 w-5 text-secondary" fill="currentColor" viewBox="0 0 20 20">

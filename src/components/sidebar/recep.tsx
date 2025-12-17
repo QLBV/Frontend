@@ -1,5 +1,5 @@
 import React, { type ReactNode } from 'react';
-import { useLocation, Link } from 'react-router-dom'; // 1. Import hook này
+import { useLocation, Link } from 'react-router-dom'; 
 import SidebarLayout from "@/components/sidebar_layout";
 import { 
   LayoutDashboard, 
@@ -60,19 +60,17 @@ const ReceptionistSidebar = ({ children }: ReceptionistLayoutProps) => {
           </h2>
           <div className="space-y-3">
             {group.items.map((item, itemIndex) => {
-              // 4. Kiểm tra xem mục này có đang active không
               const isActive = location.pathname === item.href;
 
               return (
                 <Link 
                   to={item.href}
                   key={itemIndex}
-                  // 5. Thay đổi class dựa trên isActive
                   className={`
                     flex items-center gap-3 w-full text-left group p-2 rounded-lg transition-colors -ml-2
                     ${isActive 
-                      ? "bg-blue-50 text-blue-600"  // Style khi Active (Bôi xanh)
-                      : "hover:bg-gray-50 text-gray-500" // Style mặc định
+                      ? "bg-blue-50 text-blue-600"  
+                      : "hover:bg-gray-50 text-gray-500" 
                     }
                   `}
                 >
