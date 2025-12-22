@@ -9,6 +9,11 @@ import PatientDetailPage from "@/pages/recep/patient_detail"
 import PatientAppointmentsPage from "@/pages/patient/Appointments"
 import DoctorListPage from "./pages/admin/doctorList"
 import DoctorDetailPage from "./pages/admin/doctorDetail"
+import DoctorAddPage from "./pages/admin/doctorAdd"
+import DoctorSchedulePage from "./pages/admin/doctorSchedule"
+import DoctorShilfPage from "./pages/admin/doctorShilf"
+import MedicalListPage from "./pages/doctor/medicalList"
+import FormMedicalPage from "./pages/doctor/formMedical"
 function App() {
   return (
     <Routes>
@@ -22,6 +27,12 @@ function App() {
       <Route path="/patient/appointments" element={<PatientAppointmentsPage />} />
       <Route path="/admin/doctors" element={<DoctorListPage />} />
       <Route path="/admin/doctors/:id" element={<DoctorDetailPage />} />
+      <Route path="/admin/doctors/add" element={<DoctorAddPage />} />
+      <Route path="/admin/schedule" element={<DoctorSchedulePage />} />
+      <Route path="/admin/doctors/:id/shilf" element={<DoctorShilfPage />} />
+      <Route path="/doctor/medicalList" element={<MedicalListPage />} />
+      <Route path="/doctor/patients/:id" element={<FormMedicalPage />} />
+      <Route path="/doctor/patients/:id/examination" element={<FormMedicalPage />} />
     </Routes>
   )
 }
