@@ -69,6 +69,8 @@ export default function DoctorSchedulePage() {
   const [selectedDate, setSelectedDate] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [cancelLoading, setCancelLoading] = useState(false)
 
   // Data states
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -261,19 +263,93 @@ export default function DoctorSchedulePage() {
   }
 
   const handleDeleteShift = async (doctorShiftId: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa ca trực này?')) {
-      return
-    }
-
     try {
-      // Tạm thời chỉ xóa ở UI
-      setDoctorShifts(prev => prev.filter(ds => ds.id !== doctorShiftId))
-      toast.success('Đã xóa ca trực thành công')
+      // Step 1: Get preview of what will happen if we cancel this shift
+      setPreviewLoading(true)
+      const previewResponse = await api.get(`/api/doctor-shifts/${doctorShiftId}/reschedule-preview`)
+      
+      if (previewResponse.data.success) {
+        const previewData = previewResponse.data.data
+        
+        // Show confirmation modal with preview information
+        const confirmMessage = `
+Hủy ca trực này sẽ ảnh hưởng đến ${previewData.affectedAppointments} lịch hẹn.
+
+${previewData.hasReplacementDoctor 
+  ? `✅ Đã tìm thấy bác sĩ thay thế cùng chuyên khoa.
+📋 Tất cả lịch hẹn sẽ được tự động chuyển sang bác sĩ thay thế.` 
+  : `⚠️ CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa!
+❌ ${previewData.affectedAppointments} lịch hẹn sẽ không thể tự động chuyển.`}
+
+${previewData.warning ? `\n⚠️ ${previewData.warning}` : ''}
+
+Bạn có chắc chắn muốn tiếp tục?`
+
+        if (!confirm(confirmMessage)) {
+          return
+        }
+
+        // Step 2: Ask for cancellation reason
+        const cancelReason = prompt('Vui lòng nhập lý do hủy ca:')
+        if (!cancelReason || cancelReason.trim() === '') {
+          alert('Vui lòng cung cấp lý do hủy ca')
+          return
+        }
+
+        // Step 3: Call the reschedule API
+        setCancelLoading(true)
+        const response = await api.post(`/api/doctor-shifts/${doctorShiftId}/cancel-and-reschedule`, {
+          cancelReason: cancelReason.trim()
+        })
+
+        if (response.data.success) {
+          const result = response.data.data
+          
+          // Update UI - remove the cancelled shift
+          setDoctorShifts(prev => prev.filter(ds => ds.id !== doctorShiftId))
+          
+          // Show detailed success message
+          let successMessage = `✅ Đã hủy ca trực thành công!\n\n`
+          successMessage += `📊 Tổng số lịch hẹn xử lý: ${result.totalAppointments}\n`
+          
+          if (result.rescheduledCount > 0) {
+            successMessage += `✅ Đã chuyển thành công: ${result.rescheduledCount} lịch hẹn\n`
+          }
+          
+          if (result.failedCount > 0) {
+            successMessage += `❌ Không thể chuyển: ${result.failedCount} lịch hẹn\n`
+            successMessage += `💡 Các lịch hẹn này cần được xử lý thủ công.`
+          }
+          
+          alert(successMessage)
+          toast.success('Đã hủy ca trực và xử lý lịch hẹn thành công')
+          
+        } else {
+          throw new Error(response.data.message || 'Không thể hủy ca trực')
+        }
+      } else {
+        throw new Error(previewResponse.data.message || 'Không thể lấy thông tin preview')
+      }
       
     } catch (err: any) {
-      console.error('Delete shift error:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Xóa ca trực thất bại'
+      console.error('Cancel shift error:', err)
+      let errorMessage = 'Hủy ca trực thất bại'
+      
+      if (err.response?.status === 404) {
+        errorMessage = 'Không tìm thấy ca trực'
+      } else if (err.response?.status === 400) {
+        errorMessage = err.response.data.message || 'Dữ liệu không hợp lệ'
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau'
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      }
+      
+      alert(`❌ ${errorMessage}`)
       toast.error(errorMessage)
+    } finally {
+      setPreviewLoading(false)
+      setCancelLoading(false)
     }
   }
 
@@ -460,10 +536,19 @@ export default function DoctorSchedulePage() {
                                 {showAddEvent && (
                                   <button
                                     onClick={() => handleDeleteShift(doctorShift.id)}
-                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                                    title="Xóa ca trực"
+                                    disabled={previewLoading || cancelLoading}
+                                    className={`absolute -top-1 -right-1 w-5 h-5 ${
+                                      previewLoading || cancelLoading 
+                                        ? 'bg-gray-400 cursor-not-allowed' 
+                                        : 'bg-red-500 hover:bg-red-600'
+                                    } text-white rounded-full text-xs transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100`}
+                                    title={previewLoading || cancelLoading ? "Đang xử lý..." : "Hủy ca trực"}
                                   >
-                                    ×
+                                    {previewLoading || cancelLoading ? (
+                                      <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full"></div>
+                                    ) : (
+                                      '×'
+                                    )}
                                   </button>
                                 )}
                               </div>
