@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import AdminSidebar from '@/components/sidebar/admin';
 import { 
   ArrowLeft,
@@ -16,85 +16,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import api from "@/lib/api";
 
-// Doctor data - trong thực tế sẽ fetch từ API
-const doctorsData = [
-  {
-    id: "1",
-    name: "Dr. Nguyen A",
-    specialty: "Cardiology",
-    doctorId: "D-738491",
-    experience: "12 Years",
-    status: "Active",
-    avatar: "NA",
-    dateOfBirth: "1984/02/08",
-    gender: "Male",
-    email: "nguyena@email.com",
-    phone: "+84 123 456 789",
-    address: "123 Medical Center Dr, Suite 400, New York, NY",
-  },
-  {
-    id: "2", 
-    name: "Dr. Vu B",
-    specialty: "Pediatrics",
-    doctorId: "D-629502",
-    experience: "8 Years",
-    status: "Active",
-    avatar: "VB",
-    dateOfBirth: "1985/03/07",
-    gender: "Female",
-    email: "vub@email.com",
-    phone: "+84 234 567 891",
-    address: "456 Health Plaza, Suite 200, Boston, MA",
-  },
-  {
-    id: "3",
-    name: "Dr. Tran C",
-    specialty: "Neurology", 
-    doctorId: "D-847261",
-    experience: "15 Years",
-    status: "On Leave",
-    avatar: "TC",
-    dateOfBirth: "1978/09/08",
-    gender: "Male",
-    email: "tranc@email.com",
-    phone: "+84 345 678 912",
-    address: "789 Brain Institute, Suite 300, Chicago, IL",
-  },
-  {
-    id: "4",
-    name: "Dr. Ngo D",
-    specialty: "Dermatology",
-    doctorId: "D-391047",
-    experience: "5 Years", 
-    status: "Active",
-    avatar: "ND",
-    dateOfBirth: "1988/05/05",
-    gender: "Female",
-    email: "ngod@email.com",
-    phone: "+84 456 789 123",
-    address: "321 Skin Care Center, Suite 150, Miami, FL",
-  },
-  {
-    id: "5",
-    name: "Dr. Chu E",
-    specialty: "Orthopedics",
-    doctorId: "D-510283",
-    experience: "20 Years",
-    avatar: "CE",
-    dateOfBirth: "1973/11/10",
-    gender: "Male",
-    email: "chue@email.com",
-    phone: "+84 567 891 234",
-    address: "654 Bone & Joint Clinic, Suite 400, Los Angeles, CA",
+// Define interfaces based on backend API
+interface Doctor {
+  id: number
+  doctorCode: string
+  userId: number
+  specialtyId: number
+  position?: string
+  degree?: string
+  description?: string
+  createdAt: string
+  updatedAt: string
+  user: {
+    id: number
+    fullName: string
+    email: string
+    isActive: boolean
   }
-];
+  specialty: {
+    id: number
+    name: string
+  }
+}
+
+interface ApiResponse {
+  success: boolean
+  data: Doctor
+  message?: string
+}
 
 export default function DoctorDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   
-  // Tìm doctor theo ID
-  const doctor = doctorsData.find(d => d.id === id);
+  // API states
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   
   // Edit states
   const [editingPersonal, setEditingPersonal] = useState(false);
@@ -106,65 +67,196 @@ export default function DoctorDetail() {
   
   // Form states
   const [personalForm, setPersonalForm] = useState({
-    dateOfBirth: doctor?.dateOfBirth || "",
-    gender: doctor?.gender || "",
-    experience: doctor?.experience || ""
+    position: "",
+    degree: "",
+    description: ""
   });
   
   const [contactForm, setContactForm] = useState({
-    email: doctor?.email || "",
-    phone: doctor?.phone || "",
-    address: doctor?.address || ""
+    email: "",
+    fullName: ""
   });
+
+  // Add error boundary
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('JavaScript Error:', event.error);
+      setError('Có lỗi xảy ra trong ứng dụng. Vui lòng refresh trang.');
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  // Fetch doctor data from API
+  const fetchDoctor = async () => {
+    if (!id) {
+      setError('ID bác sĩ không hợp lệ');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError("");
+      
+      console.log('Fetching doctor with ID:', id);
+      const response = await api.get(`/api/doctors/${id}`)
+      console.log('Doctor response:', response.data);
+      
+      if (response.data.success && response.data.data) {
+        const doctorData = response.data.data;
+        
+        // Validate required data
+        if (!doctorData.user || !doctorData.specialty) {
+          throw new Error('Dữ liệu bác sĩ không đầy đủ');
+        }
+        
+        setDoctor(doctorData);
+        // Initialize form data
+        setPersonalForm({
+          position: doctorData.position || "",
+          degree: doctorData.degree || "",
+          description: doctorData.description || ""
+        });
+        setContactForm({
+          email: doctorData.user.email || "",
+          fullName: doctorData.user.fullName || ""
+        });
+      } else {
+        throw new Error(response.data.message || 'Không thể tải thông tin bác sĩ');
+      }
+    } catch (err: any) {
+      console.error('Error fetching doctor:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Không thể tải thông tin bác sĩ';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update doctor data
+  const updateDoctor = async (updateData: Partial<Doctor>) => {
+    if (!id || !doctor) {
+      console.error('Missing id or doctor data');
+      return false;
+    }
+    
+    try {
+      console.log('Updating doctor with data:', updateData);
+      const response = await api.put(`/api/doctors/${id}`, updateData);
+      console.log('Update response:', response.data);
+
+      if (response.data.success) {
+        // Don't set doctor state here, let the parent function handle it
+        toast.success('Cập nhật thông tin thành công');
+        return true;
+      } else {
+        throw new Error(response.data.message || 'Cập nhật thất bại');
+      }
+    } catch (err: any) {
+      console.error('Error updating doctor:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Cập nhật thất bại';
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    fetchDoctor();
+  }, [id]);
   
   // Handlers
   const handlePersonalEdit = () => {
     setEditingPersonal(true);
-    setPersonalForm({
-      dateOfBirth: doctor?.dateOfBirth || "",
-      gender: doctor?.gender || "",
-      experience: doctor?.experience || ""
-    });
+    if (doctor) {
+      setPersonalForm({
+        position: doctor.position || "",
+        degree: doctor.degree || "",
+        description: doctor.description || ""
+      });
+    }
   };
 
-  const handlePersonalSave = () => {
-    // Trong thực tế sẽ gọi API để update
-    console.log("Saving personal info:", personalForm);
-    setEditingPersonal(false);
+  const handlePersonalSave = async () => {
+    try {
+      if (!doctor) {
+        toast.error('Không tìm thấy thông tin bác sĩ');
+        return;
+      }
+
+      const success = await updateDoctor({
+        specialtyId: doctor.specialtyId,
+        position: personalForm.position,
+        degree: personalForm.degree,
+        description: personalForm.description
+      });
+      
+      if (success) {
+        setEditingPersonal(false);
+        // Refresh doctor data to get latest info
+        await fetchDoctor();
+      }
+    } catch (error) {
+      console.error('Error in handlePersonalSave:', error);
+      toast.error('Có lỗi xảy ra khi lưu thông tin');
+    }
   };
 
   const handlePersonalCancel = () => {
-    setEditingPersonal(false);
-    setPersonalForm({
-      dateOfBirth: doctor?.dateOfBirth || "",
-      gender: doctor?.gender || "",
-      experience: doctor?.experience || ""
-    });
+    try {
+      setEditingPersonal(false);
+      if (doctor) {
+        setPersonalForm({
+          position: doctor.position || "",
+          degree: doctor.degree || "",
+          description: doctor.description || ""
+        });
+      }
+    } catch (error) {
+      console.error('Error in handlePersonalCancel:', error);
+    }
   };
 
-  // Contact handlers
+  // Contact handlers (Note: User info update would need separate API)
   const handleContactEdit = () => {
-    setEditingContact(true);
-    setContactForm({
-      email: doctor?.email || "",
-      phone: doctor?.phone || "",
-      address: doctor?.address || ""
-    });
+    try {
+      setEditingContact(true);
+      if (doctor) {
+        setContactForm({
+          email: doctor.user?.email || "",
+          fullName: doctor.user?.fullName || ""
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleContactEdit:', error);
+    }
   };
 
   const handleContactSave = () => {
-    // Trong thực tế sẽ gọi API để update
-    console.log("Saving contact info:", contactForm);
-    setEditingContact(false);
+    try {
+      // Note: Updating user info would require a separate API endpoint
+      // For now, just close the edit mode
+      toast.info('Cập nhật thông tin liên hệ cần API riêng cho User');
+      setEditingContact(false);
+    } catch (error) {
+      console.error('Error in handleContactSave:', error);
+    }
   };
 
   const handleContactCancel = () => {
-    setEditingContact(false);
-    setContactForm({
-      email: doctor?.email || "",
-      phone: doctor?.phone || "",
-      address: doctor?.address || ""
-    });
+    try {
+      setEditingContact(false);
+      if (doctor) {
+        setContactForm({
+          email: doctor.user?.email || "",
+          fullName: doctor.user?.fullName || ""
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleContactCancel:', error);
+    }
   };
 
   // Avatar handlers
@@ -172,18 +264,18 @@ export default function DoctorDetail() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Kiểm tra file type
       if (!file.type.startsWith('image/')) {
-        alert('Vui lòng chọn file hình ảnh');
+        toast.error('Vui lòng chọn file hình ảnh');
         return;
       }
       
       // Kiểm tra file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+        toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
         return;
       }
 
@@ -194,10 +286,90 @@ export default function DoctorDetail() {
       };
       reader.readAsDataURL(file);
       
-      // Trong thực tế sẽ upload file lên server
-      console.log('Uploading avatar:', file);
+      // Note: Avatar upload would need separate API endpoint for file upload
+      toast.info('Tính năng upload avatar sẽ được thêm sau');
     }
   };
+
+  const getAvatarInitials = (fullName: string) => {
+    try {
+      if (!fullName || typeof fullName !== 'string') {
+        return 'NA';
+      }
+      return fullName
+        .split(' ')
+        .map(name => name.charAt(0))
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'NA';
+    } catch (error) {
+      return 'NA';
+    }
+  };
+
+  const getAvatarColor = (name: string) => {
+    try {
+      if (!name || typeof name !== 'string') {
+        return "from-blue-500 to-blue-600";
+      }
+      const colors = [
+        "from-blue-500 to-blue-600",
+        "from-purple-500 to-purple-600", 
+        "from-orange-500 to-orange-600",
+        "from-green-500 to-green-600",
+        "from-red-500 to-red-600",
+        "from-indigo-500 to-indigo-600",
+        "from-pink-500 to-pink-600",
+        "from-teal-500 to-teal-600"
+      ];
+      const index = name.length % colors.length;
+      return colors[index];
+    } catch (error) {
+      return "from-blue-500 to-blue-600";
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <AdminSidebar>
+        <div className="p-8 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Đang tải thông tin bác sĩ...</p>
+          </div>
+        </div>
+      </AdminSidebar>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <AdminSidebar>
+        <div className="p-8 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={fetchDoctor} className="bg-blue-600 hover:bg-blue-700">
+                Thử lại
+              </Button>
+              <Link to="/admin/doctors">
+                <Button variant="outline">
+                  Quay lại danh sách
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </AdminSidebar>
+    );
+  }
 
   
   // Nếu không tìm thấy doctor
@@ -216,17 +388,6 @@ export default function DoctorDetail() {
     );
   }
 
-  const getAvatarColor = (avatar: string) => {
-    const colors = {
-      "NA": "from-blue-500 to-blue-600",
-      "VB": "from-purple-500 to-purple-600", 
-      "TC": "from-orange-500 to-orange-600",
-      "ND": "from-green-500 to-green-600",
-      "CE": "from-gray-500 to-gray-600"
-    }
-    return colors[avatar as keyof typeof colors] || "from-blue-500 to-blue-600"
-  }
-
   return (
     <AdminSidebar>
       <div className="p-8">
@@ -241,61 +402,90 @@ export default function DoctorDetail() {
           </Link>
         </div>
 
-        {/* Doctor Profile Header */}
-        <Card className="border-0 shadow-lg mb-8">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-6">
-                {/* Avatar */}
-                <div className="relative">
-                  {avatarUrl ? (
-                    <img 
-                      src={avatarUrl} 
-                      alt={doctor.name}
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${getAvatarColor(doctor.avatar)} flex items-center justify-center text-white font-bold text-2xl`}>
-                      {doctor.avatar}
+        {/* Wrap content in try-catch equivalent */}
+        {(() => {
+          try {
+            return (
+              <>
+                {/* Doctor Profile Header */}
+                <Card className="border-0 shadow-lg mb-8">
+                  <CardContent className="p-8">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-6">
+                        {/* Avatar */}
+                        <div className="relative">
+                          {avatarUrl ? (
+                            <img 
+                              src={avatarUrl} 
+                              alt={doctor?.user?.fullName || 'Doctor'}
+                              className="w-24 h-24 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${getAvatarColor(doctor?.user?.fullName || '')} flex items-center justify-center text-white font-bold text-2xl`}>
+                              {getAvatarInitials(doctor?.user?.fullName || '')}
+                            </div>
+                          )}
+                          
+                          {/* Hidden file input */}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                        </div>
+
+                        {/* Doctor Info */}
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold text-gray-900">
+                              {doctor?.user?.fullName || 'Tên không xác định'}
+                            </h1>
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                              {doctor?.doctorCode || 'Mã không xác định'}
+                            </span>
+                          </div>
+                          <p className="text-lg text-gray-600 mb-3">
+                            Khoa {doctor?.specialty?.name || 'Chuyên khoa không xác định'}
+                          </p>
+                          {doctor?.position && (
+                            <p className="text-sm text-gray-500">{doctor.position}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={handleAvatarUpload}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Avatar
+                        </Button>
+                        <Button variant="outline" className="border-gray-300">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Manage Schedule
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                  
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </div>
-
-                {/* Doctor Info */}
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl font-bold text-gray-900">{doctor.name}</h1>
-                  </div>
-                  <p className="text-lg text-gray-600 mb-3">{doctor.specialty} Specialist</p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={handleAvatarUpload}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Avatar
-                </Button>
-                <Button variant="outline" className="border-gray-300">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Manage Schedule
+                  </CardContent>
+                </Card>
+              </>
+            );
+          } catch (error) {
+            console.error('Render error:', error);
+            return (
+              <div className="text-center p-8">
+                <p className="text-red-600">Có lỗi hiển thị. Vui lòng refresh trang.</p>
+                <Button onClick={() => window.location.reload()} className="mt-4">
+                  Refresh
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            );
+          }
+        })()}
 
         {/* Tabs */}
         <div className="mb-8">
@@ -360,53 +550,56 @@ export default function DoctorDetail() {
                 {!editingPersonal ? (
                   <>
                     <div>
-                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">DATE OF BIRTH</label>
-                      <p className="text-gray-900 font-medium mt-1">{doctor.dateOfBirth}</p>
+                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">POSITION</label>
+                      <p className="text-gray-900 font-medium mt-1">{doctor.position || 'Chưa cập nhật'}</p>
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">GENDER</label>
-                      <p className="text-gray-900 font-medium mt-1">{doctor.gender}</p>
+                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">DEGREE</label>
+                      <p className="text-gray-900 font-medium mt-1">{doctor.degree || 'Chưa cập nhật'}</p>
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">EXPERIENCE</label>
-                      <p className="text-gray-900 font-medium mt-1">{doctor.experience}</p>
+                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">DESCRIPTION</label>
+                      <p className="text-gray-900 font-medium mt-1">{doctor.description || 'Chưa có mô tả'}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">SPECIALTY</label>
+                      <p className="text-gray-900 font-medium mt-1">{doctor.specialty.name}</p>
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
-                      <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-500 uppercase tracking-wide">DATE OF BIRTH</Label>
+                      <Label htmlFor="position" className="text-sm font-medium text-gray-500 uppercase tracking-wide">POSITION</Label>
                       <Input
-                        id="dateOfBirth"
-                        value={personalForm.dateOfBirth}
-                        onChange={(e) => setPersonalForm({...personalForm, dateOfBirth: e.target.value})}
+                        id="position"
+                        value={personalForm.position}
+                        onChange={(e) => setPersonalForm({...personalForm, position: e.target.value})}
+                        placeholder="e.g., Senior Doctor, Chief of Cardiology"
                         className="mt-1"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="gender" className="text-sm font-medium text-gray-500 uppercase tracking-wide">GENDER</Label>
-                      <select
-                        id="gender"
-                        value={personalForm.gender}
-                        onChange={(e) => setPersonalForm({...personalForm, gender: e.target.value})}
-                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <Label htmlFor="degree" className="text-sm font-medium text-gray-500 uppercase tracking-wide">DEGREE</Label>
+                      <Input
+                        id="degree"
+                        value={personalForm.degree}
+                        onChange={(e) => setPersonalForm({...personalForm, degree: e.target.value})}
+                        placeholder="e.g., MD, PhD, MBBS"
+                        className="mt-1"
+                      />
                     </div>
                     
                     <div>
-                      <Label htmlFor="experience" className="text-sm font-medium text-gray-500 uppercase tracking-wide">EXPERIENCE</Label>
+                      <Label htmlFor="description" className="text-sm font-medium text-gray-500 uppercase tracking-wide">DESCRIPTION</Label>
                       <Input
-                        id="experience"
-                        value={personalForm.experience}
-                        onChange={(e) => setPersonalForm({...personalForm, experience: e.target.value})}
-                        placeholder="e.g., 12 Years"
+                        id="description"
+                        value={personalForm.description}
+                        onChange={(e) => setPersonalForm({...personalForm, description: e.target.value})}
+                        placeholder="Brief description about the doctor"
                         className="mt-1"
                       />
                     </div>
@@ -463,7 +656,7 @@ export default function DoctorDetail() {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">EMAIL ADDRESS</label>
-                        <p className="text-gray-900 font-medium">{doctor.email}</p>
+                        <p className="text-gray-900 font-medium">{doctor.user.email}</p>
                       </div>
                     </div>
 
@@ -472,8 +665,8 @@ export default function DoctorDetail() {
                         <Phone className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">PHONE NUMBER</label>
-                        <p className="text-gray-900 font-medium">{doctor.phone}</p>
+                        <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">FULL NAME</label>
+                        <p className="text-gray-900 font-medium">{doctor.user.fullName}</p>
                       </div>
                     </div>
 
@@ -482,8 +675,14 @@ export default function DoctorDetail() {
                         <MapPin className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">OFFICE ADDRESS</label>
-                        <p className="text-gray-900 font-medium">{doctor.address}</p>
+                        <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">STATUS</label>
+                        <p className="text-gray-900 font-medium">
+                          {doctor.user.isActive ? (
+                            <span className="text-green-600">Active</span>
+                          ) : (
+                            <span className="text-red-600">Inactive</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                   </>
@@ -502,41 +701,28 @@ export default function DoctorDetail() {
                           onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
                           placeholder="doctor@email.com"
                           className="flex-1"
+                          disabled
                         />
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">Email không thể chỉnh sửa từ đây</p>
                     </div>
 
                     <div>
-                      <Label htmlFor="phone" className="text-sm font-medium text-gray-500 uppercase tracking-wide">PHONE NUMBER</Label>
+                      <Label htmlFor="fullName" className="text-sm font-medium text-gray-500 uppercase tracking-wide">FULL NAME</Label>
                       <div className="flex items-center gap-3 mt-1">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Phone className="h-5 w-5 text-blue-600" />
                         </div>
                         <Input
-                          id="phone"
-                          type="tel"
-                          value={contactForm.phone}
-                          onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
-                          placeholder="+84 123 456 789"
+                          id="fullName"
+                          value={contactForm.fullName}
+                          onChange={(e) => setContactForm({...contactForm, fullName: e.target.value})}
+                          placeholder="Full Name"
                           className="flex-1"
+                          disabled
                         />
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="address" className="text-sm font-medium text-gray-500 uppercase tracking-wide">OFFICE ADDRESS</Label>
-                      <div className="flex items-start gap-3 mt-1">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <MapPin className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <Input
-                          id="address"
-                          value={contactForm.address}
-                          onChange={(e) => setContactForm({...contactForm, address: e.target.value})}
-                          placeholder="123 Medical Center Dr, Suite 400, City, State"
-                          className="flex-1"
-                        />
-                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Tên không thể chỉnh sửa từ đây</p>
                     </div>
                   </>
                 )}
@@ -582,7 +768,11 @@ export default function DoctorDetail() {
                   <span className="text-sm text-gray-600">08:00 - 16:00</span>
                 </div>
 
-                <Button variant="outline" className="w-full mt-4 text-blue-600 border-blue-200 hover:bg-blue-50">
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  onClick={() => navigate(`/admin/doctors/${id}/shilf`)}
+                >
                   View Full Calendar
                 </Button>
               </CardContent>

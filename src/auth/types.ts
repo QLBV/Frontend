@@ -3,6 +3,7 @@ export type User = {
   email: string;
   fullName: string;
   role: string;
+  roleId: number;
 };
 
 export type AuthContextType = {
@@ -10,5 +11,6 @@ export type AuthContextType = {
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, fullName: string) => Promise<User>;
   logout: () => Promise<void>;
 };

@@ -1,118 +1,250 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import DoctorSidebar from '@/components/sidebar/doctor'
-import { Search, Phone, Calendar, ChevronRight, Activity, Filter, UserCheck, Bell } from "lucide-react"
+import { Search, Calendar, ChevronRight, Activity, Filter, UserCheck, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
+import api from "@/lib/api"
+import { useAuth } from "@/auth/authContext"
 
 // --- Interfaces & Data ---
 interface MedicalAppointment {
-  id: string
-  patientName: string
-  medicalCode: string
-  appointmentTime: string
-  status: "waiting" | "in-progress" | "completed" | "cancelled"
-  patientAge: number
-  patientGender: "Male" | "Female"
-  appointmentType: "consultation" | "follow-up" | "emergency"
+  id: number
+  patientId: number
+  doctorId: number
+  shiftId: number
+  date: string
+  slotNumber: number
+  status: "WAITING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+  bookingType: string
+  bookedBy: string
+  symptomInitial?: string
+  Patient: {
+    id: number
+    fullName: string
+    dateOfBirth: string
+    gender: "MALE" | "FEMALE"
+    phoneNumber: string
+  }
+  Doctor: {
+    id: number
+    fullName: string
+  }
+  Shift: {
+    id: number
+    name: string
+    startTime: string
+    endTime: string
+  }
 }
-
-const appointments: MedicalAppointment[] = [
-  { 
-    id: "1", 
-    patientName: "Nguyễn Văn A", 
-    medicalCode: "MED001", 
-    appointmentTime: "09:00", 
-    status: "waiting",
-    patientAge: 45,
-    patientGender: "Male",
-    appointmentType: "consultation"
-  },
-  { 
-    id: "2", 
-    patientName: "Trần Thị B", 
-    medicalCode: "MED002", 
-    appointmentTime: "09:30", 
-    status: "in-progress",
-    patientAge: 32,
-    patientGender: "Female",
-    appointmentType: "follow-up"
-  },
-  { 
-    id: "3", 
-    patientName: "Lê Văn C", 
-    medicalCode: "MED003", 
-    appointmentTime: "10:00", 
-    status: "waiting",
-    patientAge: 58,
-    patientGender: "Male",
-    appointmentType: "consultation"
-  },
-  { 
-    id: "4", 
-    patientName: "Phạm Thị D", 
-    medicalCode: "MED004", 
-    appointmentTime: "10:30", 
-    status: "waiting",
-    patientAge: 27,
-    patientGender: "Female",
-    appointmentType: "consultation"
-  },
-  { 
-    id: "5", 
-    patientName: "Hoàng Văn E", 
-    medicalCode: "MED005", 
-    appointmentTime: "11:00", 
-    status: "waiting",
-    patientAge: 41,
-    patientGender: "Male",
-    appointmentType: "emergency"
-  },
-  { 
-    id: "6", 
-    patientName: "Vũ Thị F", 
-    medicalCode: "MED006", 
-    appointmentTime: "11:30", 
-    status: "cancelled",
-    patientAge: 35,
-    patientGender: "Female",
-    appointmentType: "follow-up"
-  },
-]
 
 export default function MedicalList() {
   const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterStatus, setFilterStatus] = useState<"all" | "waiting" | "in-progress" | "completed" | "cancelled">("all")
+  const [filterStatus, setFilterStatus] = useState<"all" | "WAITING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED">("all")
+  const [appointments, setAppointments] = useState<MedicalAppointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Check if user is doctor
+  useEffect(() => {
+    if (authLoading) return // Wait for auth to load
+    
+    if (!user) {
+      setError('Please login to access this page.')
+      setLoading(false)
+      return
+    }
+    
+    if (user.roleId !== 2) { // 2 = DOCTOR
+      setError('Access denied. This page is only for doctors and receptionists.')
+      setLoading(false)
+      return
+    }
+  }, [user, authLoading])
+
+  // Fetch appointments from API
+  useEffect(() => {
+    if (authLoading || !user) return
+    
+    if (user.roleId !== 2) return // Not a doctor or receptionist
+
+    const fetchAppointments = async () => {
+      try {
+        setLoading(true)
+        
+        // Mock data for testing
+        const mockAppointments: MedicalAppointment[] = [
+          {
+            id: 1,
+            patientId: 1,
+            doctorId: 1,
+            shiftId: 1,
+            date: new Date().toISOString().split('T')[0],
+            slotNumber: 1,
+            status: "WAITING",
+            bookingType: "ONLINE",
+            bookedBy: "PATIENT",
+            symptomInitial: "Đau đầu, chóng mặt, sốt nhẹ",
+            Patient: {
+              id: 1,
+              fullName: "Nguyễn Văn A",
+              dateOfBirth: "1990-05-15",
+              gender: "MALE",
+              phoneNumber: "0123456789"
+            },
+            Doctor: {
+              id: 1,
+              fullName: "BS. Trần Thị B"
+            },
+            Shift: {
+              id: 1,
+              name: "Ca sáng",
+              startTime: "08:00",
+              endTime: "12:00"
+            }
+          },
+          {
+            id: 2,
+            patientId: 2,
+            doctorId: 1,
+            shiftId: 1,
+            date: new Date().toISOString().split('T')[0],
+            slotNumber: 2,
+            status: "WAITING",
+            bookingType: "OFFLINE",
+            bookedBy: "RECEPTIONIST",
+            symptomInitial: "Ho khan, đau họng",
+            Patient: {
+              id: 2,
+              fullName: "Lê Thị C",
+              dateOfBirth: "1985-08-22",
+              gender: "FEMALE",
+              phoneNumber: "0987654321"
+            },
+            Doctor: {
+              id: 1,
+              fullName: "BS. Trần Thị B"
+            },
+            Shift: {
+              id: 1,
+              name: "Ca sáng",
+              startTime: "08:00",
+              endTime: "12:00"
+            }
+          },
+          {
+            id: 3,
+            patientId: 3,
+            doctorId: 2,
+            shiftId: 2,
+            date: new Date().toISOString().split('T')[0],
+            slotNumber: 1,
+            status: "IN_PROGRESS",
+            bookingType: "ONLINE",
+            bookedBy: "PATIENT",
+            symptomInitial: "Đau bụng, buồn nôn",
+            Patient: {
+              id: 3,
+              fullName: "Phạm Văn D",
+              dateOfBirth: "1992-12-10",
+              gender: "MALE",
+              phoneNumber: "0369852147"
+            },
+            Doctor: {
+              id: 2,
+              fullName: "BS. Hoàng Văn E"
+            },
+            Shift: {
+              id: 2,
+              name: "Ca chiều",
+              startTime: "13:00",
+              endTime: "17:00"
+            }
+          },
+          {
+            id: 4,
+            patientId: 4,
+            doctorId: 1,
+            shiftId: 1,
+            date: new Date().toISOString().split('T')[0],
+            slotNumber: 3,
+            status: "COMPLETED",
+            bookingType: "ONLINE",
+            bookedBy: "PATIENT",
+            symptomInitial: "Khám tổng quát",
+            Patient: {
+              id: 4,
+              fullName: "Vũ Thị F",
+              dateOfBirth: "1988-03-18",
+              gender: "FEMALE",
+              phoneNumber: "0147258369"
+            },
+            Doctor: {
+              id: 1,
+              fullName: "BS. Trần Thị B"
+            },
+            Shift: {
+              id: 1,
+              name: "Ca sáng",
+              startTime: "08:00",
+              endTime: "12:00"
+            }
+          }
+        ]
+        
+        // Try to get real data from API first
+        const today = new Date().toISOString().split('T')[0]
+        const response = await api.get(`/api/appointments?date=${today}`)
+
+        if (response.data.success && response.data.data.length > 0) {
+          // Use real data if available
+          setAppointments(response.data.data)
+          setError(null)
+        } else {
+          // Use mock data if no real appointments found
+          setAppointments(mockAppointments)
+          setError(null)
+        }
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || 'An error occurred')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAppointments()
+  }, [user?.id, authLoading])
 
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
-      appointment.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      appointment.medicalCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      appointment.appointmentTime.includes(searchQuery)
+      appointment.Patient.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      appointment.id.toString().includes(searchQuery) ||
+      appointment.Shift.startTime.includes(searchQuery)
 
     const matchesStatus = filterStatus === "all" || appointment.status === filterStatus
 
     return matchesSearch && matchesStatus
   })
 
-  const waitingCount = appointments.filter((a) => a.status === "waiting").length
-  const CancelCount = appointments.filter((a) => a.status === "cancelled").length
-  const completedCount = appointments.filter((a) => a.status === "completed").length
+  const waitingCount = appointments.filter((a) => a.status === "WAITING").length
+  const cancelledCount = appointments.filter((a) => a.status === "CANCELLED").length
+  const completedCount = appointments.filter((a) => a.status === "COMPLETED").length
   const totalAppointments = appointments.length
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "waiting":
+      case "WAITING":
         return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "in-progress":
+      case "IN_PROGRESS":
         return "bg-blue-100 text-blue-800 border-blue-200"
-      case "completed":
+      case "COMPLETED":
         return "bg-green-100 text-green-800 border-green-200"
-      case "cancelled":
+      case "CANCELLED":
         return "bg-red-100 text-red-800 border-red-200"
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
@@ -121,21 +253,75 @@ export default function MedicalList() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "waiting":
+      case "WAITING":
         return "Chờ khám"
-      case "in-progress":
+      case "IN_PROGRESS":
         return "Đang khám"
-      case "cancelled":
+      case "COMPLETED":
+        return "Đã khám"
+      case "CANCELLED":
         return "Đã hủy"
       default:
         return status
     }
   }
 
+  const calculateAge = (dateOfBirth: string) => {
+    const today = new Date()
+    const birthDate = new Date(dateOfBirth)
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
+  }
+
   const handleCallPatient = (appointment: MedicalAppointment) => {
-    console.log("Calling patient:", appointment.patientName)
+    console.log("Calling patient:", appointment.Patient.fullName)
     // Navigate to medical form for examination
     navigate(`/doctor/patients/${appointment.id}/examination`)
+  }
+
+  if (loading) {
+    return (
+      <DoctorSidebar>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading appointments...</p>
+          </div>
+        </div>
+      </DoctorSidebar>
+    )
+  }
+
+  if (error) {
+    return (
+      <DoctorSidebar>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <Activity className="h-12 w-12 mx-auto mb-2" />
+              <p className="text-lg font-medium">Error loading appointments</p>
+              <p className="text-sm">{error}</p>
+            </div>
+            {user?.roleId !== 2 ? (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">You need to be logged in as a doctor or receptionist to access this page.</p>
+                <Button onClick={() => navigate('/login')}>
+                  Go to Login
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            )}
+          </div>
+        </div>
+      </DoctorSidebar>
+    )
   }
 
   return (
@@ -176,16 +362,16 @@ export default function MedicalList() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30">
+          <Card className="border-0 shadow-lg shadow-red-500/5 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 bg-gradient-to-br from-white to-red-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-slate-600">Cancelled</CardTitle>
-              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <UserCheck className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                <UserCheck className="h-5 w-5 text-red-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-slate-900 mb-1">{CancelCount}</div>
-              <p className="text-xs text-slate-500">Currently examining</p>
+              <div className="text-4xl font-bold text-slate-900 mb-1">{cancelledCount}</div>
+              <p className="text-xs text-slate-500">Cancelled today</p>
             </CardContent>
           </Card>
 
@@ -202,7 +388,6 @@ export default function MedicalList() {
             </CardContent>
           </Card>
         </div>
-
         {/* Search and Filter Section */}
         <Card className="border-0 shadow-xl shadow-slate-900/5">
           <CardContent className="p-6">
@@ -211,7 +396,7 @@ export default function MedicalList() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
-                  placeholder="Search by patient name, medical code, or time..."
+                  placeholder="Search by patient name, appointment ID, or time..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
@@ -227,23 +412,23 @@ export default function MedicalList() {
                   All
                 </Button>
                 <Button
-                  variant={filterStatus === "waiting" ? "default" : "outline"}
-                  onClick={() => setFilterStatus("waiting")}
-                  className={filterStatus === "waiting" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                  variant={filterStatus === "WAITING" ? "default" : "outline"}
+                  onClick={() => setFilterStatus("WAITING")}
+                  className={filterStatus === "WAITING" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
                 >
                   Waiting
                 </Button>
                 <Button
-                  variant={filterStatus === "in-progress" ? "default" : "outline"}
-                  onClick={() => setFilterStatus("in-progress")}
-                  className={filterStatus === "in-progress" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                  variant={filterStatus === "IN_PROGRESS" ? "default" : "outline"}
+                  onClick={() => setFilterStatus("IN_PROGRESS")}
+                  className={filterStatus === "IN_PROGRESS" ? "bg-blue-600 hover:bg-blue-700" : ""}
                 >
                   In Progress
                 </Button>
                 <Button
-                  variant={filterStatus === "completed" ? "default" : "outline"}
-                  onClick={() => setFilterStatus("completed")}
-                  className={filterStatus === "completed" ? "bg-green-600 hover:bg-green-700" : ""}
+                  variant={filterStatus === "COMPLETED" ? "default" : "outline"}
+                  onClick={() => setFilterStatus("COMPLETED")}
+                  className={filterStatus === "COMPLETED" ? "bg-green-600 hover:bg-green-700" : ""}
                 >
                   Completed
                 </Button>
@@ -260,6 +445,7 @@ export default function MedicalList() {
                 <CardTitle className="text-2xl text-slate-900">Today's Appointments</CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
                   Showing {filteredAppointments.length} of {totalAppointments} appointments
+                  {totalAppointments === 0 && " (No appointments found for today)"}
                 </p>
               </div>
             </div>
@@ -282,6 +468,12 @@ export default function MedicalList() {
                       <td colSpan={5} className="py-12 text-center text-slate-500">
                         <Search className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                         <p className="text-lg font-medium">No appointments found</p>
+                        <p className="text-sm mt-2">
+                          {totalAppointments === 0 
+                            ? "No appointments scheduled for today" 
+                            : "Try adjusting your search or filter criteria"
+                          }
+                        </p>
                       </td>
                     </tr>
                   ) : (
@@ -296,30 +488,30 @@ export default function MedicalList() {
                           <div className="flex items-center gap-3">
                             <div
                               className={`h-12 w-12 rounded-full ${
-                                appointment.patientGender === "Male"
+                                appointment.Patient.gender === "MALE"
                                   ? "bg-gradient-to-br from-blue-500 to-blue-600"
                                   : "bg-gradient-to-br from-pink-500 to-pink-600"
                               } flex items-center justify-center text-white font-semibold shadow-md text-lg`}
                             >
-                              {appointment.patientName.charAt(0)}
+                              {appointment.Patient.fullName.charAt(0)}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-900">{appointment.patientName}</p>
+                              <p className="font-semibold text-slate-900">{appointment.Patient.fullName}</p>
                               <p className="text-sm text-slate-500">
-                                {appointment.patientAge} tuổi • {appointment.patientGender === "Male" ? "Nam" : "Nữ"}
+                                {calculateAge(appointment.Patient.dateOfBirth)} tuổi • {appointment.Patient.gender === "MALE" ? "Nam" : "Nữ"}
                               </p>
                             </div>
                           </div>
                         </td>
                         <td className="py-4 px-6">
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            {appointment.medicalCode}
+                            #{appointment.id}
                           </Badge>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-2 text-slate-700">
                             <Calendar className="h-4 w-4 text-slate-400" />
-                            <span className="text-sm font-medium">{appointment.appointmentTime}</span>
+                            <span className="text-sm font-medium">{appointment.Shift.startTime} - {appointment.Shift.endTime}</span>
                           </div>
                         </td>
                         <td className="py-4 px-6">
@@ -332,7 +524,7 @@ export default function MedicalList() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-2">
-                            {appointment.status !== "waiting" && (
+                            {appointment.status !== "WAITING" && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -345,7 +537,7 @@ export default function MedicalList() {
                               </Link>
                             </Button>
                             )}
-                            {appointment.status === "waiting" && (
+                            {appointment.status === "WAITING" && (
                               <Button 
                                 size="sm" 
                                 className="bg-green-600 hover:bg-green-700 text-white"

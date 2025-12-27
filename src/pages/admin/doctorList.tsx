@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import AdminSidebar from '@/components/sidebar/admin';
 import { 
   Search,
@@ -11,74 +11,79 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import api from "@/lib/api";
 
 // --- 1. Define Data & Interfaces ---
 interface Doctor {
-  id: string
-  name: string
-  specialty: string
-  doctorId: string
-  experience: string
-  status: "Active" | "On Leave" | "Inactive"
-  avatar: string
+  id: number
+  doctorCode: string
+  userId: number
+  specialtyId: number
+  position?: string
+  degree?: string
+  description?: string
+  createdAt: string
+  updatedAt: string
+  user: {
+    id: number
+    fullName: string
+    email: string
+    avatar?: string
+  }
+  specialty: {
+    id: number
+    name: string
+  }
 }
 
-const doctors: Doctor[] = [
-  {
-    id: "1",
-    name: "Nguyen A",
-    specialty: "Cardiology",
-    doctorId: "D-738491",
-    experience: "12 Years",
-    status: "Active",
-    avatar: "NA"
-  },
-  {
-    id: "2", 
-    name: "Vu B",
-    specialty: "Pediatrics",
-    doctorId: "D-629502",
-    experience: "8 Years",
-    status: "Active",
-    avatar: "VB"
-  },
-  {
-    id: "3",
-    name: "Tran C",
-    specialty: "Neurology", 
-    doctorId: "D-847261",
-    experience: "15 Years",
-    status: "On Leave",
-    avatar: "TC"
-  },
-  {
-    id: "4",
-    name: "Ngo D",
-    specialty: "Dermatology",
-    doctorId: "D-391047",
-    experience: "5 Years", 
-    status: "Active",
-    avatar: "ND"
-  },
-  {
-    id: "5",
-    name: "Chu E",
-    specialty: "Orthopedics",
-    doctorId: "D-510283",
-    experience: "20 Years",
-    status: "Inactive",
-    avatar: "CE"
-  }
-];
+interface ApiResponse {
+  success: boolean
+  data: Doctor[]
+  message?: string
+}
 
-type SortOption = "name" | "experience"
+type SortOption = "name" | "position"
 
 export default function DoctorList() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<SortOption>("name")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [showSortDropdown, setShowSortDropdown] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const itemsPerPage = 5
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Fetch doctors from API
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true)
+      setError("")
+      
+      const response = await api.get('/api/doctors')
+      
+      if (response.data.success) {
+        setDoctors(response.data.data)
+        toast.success(`Đã tải ${response.data.data.length} bác sĩ`)
+      } else {
+        throw new Error(response.data.message || 'Không thể tải danh sách bác sĩ')
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Không thể tải danh sách bác sĩ'
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDoctors()
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -93,10 +98,10 @@ export default function DoctorList() {
     }
   }, [])
 
-  const getStatusBadge = (status: Doctor["status"]) => {
+  const getStatusBadge = (isActive: boolean = true) => {
+    const status = isActive ? "Active" : "Inactive"
     const statusConfig = {
       "Active": "bg-green-100 text-green-800 border-green-200",
-      "On Leave": "bg-yellow-100 text-yellow-800 border-yellow-200", 
       "Inactive": "bg-red-100 text-red-800 border-red-200"
     }
     
@@ -107,41 +112,52 @@ export default function DoctorList() {
     )
   }
 
-  const getAvatarColor = (avatar: string) => {
-    const colors = {
-      "NA": "bg-blue-500",
-      "VB": "bg-purple-500", 
-      "TC": "bg-orange-500",
-      "ND": "bg-green-500",
-      "CE": "bg-gray-500"
-    }
-    return colors[avatar as keyof typeof colors] || "bg-blue-500"
+  const getAvatarInitials = (fullName: string) => {
+    return fullName
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      "bg-blue-500",
+      "bg-purple-500", 
+      "bg-orange-500",
+      "bg-green-500",
+      "bg-red-500",
+      "bg-indigo-500",
+      "bg-pink-500",
+      "bg-teal-500"
+    ]
+    const index = name.length % colors.length
+    return colors[index]
   }
 
   const getSortValue = (doctor: Doctor, sortBy: SortOption) => {
     switch (sortBy) {
       case "name":
-        return doctor.name.toLowerCase()
-      case "experience":
-        return parseInt(doctor.experience.split(" ")[0])
+        return doctor.user.fullName.toLowerCase()
+      case "position":
+        return doctor.position?.toLowerCase() || ""
       default:
-        return doctor.name.toLowerCase()
+        return doctor.user.fullName.toLowerCase()
     }
   }
 
   const sortedAndFilteredDoctors = doctors
     .filter(doctor => {
-      return doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             doctor.doctorId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase())
+      const searchLower = searchQuery.toLowerCase()
+      return doctor.user.fullName.toLowerCase().includes(searchLower) ||
+             doctor.doctorCode.toLowerCase().includes(searchLower) ||
+             doctor.specialty.name.toLowerCase().includes(searchLower) ||
+             (doctor.user.email && doctor.user.email.toLowerCase().includes(searchLower))
     })
     .sort((a, b) => {
       const aValue = getSortValue(a, sortBy)
       const bValue = getSortValue(b, sortBy)
-      
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return sortOrder === "asc" ? aValue - bValue : bValue - aValue
-      }
       
       if (typeof aValue === "string" && typeof bValue === "string") {
         return sortOrder === "asc" 
@@ -151,6 +167,33 @@ export default function DoctorList() {
       
       return 0
     })
+
+  // Pagination logic
+  const totalPages = Math.ceil(sortedAndFilteredDoctors.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentDoctors = sortedAndFilteredDoctors.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery])
 
   const handleSortChange = (newSortBy: SortOption) => {
     if (sortBy === newSortBy) {
@@ -165,11 +208,42 @@ export default function DoctorList() {
   const getSortLabel = (sortBy: SortOption) => {
     const labels = {
       name: "Name",
-      experience: "Experience", 
-      specialty: "Chuyên khoa",
-      status: "Trạng thái"
+      position: "Position"
     }
     return labels[sortBy]
+  }
+
+  if (loading) {
+    return (
+      <AdminSidebar>
+        <div className="p-8 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Đang tải danh sách bác sĩ...</p>
+          </div>
+        </div>
+      </AdminSidebar>
+    )
+  }
+
+  if (error) {
+    return (
+      <AdminSidebar>
+        <div className="p-8 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchDoctors} className="bg-blue-600 hover:bg-blue-700">
+              Thử lại
+            </Button>
+          </div>
+        </div>
+      </AdminSidebar>
+    )
   }
 
   return (
@@ -217,10 +291,10 @@ export default function DoctorList() {
                       </button>
                       <button
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between"
-                        onClick={() => handleSortChange("experience")}
+                        onClick={() => handleSortChange("position")}
                       >
-                        Experience
-                        {sortBy === "experience" && <span>{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                        Position
+                        {sortBy === "position" && <span>{sortOrder === "asc" ? "↑" : "↓"}</span>}
                       </button>
                     </div>
                   </div>
@@ -229,7 +303,9 @@ export default function DoctorList() {
             </div>
 
             {/* Add Doctor Button */}
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6">
+            <Button 
+            onClick={() => navigate("/admin/doctors/add")}
+            className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6">
               Add Doctor
             </Button>
           </div>
@@ -237,7 +313,9 @@ export default function DoctorList() {
 
         {/* Results Count */}
         <div className="mb-4">
-          <span className="text-sm text-gray-600">Hiển thị {sortedAndFilteredDoctors.length} trong tổng số {doctors.length} bác sĩ</span>
+          <span className="text-sm text-gray-600">
+            Hiển thị {startIndex + 1}-{Math.min(endIndex, sortedAndFilteredDoctors.length)} trong tổng số {sortedAndFilteredDoctors.length} bác sĩ
+          </span>
         </div>
 
         {/* Doctor Table */}
@@ -254,7 +332,7 @@ export default function DoctorList() {
                       ID
                     </th>
                     <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">
-                      EXPERIENCE
+                      POSITION
                     </th>
                     <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">
                       STATUS
@@ -265,27 +343,35 @@ export default function DoctorList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedAndFilteredDoctors.map((doctor, index) => (
+                  {currentDoctors.map((doctor, index) => (
                     <tr key={doctor.id} className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full ${getAvatarColor(doctor.avatar)} flex items-center justify-center text-white font-semibold text-sm`}>
-                            {doctor.avatar}
+                          <div className={`w-10 h-10 rounded-full ${getAvatarColor(doctor.user.fullName)} flex items-center justify-center text-white font-semibold text-sm`}>
+                            {doctor.user.avatar ? (
+                              <img 
+                                src={doctor.user.avatar} 
+                                alt={doctor.user.fullName}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              getAvatarInitials(doctor.user.fullName)
+                            )}
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">{doctor.name}</div>
-                            <div className="text-sm text-gray-500">{doctor.specialty}</div>
+                            <div className="font-medium text-gray-900">{doctor.user.fullName}</div>
+                            <div className="text-sm text-gray-500">{doctor.specialty.name}</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-gray-900 font-mono">{doctor.doctorId}</span>
+                        <span className="text-gray-900 font-mono">{doctor.doctorCode}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-gray-600">{doctor.experience}</span>
+                        <span className="text-gray-600">{doctor.position || 'Chưa cập nhật'}</span>
                       </td>
                       <td className="py-4 px-6">
-                        {getStatusBadge(doctor.status)}
+                        {getStatusBadge(doctor.user ? true : false)} {/* Can use doctor.user.isActive when available */}
                       </td>
                       <td className="py-4 px-6">
                         <Link to={`/admin/doctors/${doctor.id}`}>
@@ -303,25 +389,43 @@ export default function DoctorList() {
         </Card>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="ghost" className="flex items-center gap-2">
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="default" size="sm" className="bg-blue-600 text-white">1</Button>
-            <Button variant="ghost" size="sm">2</Button>
-            <Button variant="ghost" size="sm">3</Button>
-            <span className="text-gray-500">...</span>
-            <Button variant="ghost" size="sm">5</Button>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6">
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-2"
+              onClick={handlePrevious}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "ghost"}
+                  size="sm"
+                  className={currentPage === page ? "bg-blue-600 text-white" : ""}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-2"
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          
-          <Button variant="ghost" className="flex items-center gap-2">
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+        )}
       </div>
     </AdminSidebar>
   );

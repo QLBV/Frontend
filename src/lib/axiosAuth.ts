@@ -2,18 +2,34 @@
 import axios from "axios";
 import api from "./api";
 
-// ===== Access token (memory) =====
+// ===== Access token (localStorage + memory) =====
 let accessToken: string | null = null;
+const ACCESS_TOKEN_KEY = 'accessToken';
 
 // ===== Refresh token (localStorage) =====
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
 export const setAccessToken = (token: string) => {
   accessToken = token;
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+};
+
+export const getAccessToken = (): string | null => {
+  if (accessToken) return accessToken;
+  
+  // Try to get from localStorage if not in memory
+  const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (storedToken) {
+    accessToken = storedToken;
+    return storedToken;
+  }
+  
+  return null;
 };
 
 export const clearAccessToken = () => {
   accessToken = null;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
 };
 
 export const getRefreshToken = (): string | null => {
@@ -30,8 +46,9 @@ export const clearRefreshToken = () => {
 
 // ===== Request interceptor =====
 api.interceptors.request.use((config) => {
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

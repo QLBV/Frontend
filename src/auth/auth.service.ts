@@ -17,6 +17,24 @@ export const loginApi = async (
   }
 };
 
+export const registerApi = async (
+  email: string,
+  password: string,
+  fullName: string
+): Promise<User> => {
+  const res = await api.post("/api/auth/register", { 
+    email, 
+    password, 
+    fullName 
+  });
+
+  if (res.data.success) {
+    return res.data.user;
+  } else {
+    throw new Error(res.data.message || "Registration failed");
+  }
+};
+
 export const refreshApi = async (): Promise<User> => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
@@ -36,7 +54,8 @@ export const refreshApi = async (): Promise<User> => {
         id: payload.id,
         email: payload.email || '',
         fullName: payload.fullName || '',
-        role: payload.role
+        role: payload.role || '',
+        roleId: payload.roleId || 3 // Default to Patient if not found
       };
     } catch {
       throw new Error("Invalid token format");
