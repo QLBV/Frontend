@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState } from "react"
@@ -11,20 +9,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lock, Mail, Heart } from "lucide-react"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/lib/firebase" 
+import { loginApi } from "@/auth/auth.service"
+import { useAuth } from "@/auth/authContext" 
 
-type LoginType = "patient" | "staff"
+// type LoginType = "patient" | "staff"
 
 //  ***Login Accounts for testing: testid@gmail.com / 11032005***
 
 export default function LoginPage() {
-  const [loginType, setLoginType] = useState<LoginType>("patient")
+  // const [loginType, setLoginType] = useState<LoginType>("patient")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,17 +31,35 @@ export default function LoginPage() {
     setError("")
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      console.log("Login successful for:", loginType)
+      // Sử dụng auth context login function
+      await login(email, password)
+      
+      // Gọi API để lấy thông tin user và xác định role
+      const user = await loginApi(email, password)
+      
+      console.log("Login successful for user with roleId:", user.roleId)
 
-      // Route based on login type
-      if (loginType === "patient") {
-        navigate("/") // Route to landing page
-      } else if (loginType === "staff") {
-        navigate("/recep/dashboard") // Route to staff dashboard
+      // Route dựa trên roleId từ API response
+      switch (user.roleId) {
+        case 1: // Admin
+          navigate("/admin/doctors")
+          break
+        case 4: // Receptionist
+          navigate("/recep/dashboard")
+          break
+        case 3: // Patient
+          navigate("/patient/appointments")
+          break
+        case 2: // Doctor
+          navigate("/doctor/medicalList")
+          break
+        default:
+          // Fallback to patient dashboard
+          navigate("/")
       }
     } catch (err: any) {
-      setError(err.message || "Login failed")
+      console.error("Login error:", err)
+      setError(err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.")
     } finally {
       setLoading(false)
     }
@@ -59,22 +76,22 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4">
               <Heart className="w-8 h-8 text-white fill-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-gray-600">Sign in to access your healthcare account</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Chào mừng trở lại</h1>
+            <p className="text-gray-600">Đăng nhập để truy cập tài khoản y tế của bạn</p>
           </div>
 
           <Card className="shadow-xl border-0">
             <CardHeader className="space-y-1 pb-4">
               {/* Login Type Tabs */}
               <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
-                <button
+                {/* <button
                   type="button"
                   onClick={() => setLoginType("patient")}
                   className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-md transition-all ${
                     loginType === "patient" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  Patient Login
+                  Bệnh nhân
                 </button>
                 <button
                   type="button"
@@ -83,15 +100,14 @@ export default function LoginPage() {
                     loginType === "staff" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  Staff Login
-                </button>
+                  Nhân viên
+                </button> */}
               </div>
 
-              <CardTitle className="text-2xl">{loginType === "patient" ? "Patient Portal" : "Staff Portal"}</CardTitle>
+              {/* <CardTitle className="text-2xl">{loginType === "patient" ? "Cổng thông tin bệnh nhân" : "Cổng thông tin nhân viên"}</CardTitle> */}
               <CardDescription>
-                {loginType === "patient"
-                  ? "Access your medical records, appointments, and prescriptions"
-                  : "Access patient records, schedules, and administrative tools"}
+                  Truy cập hồ sơ y tế, lịch hẹn và đơn thuốc của bạn
+                  
               </CardDescription>
             </CardHeader>
 
@@ -107,7 +123,7 @@ export default function LoginPage() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="your.email@example.com"
+                      placeholder="email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -118,9 +134,9 @@ export default function LoginPage() {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Mật khẩu</Label>
                     <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                      Forgot password?
+                      Quên mật khẩu?
                     </Link>
                   </div>
                   <div className="relative">
@@ -128,7 +144,7 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="Nhập mật khẩu của bạn"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10"
@@ -144,30 +160,30 @@ export default function LoginPage() {
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                    Remember me for 30 days
+                    Ghi nhớ đăng nhập trong 30 ngày
                   </Label>
                 </div>
 
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
-                  {loading ? "Signing In..." : "Sign In"}
+                  {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                 </Button>
 
-                {loginType === "patient" && (
+                
                   <div className="text-center pt-4 border-t">
                     <p className="text-sm text-gray-600">
-                      Don't have an account?{" "}
+                      Chưa có tài khoản?{" "}
                       <Link to="/register" className="text-primary font-medium hover:underline">
-                        Register now
+                        Đăng ký ngay
                       </Link>
                     </p>
                   </div>
-                )}
+                
 
-                {loginType === "staff" && (
+                {/* {loginType === "staff" && (
                   <div className="text-center pt-4">
-                    <p className="text-xs text-gray-500">Staff login is restricted. Contact IT support for access.</p>
+                    <p className="text-xs text-gray-500">Đăng nhập nhân viên có giới hạn. Liên hệ IT để được hỗ trợ.</p>
                   </div>
-                )}
+                )} */}
               </form>
             </CardContent>
           </Card>
@@ -175,9 +191,9 @@ export default function LoginPage() {
           {/* Additional Info */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Need help? Contact us at{" "}
-              <a href="tel:+15551234567" className="text-primary hover:underline">
-                (555) 123-4567
+              Cần hỗ trợ? Liên hệ với chúng tôi tại{" "}
+              <a href="tel:+84123456789" className="text-primary hover:underline">
+                (84) 123-456-789
               </a>
             </p>
           </div>

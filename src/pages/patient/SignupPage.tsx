@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
@@ -9,24 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lock, Mail, Heart, User, Phone, Calendar, Loader2 } from "lucide-react"
-
-// --- Firebase Imports ---
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase" // Ensure this path matches your file structure
+import { Lock, Mail, Heart, User, Loader2 } from "lucide-react"
+import { useAuth } from "@/auth/authContext"
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const { register } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
-    phone: "",
-    dateOfBirth: "",
     password: "",
     confirmPassword: "",
   })
@@ -45,57 +37,57 @@ export default function SignupPage() {
 
     // 1. Basic Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      setError("Mật khẩu không khớp")
       setLoading(false)
       return
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters")
+    if (formData.password.length < 8) {
+      setError("Mật khẩu phải có ít nhất 8 ký tự")
+      setLoading(false)
+      return
+    }
+
+    // Check password complexity
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/
+    if (!passwordRegex.test(formData.password)) {
+      setError("Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ hoa và 1 số")
+      setLoading(false)
+      return
+    }
+
+    if (formData.fullName.trim().length < 2) {
+      setError("Họ tên phải có ít nhất 2 ký tự")
       setLoading(false)
       return
     }
 
     try {
-      // 2. Create User in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth, 
-        formData.email, 
-        formData.password
-      )
+      // 3. Gọi API register
+      await register(formData.email, formData.password, formData.fullName)
+
+      console.log("Tài khoản được tạo thành công!")
       
-      const user = userCredential.user
-
-      // 3. Update "Display Name" in Auth (optional but useful)
-      await updateProfile(user, {
-        displayName: `${formData.firstName} ${formData.lastName}`
-      })
-
-      // 4. Save Extra Data to Firestore
-      // We create a document in the 'patients' collection with the same ID as the User UID
-      await setDoc(doc(db, "patients", user.uid), {
-        uid: user.uid,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
-        role: "patient", // Useful for distinguishing users later
-        createdAt: new Date().toISOString()
-      })
-
-      console.log("Account created successfully!")
-      
-      // 5. Redirect to Home (The AuthContext will detect the login automatically)
+      // 4. Chuyển hướng về trang chủ
       navigate("/") 
 
     } catch (err: any) {
-      console.error("Signup Error:", err)
-      // Make error messages more user-friendly
-      if (err.code === 'auth/email-already-in-use') {
-        setError("This email is already registered.")
+      console.error("Lỗi đăng ký:", err)
+      // Xử lý lỗi thân thiện với người dùng
+      const errorMessage = err.response?.data?.message || err.message || "Không thể tạo tài khoản. Vui lòng thử lại."
+      
+      if (errorMessage.includes("EMAIL_INVALID")) {
+        setError("Định dạng email không hợp lệ.")
+      } else if (errorMessage.includes("PASSWORD_TOO_SHORT")) {
+        setError("Mật khẩu phải có ít nhất 8 ký tự.")
+      } else if (errorMessage.includes("PASSWORD_WEAK")) {
+        setError("Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ hoa và 1 số.")
+      } else if (errorMessage.includes("FULLNAME_INVALID")) {
+        setError("Họ tên phải từ 2-100 ký tự.")
+      } else if (errorMessage.includes("Email already exists")) {
+        setError("Email này đã được đăng ký.")
       } else {
-        setError(err.message || "Failed to create account. Please try again.")
+        setError(errorMessage)
       }
     } finally {
       setLoading(false)
@@ -112,14 +104,14 @@ export default function SignupPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4">
               <Heart className="w-8 h-8 text-white fill-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
-            <p className="text-gray-600">Join HealthCare Plus and get access to quality healthcare</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Tạo tài khoản của bạn</h1>
+            <p className="text-gray-600">Tham gia HealthCare Plus và truy cập dịch vụ y tế chất lượng</p>
           </div>
 
           <Card className="shadow-xl border-0">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl">Patient Registration</CardTitle>
-              <CardDescription>Please fill in your information to create a new patient account</CardDescription>
+              <CardTitle className="text-2xl">Đăng ký bệnh nhân</CardTitle>
+              <CardDescription>Vui lòng điền thông tin của bạn để tạo tài khoản bệnh nhân mới</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -132,53 +124,34 @@ export default function SignupPage() {
                   </div>
                 )}
 
-                {/* Name Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        type="text"
-                        placeholder="John"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        type="text"
-                        placeholder="Doe"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Họ và Tên</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      placeholder="Nguyễn Văn A"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      className="pl-10"
+                      required
+                    />
                   </div>
                 </div>
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Địa chỉ Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="john.doe@example.com"
+                      placeholder="nguyenvana@example.com"
                       value={formData.email}
                       onChange={handleChange}
                       className="pl-10"
@@ -187,76 +160,43 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Phone and DOB */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        placeholder="(555) 123-4567"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="dateOfBirth"
-                        name="dateOfBirth"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Passwords */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Mật khẩu</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="password"
                         name="password"
                         type="password"
-                        placeholder="Create a password"
+                        placeholder="Tạo mật khẩu"
                         value={formData.password}
                         onChange={handleChange}
                         className="pl-10"
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tối thiểu 8 ký tự, có chữ thường, chữ hoa và số
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
                         type="password"
-                        placeholder="Confirm your password"
+                        placeholder="Xác nhận mật khẩu"
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         className="pl-10"
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                     </div>
                   </div>
@@ -271,13 +211,13 @@ export default function SignupPage() {
                     required
                   />
                   <Label htmlFor="terms" className="text-sm font-normal cursor-pointer leading-relaxed">
-                    I agree to the{" "}
+                    Tôi đồng ý với{" "}
                     <Link to="/terms" className="text-primary hover:underline">
-                      Terms of Service
+                      Điều khoản dịch vụ
                     </Link>{" "}
-                    and{" "}
+                    và{" "}
                     <Link to="/privacy" className="text-primary hover:underline">
-                      Privacy Policy
+                      Chính sách bảo mật
                     </Link>
                   </Label>
                 </div>
@@ -286,18 +226,18 @@ export default function SignupPage() {
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Account...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang tạo tài khoản...
                     </>
                   ) : (
-                    "Create Account"
+                    "Tạo tài khoản"
                   )}
                 </Button>
 
                 <div className="text-center pt-4 border-t">
                   <p className="text-sm text-gray-600">
-                    Already have an account?{" "}
+                    Đã có tài khoản?{" "}
                     <Link to="/login" className="text-primary font-medium hover:underline">
-                      Sign in
+                      Đăng nhập
                     </Link>
                   </p>
                 </div>
