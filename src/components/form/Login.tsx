@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-
+import { useAuth } from "@/context/AuthContext"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -19,37 +18,28 @@ import {
 
 import { Lock, Mail, Heart } from "lucide-react"
 
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/lib/firebase"
-
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 
-type LoginType = "patient" | "staff"
-
-//  ***Login Accounts for testing: testid@gmail.com / 11032005***
-
+const API_URL = "http://localhost:5000/api/auth/login"
 
 const loginSchema = yup.object({
   email: yup
     .string()
-    .required("Email is required")
-    .email("Invalid email format"),
-
+    .required("Email bắt buộc nhập")
+    .email("Định dạng email không hợp lệ"),
   password: yup
     .string()
-    .required("Password is required")
-    .min(6, "Password must be at least 6 characters"),
+    .required("Mật khẩu bắt buộc nhập")
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
 })
 
 type LoginFormValues = yup.InferType<typeof loginSchema>
 
-
 export default function Login() {
-  const [loginType, setLoginType] = useState<LoginType>("patient")
+  const { login } = useAuth()
   const [error, setError] = useState("")
-
   const navigate = useNavigate()
 
   const {
@@ -63,17 +53,51 @@ export default function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setError("")
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password)
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      })
 
-      console.log("Login successful:", loginType)
+      const result = await response.json()
 
-      if (loginType === "patient") {
-        navigate("/")
-      } else {
-        navigate("/staff-dashboard")
+      if (!response.ok) {
+        throw new Error(result.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.")
       }
+
+      login(result.user, result.accessToken)
+
+      const userRole = result.user?.role?.toLowerCase() || "patient"
+
+      switch (userRole) {
+        case "admin":
+        case "administrator":
+          navigate("/admin-dashboard")
+          break
+        
+        case "doctor":
+          navigate("/doctor-dashboard")
+          break
+        
+        case "receptionist":
+        case "staff":
+          navigate("/receptionist-dashboard")
+          break
+        
+        case "patient":
+        default:
+          navigate("/") 
+          break
+      }
+
     } catch (err: any) {
-      setError(err.message || "Login failed")
+      console.error("Login Error:", err)
+      setError(err.message || "Đã có lỗi xảy ra.")
     }
   }
 
@@ -83,58 +107,25 @@ export default function Login() {
 
       <main className="flex-1 flex items-center justify-center py-12 px-4 bg-linear-to-br from-blue-50 via-white to-blue-50">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4">
               <Heart className="w-8 h-8 text-white fill-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back
+              Chào mừng trở lại
             </h1>
             <p className="text-gray-600">
-              Sign in to access your healthcare account
+              Đăng nhập để truy cập hệ thống HealthCare
             </p>
           </div>
 
           <Card className="shadow-xl border-0">
-            <CardHeader className="space-y-1 pb-4">
-              {/* Login type */}
-              <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
-                <button
-                  type="button"
-                  onClick={() => setLoginType("patient")}
-                  className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-md transition-all ${
-                    loginType === "patient"
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Patient Login
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setLoginType("staff")}
-                  className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-md transition-all ${
-                    loginType === "staff"
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Staff Login
-                </button>
-              </div>
-
+            <CardHeader className="space-y-1 pb-4 text-center">
               <CardTitle className="text-2xl">
-                {loginType === "patient"
-                  ? "Patient Portal"
-                  : "Staff Portal"}
+                Đăng Nhập
               </CardTitle>
-
               <CardDescription>
-                {loginType === "patient"
-                  ? "Access your medical records, appointments, and prescriptions"
-                  : "Access patient records, schedules, and administrative tools"}
+                Nhập email và mật khẩu của bạn để tiếp tục
               </CardDescription>
             </CardHeader>
 
@@ -144,12 +135,11 @@ export default function Login() {
                 className="space-y-4"
               >
                 {error && (
-                  <div className="text-red-500 text-sm text-center">
+                  <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded border border-red-100">
                     {error}
                   </div>
                 )}
 
-                {/* Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
@@ -157,7 +147,7 @@ export default function Login() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="your.email@example.com"
+                      placeholder="name@example.com"
                       className="pl-10"
                       {...register("email")}
                     />
@@ -169,15 +159,14 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Password */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Mật khẩu</Label>
                     <Link
                       to="/forgot-password"
                       className="text-sm text-primary hover:underline"
                     >
-                      Forgot password?
+                      Quên mật khẩu?
                     </Link>
                   </div>
 
@@ -186,7 +175,7 @@ export default function Login() {
                     <Input
                       id="password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="Nhập mật khẩu"
                       className="pl-10"
                       {...register("password")}
                     />
@@ -199,7 +188,6 @@ export default function Login() {
                   )}
                 </div>
 
-                {/* Remember */}
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -210,7 +198,7 @@ export default function Login() {
                     htmlFor="remember"
                     className="text-sm font-normal cursor-pointer"
                   >
-                    Remember me for 30 days
+                    Ghi nhớ đăng nhập 30 ngày
                   </Label>
                 </div>
 
@@ -219,45 +207,24 @@ export default function Login() {
                   className="w-full h-11 text-base"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Signing In..." : "Sign In"}
+                  {isSubmitting ? "Đang xử lý..." : "Đăng Nhập"}
                 </Button>
 
-                {loginType === "patient" && (
-                  <div className="text-center pt-4 border-t">
-                    <p className="text-sm text-gray-600">
-                      Don't have an account?{" "}
-                      <Link
-                        to="/register"
-                        className="text-primary font-medium hover:underline"
-                      >
-                        Register now
-                      </Link>
-                    </p>
-                  </div>
-                )}
+                <div className="text-center pt-4 border-t">
+                  <p className="text-sm text-gray-600">
+                    Chưa có tài khoản?{" "}
+                    <Link
+                      to="/register"
+                      className="text-primary font-medium hover:underline"
+                    >
+                      Đăng ký ngay
+                    </Link>
+                  </p>
+                </div>
 
-                {loginType === "staff" && (
-                  <div className="text-center pt-4">
-                    <p className="text-xs text-gray-500">
-                      Staff login is restricted. Contact IT support for access.
-                    </p>
-                  </div>
-                )}
               </form>
             </CardContent>
           </Card>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Need help? Contact us at{" "}
-              <a
-                href="tel:+15551234567"
-                className="text-primary hover:underline"
-              >
-                (555) 123-4567
-              </a>
-            </p>
-          </div>
         </div>
       </main>
 
