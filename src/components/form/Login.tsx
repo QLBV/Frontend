@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 
-const API_URL = "http://localhost:5000/api/auth/login"
+const API_URL = "http://localhost:3000/api/auth/login"
 
 const loginSchema = yup.object({
   email: yup

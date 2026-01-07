@@ -22,9 +22,9 @@ import { Lock, Mail, Heart, Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { ca } from "date-fns/locale"
+import api from "@/lib/api"
 
-const API_URL = "http://localhost:5000/api/auth/login"
+const API_URL = "http://localhost:3000/api/auth/login"
 
 const loginSchema = yup.object({
   email: yup
@@ -57,25 +57,17 @@ export default function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setError("")
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+      const response = await api.post("/api/auth/login", {
+        email: data.email,
+        password: data.password,
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.")
-      }
+      const result = response.data
 
       login(result.user, result.accessToken)
-
+      if (result.message) {
+        console.log("Login Success Message:", result.message)
+      }
       const rawRole = result.user?.roleId || result.user?.role || "patient";
       const userRole = String(rawRole).toLowerCase();
       console.log("Role sau khi xử lý:", userRole);
@@ -83,17 +75,17 @@ export default function Login() {
       switch (userRole) {
         case "admin":
         case "1":
-          navigate("/admin-dashboard")
+          navigate("/admin/dashboard")
           break
         
         case "doctor":
         case "2":
-          navigate("/doctor-dashboard")
+          navigate("/doctor/dashboard")
           break
         
         case "receptionist":
         case "4":
-          navigate("/receptionist-dashboard")
+          navigate("/receptionist/dashboard")
           break
         
         case "patient":

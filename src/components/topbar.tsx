@@ -21,10 +21,10 @@ const Topbar = ({ onMenuClick, userName = "Pendragon" }: TopbarProps) => {
         {/* Text Chào mừng */}
         <div className="flex flex-col">
           <h2 className="text-lg font-bold text-gray-900 leading-tight">
-            Good morning, {userName}
+            Xin chào, {userName}
           </h2>
           <span className="text-xs font-bold text-gray-500 mt-0.5">
-            Welcome back, great to see you again!
+            Chào mừng trở lại!
           </span>
         </div>
       </div>

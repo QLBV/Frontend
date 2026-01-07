@@ -63,7 +63,7 @@ export function Services() {
                   ))}
                 </ul>
                 <Button variant="ghost" className="gap-2 p-0">
-                  Learn more
+                  Tìm hiểu thêm
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardContent>

@@ -132,7 +132,7 @@ const SidebarLayout = ({
             <Settings className="text-black" size={32} strokeWidth={2} />
             {!isCollapsed && (
               <span className="font-extrabold text-2xl text-black">
-                Settings
+                Cài đặt
               </span>
             )}
           </button>

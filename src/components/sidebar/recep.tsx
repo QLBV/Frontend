@@ -19,7 +19,7 @@ const ReceptionistSidebar = ({ children }: ReceptionistLayoutProps) => {
     {
       title: "Dashboard",
       items: [
-        { label: "Dashboard", href: "/recep/dashboard", icon: <LayoutDashboard size={24} strokeWidth={2.5} /> }
+        { label: "Dashboard", href: "/receptionist/dashboard", icon: <LayoutDashboard size={24} strokeWidth={2.5} /> }
       ]
     },
     {

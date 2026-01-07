@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
 import DoctorSidebar from "@/components/sidebar/doctor"
 
+// --- Interfaces ---
 interface Appointment {
   id: string
   patientName: string
@@ -15,6 +16,7 @@ interface Appointment {
   status: "arrived" | "examining" | "waiting"
 }
 
+// --- Mock Data ---
 const mockAppointments: Appointment[] = [
   { id: "1", patientName: "Nguyễn Văn A", time: "09:00", status: "arrived" },
   { id: "2", patientName: "Trần Thị B", time: "10:30", status: "examining" },
@@ -36,6 +38,7 @@ export default function DoctorDashboardPage() {
       waiting: "bg-amber-500/10 text-amber-700 border-amber-200",
     }
     const labels = { arrived: "Đã đến", examining: "Đang khám", waiting: "Chờ khám" }
+
     return (
       <Badge variant="outline" className={config[status]}>
         {labels[status]}
@@ -44,19 +47,22 @@ export default function DoctorDashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
-      <DoctorSidebar children={undefined} />
-
-      <div className="flex-1 ml-64">
+    <DoctorSidebar>
+      <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
         <div className="container mx-auto px-6 py-8">
+
+          {/* --- Header Section --- */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Doctor Dashboard</h1>
             <p className="text-slate-600">Lịch khám và bệnh nhân hôm nay</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* --- Left Column: Stats & List --- */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Stats */}
+
+              {/* --- Stats Cards Section --- */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -80,7 +86,7 @@ export default function DoctorDashboardPage() {
                 </Card>
               </div>
 
-              {/* Appointments List */}
+              {/* --- Appointments List Section --- */}
               <Card className="border-0 shadow-xl">
                 <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
                   <CardTitle className="text-2xl">Danh sách lịch hẹn</CardTitle>
@@ -134,14 +140,19 @@ export default function DoctorDashboardPage() {
               </Card>
             </div>
 
-            {/* Calendar Sidebar */}
-            <div>
+            {/* --- Right Column: Calendar Section --- */}
+            <div className="space-y-6">
               <Card className="border-0 shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-lg">Lịch làm việc</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border-0" />
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border-0 flex justify-center"
+                  />
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <div className="text-sm font-medium text-slate-900 mb-2">
                       Lịch hẹn ngày {date?.toLocaleDateString("vi-VN")}
@@ -151,9 +162,10 @@ export default function DoctorDashboardPage() {
                 </CardContent>
               </Card>
             </div>
+
           </div>
         </div>
       </div>
-    </div>
+    </DoctorSidebar>
   )
 }
