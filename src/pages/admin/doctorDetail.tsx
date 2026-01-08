@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminSidebar from '@/components/sidebar/admin';
 import { 
@@ -9,12 +9,14 @@ import {
   MapPin,
   Save,
   X,
-  Upload,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -42,10 +44,9 @@ interface Doctor {
   }
 }
 
-interface ApiResponse {
-  success: boolean
-  data: Doctor
-  message?: string
+interface Specialty {
+  id: number
+  name: string
 }
 
 export default function DoctorDetail() {
@@ -54,19 +55,24 @@ export default function DoctorDetail() {
   
   // API states
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
   // Edit states
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [editingContact, setEditingContact] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
   
-  // Avatar states
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Avatar states - removed for admin panel
+  // const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form states
   const [personalForm, setPersonalForm] = useState({
+    specialtyId: 0,
     position: "",
     degree: "",
     description: ""
@@ -87,6 +93,19 @@ export default function DoctorDetail() {
     window.addEventListener('error', handleError);
     return () => window.removeEventListener('error', handleError);
   }, []);
+
+  // Fetch specialties
+  const fetchSpecialties = async () => {
+    try {
+      const response = await api.get('/api/specialties');
+      if (response.data.success) {
+        setSpecialties(response.data.data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching specialties:', err);
+      // Don't show error toast for specialties, just log it
+    }
+  };
 
   // Fetch doctor data from API
   const fetchDoctor = async () => {
@@ -115,6 +134,7 @@ export default function DoctorDetail() {
         setDoctor(doctorData);
         // Initialize form data
         setPersonalForm({
+          specialtyId: doctorData.specialtyId || 0,
           position: doctorData.position || "",
           degree: doctorData.degree || "",
           description: doctorData.description || ""
@@ -164,7 +184,13 @@ export default function DoctorDetail() {
   };
 
   useEffect(() => {
-    fetchDoctor();
+    const loadData = async () => {
+      await Promise.all([
+        fetchDoctor(),
+        fetchSpecialties()
+      ]);
+    };
+    loadData();
   }, [id]);
   
   // Handlers
@@ -172,6 +198,7 @@ export default function DoctorDetail() {
     setEditingPersonal(true);
     if (doctor) {
       setPersonalForm({
+        specialtyId: doctor.specialtyId || 0,
         position: doctor.position || "",
         degree: doctor.degree || "",
         description: doctor.description || ""
@@ -187,7 +214,7 @@ export default function DoctorDetail() {
       }
 
       const success = await updateDoctor({
-        specialtyId: doctor.specialtyId,
+        specialtyId: personalForm.specialtyId,
         position: personalForm.position,
         degree: personalForm.degree,
         description: personalForm.description
@@ -209,6 +236,7 @@ export default function DoctorDetail() {
       setEditingPersonal(false);
       if (doctor) {
         setPersonalForm({
+          specialtyId: doctor.specialtyId || 0,
           position: doctor.position || "",
           degree: doctor.degree || "",
           description: doctor.description || ""
@@ -259,36 +287,52 @@ export default function DoctorDetail() {
     }
   };
 
-  // Avatar handlers
-  const handleAvatarUpload = () => {
-    fileInputRef.current?.click();
+  // Avatar handlers - removed for admin panel
+
+  // Delete doctor handler
+  const handleDeleteDoctor = () => {
+    setShowDeleteModal(true);
+    setDeleteConfirmName("");
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Kiểm tra file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Vui lòng chọn file hình ảnh');
-        return;
-      }
-      
-      // Kiểm tra file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
-        return;
-      }
-
-      // Tạo preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-      
-      // Note: Avatar upload would need separate API endpoint for file upload
-      toast.info('Tính năng upload avatar sẽ được thêm sau');
+  const confirmDeleteDoctor = async () => {
+    if (!id || !doctor) {
+      toast.error('Không tìm thấy thông tin bác sĩ');
+      return;
     }
+
+    // Check if name matches
+    if (deleteConfirmName !== doctor.user.fullName) {
+      toast.error('Tên bác sĩ không khớp. Vui lòng nhập chính xác.');
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      
+      const response = await api.delete(`/api/doctors/${id}`);
+      
+      if (response.data.success) {
+        toast.success('Đã xóa bác sĩ thành công');
+        // Navigate back to doctor list
+        navigate('/admin/doctors');
+      } else {
+        throw new Error(response.data.message || 'Xóa bác sĩ thất bại');
+      }
+    } catch (err: any) {
+      console.error('Error deleting doctor:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Xóa bác sĩ thất bại';
+      toast.error(errorMessage);
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+      setDeleteConfirmName("");
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmName("");
   };
 
   const getAvatarInitials = (fullName: string) => {
@@ -414,26 +458,17 @@ export default function DoctorDetail() {
                       <div className="flex items-start gap-6">
                         {/* Avatar */}
                         <div className="relative">
-                          {avatarUrl ? (
-                            <img 
-                              src={avatarUrl} 
-                              alt={doctor?.user?.fullName || 'Doctor'}
-                              className="w-24 h-24 rounded-full object-cover"
-                            />
+                          {doctor?.user?.fullName ? (
+                            <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${getAvatarColor(doctor.user.fullName)} flex items-center justify-center text-white font-bold text-2xl`}>
+                              {getAvatarInitials(doctor.user.fullName)}
+                            </div>
                           ) : (
-                            <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${getAvatarColor(doctor?.user?.fullName || '')} flex items-center justify-center text-white font-bold text-2xl`}>
-                              {getAvatarInitials(doctor?.user?.fullName || '')}
+                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-bold text-2xl">
+                              NA
                             </div>
                           )}
                           
-                          {/* Hidden file input */}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="hidden"
-                          />
+                          {/* Hidden file input - removed for admin panel */}
                         </div>
 
                         {/* Doctor Info */}
@@ -457,16 +492,27 @@ export default function DoctorDetail() {
 
                       {/* Action Buttons */}
                       <div className="flex items-center gap-3">
-                        <Button 
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={handleAvatarUpload}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Avatar
-                        </Button>
                         <Button variant="outline" className="border-gray-300">
                           <Calendar className="h-4 w-4 mr-2" />
                           Manage Schedule
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={handleDeleteDoctor}
+                          disabled={deleting}
+                        >
+                          {deleting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Đang xóa...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Xóa bác sĩ
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -571,6 +617,25 @@ export default function DoctorDetail() {
                   </>
                 ) : (
                   <>
+                    <div>
+                      <Label htmlFor="specialty" className="text-sm font-medium text-gray-500 uppercase tracking-wide">SPECIALTY</Label>
+                      <Select
+                        value={personalForm.specialtyId.toString()}
+                        onValueChange={(value) => setPersonalForm({...personalForm, specialtyId: parseInt(value)})}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Chọn chuyên khoa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {specialties.map((specialty) => (
+                            <SelectItem key={specialty.id} value={specialty.id.toString()}>
+                              {specialty.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div>
                       <Label htmlFor="position" className="text-sm font-medium text-gray-500 uppercase tracking-wide">POSITION</Label>
                       <Input
@@ -779,6 +844,87 @@ export default function DoctorDetail() {
             </Card>
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="w-6 h-6" />
+                Xác nhận xóa bác sĩ
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {doctor && (
+                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="font-semibold text-red-800 mb-2">
+                    Bạn sắp xóa bác sĩ: {doctor.user.fullName}
+                  </div>
+                  <div className="text-sm text-red-700 space-y-1">
+                    <div>• Mã bác sĩ: {doctor.doctorCode}</div>
+                    <div>• Chuyên khoa: {doctor.specialty.name}</div>
+                    <div>• Email: {doctor.user.email}</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+                  ⚠️ Cảnh báo
+                </div>
+                <div className="text-sm text-yellow-700 space-y-1">
+                  <div>Hành động này không thể hoàn tác và sẽ:</div>
+                  <div>• Xóa tất cả thông tin bác sĩ</div>
+                  <div>• Xóa tất cả ca trực đã phân công</div>
+                  <div>• Ảnh hưởng đến các lịch hẹn liên quan</div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirm-name" className="text-sm font-medium">
+                  Để xác nhận, vui lòng nhập tên bác sĩ: <span className="font-bold text-red-600">{doctor?.user.fullName}</span>
+                </Label>
+                <Input
+                  id="confirm-name"
+                  value={deleteConfirmName}
+                  onChange={(e) => setDeleteConfirmName(e.target.value)}
+                  placeholder="Nhập tên bác sĩ để xác nhận"
+                  className="border-red-300 focus:border-red-500"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={cancelDelete}
+                disabled={deleting}
+                className="flex-1"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeleteDoctor}
+                disabled={deleting || deleteConfirmName !== doctor?.user.fullName}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Đang xóa...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Xác nhận xóa
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminSidebar>
   );

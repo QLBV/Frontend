@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, User, Phone, Mail, Award, MapPin, Briefcase, Calendar, ArrowLeft, Stethoscope } from "lucide-react"
+import { Loader2, User, Mail, Award, MapPin, Briefcase, Calendar, ArrowLeft, Stethoscope } from "lucide-react"
 import { toast } from "sonner"
 import api from "@/lib/api"
 
@@ -28,12 +28,6 @@ interface Specialty {
   id: number
   name: string
   description?: string
-}
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message?: string
 }
 
 export default function DoctorAddPage() {
@@ -66,7 +60,7 @@ export default function DoctorAddPage() {
     try {
       setLoadingSpecialties(true)
       
-      const response = await api.get('/api/doctors/specialties')
+      const response = await api.get('/api/specialties')
       
       if (response.data.success && response.data.data.length > 0) {
         setSpecialties(response.data.data)
