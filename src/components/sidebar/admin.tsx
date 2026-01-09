@@ -32,7 +32,7 @@ const AdminSidebar = ({ children }: AdminSidebarProps) => {
       items: [
         { label: "Employee", href: "/admin/doctors", icon: <UsersRound size={24} strokeWidth={2.5} /> },
         { label: "Schedule", href: "/admin/schedule", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
-        { label: "Inventory", href: "/admin/inventory", icon: <ClipboardList size={24} strokeWidth={2.5} /> },
+        { label: "Inventory", href: "/admin/pharmacy", icon: <ClipboardList size={24} strokeWidth={2.5} /> },
         { label: "Salary", href: "/admin/salary", icon: <Banknote size={24} strokeWidth={2.5} /> }
       ]
     },

@@ -63,10 +63,9 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-6 md:flex">
-            <a href="#services" className="text-sm font-medium transition-colors hover:text-primary">Services</a>
-            <a href="#about" className="text-sm font-medium transition-colors hover:text-primary">About Us</a>
-            <a href="#providers" className="text-sm font-medium transition-colors hover:text-primary">Providers</a>
-            <a href="#contact" className="text-sm font-medium transition-colors hover:text-primary">Contact</a>
+            <a href="#services" className="text-sm font-medium transition-colors hover:text-primary">Hỗ trợ</a>
+            <a href="#about" className="text-sm font-medium transition-colors hover:text-primary">Về chúng tôi</a>
+            <a href="#contact" className="text-sm font-medium transition-colors hover:text-primary">Liên hệ</a>
           </nav>
 
           {/* Right Side Actions (Login / Profile) */}
@@ -98,14 +97,14 @@ export function Header() {
                         onClick={() => setIsProfileOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                       >
-                        <Home size={20} /> Home
+                        <Home size={20} /> Trang chủ
                       </Link>
                       <Link 
                         to="/patient/appointments" 
                         onClick={() => setIsProfileOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                       >
-                        <Calendar size={20} /> Appointments
+                        <Calendar size={20} /> Lịch hẹn
                       </Link>
                       
                       <div className="my-1 h-px bg-border/50" />

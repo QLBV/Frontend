@@ -19,15 +19,17 @@ import PrescribeMedPage from "./pages/doctor/prescribeMed"
 import DoctorShiftPage from "./pages/doctor/doctorShift"
 import UiQuanLyDT from "./pages/doctor/QuanlyDonThuoc"
 import PrescriptionDetailPage from "./pages/doctor/prescriptionDetail"
-import PharmacyPage from "./pages/PharmacyPage"
+import PharmacyPage from "./pages/admin/PharmacyPage"
 import PharmacyImportPage from "./pages/admin/PharmacyImportPage"
-import PharmacyDetailPage from "./pages/PharmacyDetailPage"
+import PharmacyDetailPage from "./pages/admin/PharmacyDetailPage"
 import InvoicesPage from "./pages/recep/InvoicesPage"
 import InvoiceDetailPage from "./pages/recep/InvoiceDetailPage"
 import SalaryPage from "./pages/admin/SalaryPage"
 import AdminDashboardPage from "./pages/admin/DashboardPage"
 import DoctorDashboardPage from "./pages/doctor/DashboardPage"
 import ReceptionistDashboardPage from "./pages/recep/DashboardPage"
+import ExpenseReport from "./pages/admin/expenseReport"
+import RevenueReport from "./pages/admin/revenueReport"
 
 function App() {
   return (
@@ -52,15 +54,17 @@ function App() {
         <Route path="/doctor/patients/:id/prescription" element={<PrescribeMedPage />} />
         <Route path="/doctor/prescriptions" element={<UiQuanLyDT />} />
         <Route path="/doctor/prescriptions/:id/edit" element={<PrescriptionDetailPage />} />
-        <Route path="/pharmacy" element={<PharmacyPage />} />
+        <Route path="/admin/pharmacy" element={<PharmacyPage />} />
         <Route path="/admin/pharmacy/import" element={<PharmacyImportPage />} />
-        <Route path="/pharmacy/:id" element={<PharmacyDetailPage />} />
+        <Route path="/admin/pharmacy/:id" element={<PharmacyDetailPage />} />
         <Route path="/invoices" element={<InvoicesPage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
-        <Route path="/salary" element={<SalaryPage />} />
+        <Route path="/admin/salary" element={<SalaryPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/doctor/dashboard" element={<DoctorDashboardPage />} />
         <Route path="/receptionist/dashboard" element={<ReceptionistDashboardPage />} />
+        <Route path="/admin/expense" element={<ExpenseReport />} />
+        <Route path="/admin/revenue" element={<RevenueReport />} />
       </Routes>
       <Toaster />
     </AuthProvider>

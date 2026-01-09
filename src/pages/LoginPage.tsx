@@ -63,8 +63,19 @@ export default function Login() {
       })
 
       const result = response.data
+      console.log("LOGIN RESPONSE:", result);
 
-      login(result.user, result.accessToken)
+      const realToken = result.accessToken || result.tokens?.accessToken;
+      const refreshToken = result.refreshToken || result.tokens?.refreshToken;
+
+      if (!realToken) {
+          throw new Error("Không tìm thấy Token trong phản hồi từ Server!");
+      }
+      else {
+          console.log("Received Access Token:", realToken, "Refresh Token:", refreshToken);
+      }
+
+      login(result.user, realToken, refreshToken)
       if (result.message) {
         console.log("Login Success Message:", result.message)
       }

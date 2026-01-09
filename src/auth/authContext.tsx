@@ -53,8 +53,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     restore();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const user = await loginApi(email, password);
+  const login = (user: User, accessToken: string, refreshToken?: string) => {
+    localStorage.setItem("accessToken", accessToken);
+    if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+    }
     setUser(user);
   };
 

@@ -239,22 +239,22 @@ export default function ExpenseReport() {
           {/* Summary Cards */}
           {reportData && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+              <Card className="bg-white border-gray-200 dark:border-gray-800">
                 <CardContent className="pt-6">
                   <div className="text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Tổng chi phí</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <p className="text-2xl font-bold text-gray-900">
                       {formatCurrency(summaryData.totalExpense)}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+              <Card className="bg-white border-gray-200 dark:border-gray-800">
                 <CardContent className="pt-6">
                   <div className="text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Chi phí thuốc</p>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    <p className="text-2xl font-bold text-black dark:text-amber-400">
                       {formatCurrency(summaryData.medicineExpense)}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">{summaryData.medicinePercentage.toFixed(1)}%</p>
@@ -262,11 +262,11 @@ export default function ExpenseReport() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+              <Card className="bg-white  border-gray-200 dark:border-gray-800">
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Chi phí lương</p>
-                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    <p className="text-sm text-black dark:text-gray-400 mb-2">Chi phí lương</p>
+                    <p className="text-2xl font-bold text-black ">
                       {formatCurrency(summaryData.salaryExpense)}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">{summaryData.salaryPercentage.toFixed(1)}%</p>
@@ -274,22 +274,22 @@ export default function ExpenseReport() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+              <Card className="bg-white  border-gray-200 dark:border-gray-800">
                 <CardContent className="pt-6">
                   <div className="text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Số nhân viên</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <p className="text-2xl font-bold text-black ">
                       {salaryData.reduce((sum, item) => sum + item.count, 0)}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+              <Card className="bg-white   border-gray-200 dark:border-gray-800">
                 <CardContent className="pt-6">
                   <div className="text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Số vai trò</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <p className="text-2xl font-bold text-black">
                       {salaryData.length}
                     </p>
                   </div>

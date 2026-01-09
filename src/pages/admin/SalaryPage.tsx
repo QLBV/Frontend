@@ -1,273 +1,313 @@
 "use client"
 
-import { useState } from "react"
-import { DollarSign, Users, Calendar, Activity, Search, Eye } from "lucide-react"
+import { useState, useEffect } from "react"
+import { DollarSign, Users, Calendar, Search, Eye, Loader2, AlertTriangle, Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
 import { Label } from "@/components/ui/label"
+import api from "@/lib/api"
+// Import Sidebar của bạn (đường dẫn có thể khác tùy cấu trúc thư mục của bạn)
+import AdminSidebar from "@/components/sidebar/admin" // Hoặc đường dẫn tới file admin.tsx chứa AdminSidebar
 
 interface SalaryRecord {
-  id: string
-  employeeId: string
+  id: number
+  payrollCode: string
+  employeeId: number
   employeeName: string
-  role: "doctor" | "receptionist"
+  roleName: string
+  roleId: number
   baseSalary: number
   coefficient: number
   experience: number
-  commission?: number
-  totalAppointments?: number
+  commission: number
   month: string
   totalSalary: number
+  status: string
 }
-
-const mockSalaries: SalaryRecord[] = [
-  {
-    id: "1",
-    employeeId: "DOC001",
-    employeeName: "BS. Trần Thị B",
-    role: "doctor",
-    baseSalary: 15000000,
-    coefficient: 2.5,
-    experience: 5,
-    commission: 1500000,
-    totalAppointments: 60,
-    month: "2025-11",
-    totalSalary: 39000000,
-  },
-  {
-    id: "2",
-    employeeId: "DOC002",
-    employeeName: "BS. Nguyễn Văn D",
-    role: "doctor",
-    baseSalary: 15000000,
-    coefficient: 2.0,
-    experience: 3,
-    commission: 1200000,
-    totalAppointments: 48,
-    month: "2025-11",
-    totalSalary: 31200000,
-  },
-  {
-    id: "3",
-    employeeId: "REC001",
-    employeeName: "Lê Thị E",
-    role: "receptionist",
-    baseSalary: 8000000,
-    coefficient: 1.5,
-    experience: 2,
-    month: "2025-11",
-    totalSalary: 12200000,
-  },
-]
 
 export default function SalaryPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedMonth, setSelectedMonth] = useState("2025-11")
-  const [baseSalaryDoctor, setBaseSalaryDoctor] = useState(15000000)
-  const [baseSalaryReceptionist, setBaseSalaryReceptionist] = useState(8000000)
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthStr)
+  const [salaries, setSalaries] = useState<SalaryRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [baseSalaryDoctor] = useState(2500000)
 
-  const filteredSalaries = mockSalaries.filter(
-    (salary) =>
-      (salary.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        salary.employeeId.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      salary.month === selectedMonth,
-  )
+  // Hàm gọi API lấy danh sách lương
+  useEffect(() => {
+    const fetchPayrolls = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const [year, month] = selectedMonth.split("-")
+        
+        // SỬA: Giảm limit xuống 50 để tránh lỗi Validator Backend
+        const response = await api.get("/api/payrolls", {
+            params: {
+                month: month,
+                year: year,
+                limit: 50 
+            }
+        })
 
-  const totalSalaryPayout = filteredSalaries.reduce((sum, s) => sum + s.totalSalary, 0)
-  const totalDoctors = filteredSalaries.filter((s) => s.role === "doctor").length
-  const totalReceptionists = filteredSalaries.filter((s) => s.role === "receptionist").length
+        if (response.data.success) {
+            const mappedData: SalaryRecord[] = response.data.data.map((item: any) => ({
+                id: item.id,
+                payrollCode: item.payrollCode,
+                employeeId: item.userId,
+                employeeName: item.user?.fullName || "N/A",
+                roleName: item.user?.role?.roleName || "Unknown",
+                roleId: item.user?.roleId,
+                baseSalary: Number(item.baseSalary),
+                coefficient: Number(item.roleCoefficient),
+                experience: item.yearsOfService,
+                commission: Number(item.commission),
+                month: `${item.year}-${String(item.month).padStart(2, '0')}`,
+                totalSalary: Number(item.netSalary),
+                status: item.status
+            }))
+            setSalaries(mappedData)
+        }
+      } catch (err: any) {
+        console.error("Lỗi tải bảng lương:", err)
+        // Không set salaries rỗng ở đây để tránh nháy màn hình nếu reload
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const calculateSalary = (record: SalaryRecord) => {
-    const experienceBonus = record.experience * 500000
-    const baseSalary = record.baseSalary * record.coefficient
-    const commission = record.commission || 0
-    return baseSalary + experienceBonus + commission
+    fetchPayrolls()
+  }, [selectedMonth])
+
+  // Hàm tính lương
+  const handleCalculateSalary = async () => {
+    try {
+      const [year, month] = selectedMonth.split("-")
+      
+      const isConfirm = window.confirm(`Bạn có chắc muốn tính lương cho tất cả nhân viên tháng ${month}/${year}?`);
+      if (!isConfirm) return;
+
+      setLoading(true);
+      
+      const response = await api.post("/api/payrolls/calculate", {
+        month: parseInt(month),
+        year: parseInt(year),
+        calculateAll: true
+      });
+
+      if (response.data.success) {
+        alert(`Thành công! Đã tính lương cho ${response.data.data.calculated} nhân viên.`);
+        window.location.reload(); 
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Lỗi tính lương: " + (err.response?.data?.message || err.message));
+      setLoading(false);
+    }
   }
 
+  // Filter Client-side
+  const filteredSalaries = salaries.filter(
+    (salary) =>
+      salary.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      salary.payrollCode.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  // Thống kê
+  const totalSalaryPayout = filteredSalaries.reduce((sum, s) => sum + s.totalSalary, 0)
+  const totalDoctors = filteredSalaries.filter((s) => s.roleName.toLowerCase().includes("doctor") || s.roleName.toLowerCase().includes("bác sĩ")).length
+  const totalReceptionists = filteredSalaries.filter((s) => s.roleName.toLowerCase().includes("reception") || s.roleName.toLowerCase().includes("lễ tân")).length
+
+  const renderRoleBadge = (roleName: string) => {
+    const isDoctor = roleName.toLowerCase().includes("doctor") || roleName.toLowerCase().includes("bác sĩ");
+    return (
+        <Badge variant="outline" className={isDoctor ? "border-blue-300 text-blue-700" : "border-violet-300 text-violet-700"}>
+            {isDoctor ? "Bác sĩ" : "Lễ tân"}
+        </Badge>
+    )
+  }
+
+  const renderStatusBadge = (status: string) => {
+      switch(status) {
+          case "PAID": return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Đã thanh toán</Badge>
+          case "APPROVED": return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Đã duyệt</Badge>
+          default: return <Badge variant="outline" className="text-slate-500">Nháp</Badge>
+      }
+  }
+
+  // --- UI CHÍNH ---
+  // Bọc tất cả trong AdminSidebar
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Activity className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                HealthCare Plus
-              </span>
-            </Link>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard">Back to Dashboard</Link>
-            </Button>
+    <AdminSidebar>
+      <div className="p-2 md:p-6 space-y-6">
+        
+        {/* Title & Action */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Quản lý lương</h1>
+            <p className="text-slate-500">Kỳ lương: Tháng {selectedMonth}</p>
           </div>
+          
+          <Button 
+            onClick={handleCalculateSalary} 
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200"
+          >
+            {loading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Calculator className="w-4 h-4 mr-2" />}
+            Tính lương tháng này
+          </Button>
         </div>
-      </header>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Quản lý lương</h1>
-          <p className="text-slate-600">Tính lương nhân viên và theo dõi hoa hồng</p>
-        </div>
+        {error && (
+            <div className="p-4 bg-red-50 text-red-600 rounded-lg flex items-center gap-2 border border-red-100">
+                <AlertTriangle className="h-5 w-5" />
+                {error}
+            </div>
+        )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/30">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="border-0 shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng chi lương</CardTitle>
-              <DollarSign className="h-5 w-5 text-emerald-600" />
+              <CardTitle className="text-sm font-medium text-slate-500">Tổng chi lương</CardTitle>
+              <DollarSign className="h-4 w-4 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{totalSalaryPayout.toLocaleString()} VND</div>
+              <div className="text-2xl font-bold text-slate-900">
+                {totalSalaryPayout.toLocaleString('vi-VN')} đ
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Dựa trên phiếu lương đã tạo</p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
+          <Card className="border-0 shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Bác sĩ</CardTitle>
-              <Users className="h-5 w-5 text-blue-600" />
+              <CardTitle className="text-sm font-medium text-slate-500">Bác sĩ nhận lương</CardTitle>
+              <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">{totalDoctors}</div>
+              <p className="text-xs text-slate-400 mt-1">
+                 {totalDoctors === 0 && !loading ? "Chưa tính lương tháng này" : "Đã có phiếu lương"}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-violet-50/30">
+          <Card className="border-0 shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Lễ tân</CardTitle>
-              <Users className="h-5 w-5 text-violet-600" />
+              <CardTitle className="text-sm font-medium text-slate-500">Lễ tân nhận lương</CardTitle>
+              <Users className="h-4 w-4 text-violet-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">{totalReceptionists}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
+          <Card className="border-0 shadow-md bg-amber-50/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tháng</CardTitle>
-              <Calendar className="h-5 w-5 text-amber-600" />
+              <CardTitle className="text-sm font-medium text-amber-700">Chọn Tháng</CardTitle>
+              <Calendar className="h-4 w-4 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <Input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
+              <Input 
+                type="month" 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-white border-amber-200 focus-visible:ring-amber-500" 
+              />
             </CardContent>
           </Card>
         </div>
 
-        {/* Base Salary Config (Admin Only) */}
-        <Card className="border-0 shadow-xl mb-6">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-xl">Cấu hình lương cơ bản (Admin)</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="doctor-salary">Lương cơ bản bác sĩ</Label>
-                <Input
-                  id="doctor-salary"
-                  type="number"
-                  value={baseSalaryDoctor}
-                  onChange={(e) => setBaseSalaryDoctor(Number(e.target.value))}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label htmlFor="receptionist-salary">Lương cơ bản lễ tân</Label>
-                <Input
-                  id="receptionist-salary"
-                  type="number"
-                  value={baseSalaryReceptionist}
-                  onChange={(e) => setBaseSalaryReceptionist(Number(e.target.value))}
-                  className="mt-2"
-                />
-              </div>
+        {/* Info Box */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800 flex flex-col md:flex-row gap-4 justify-between items-center">
+            <span>
+                ℹ️ <strong>Lưu ý:</strong> Số lượng bác sĩ/lễ tân ở trên là số người <strong>đã được tính lương</strong> trong tháng này. 
+                Nếu số liệu là 0, vui lòng nhấn nút <strong>"Tính lương tháng này"</strong> để hệ thống tạo phiếu lương từ danh sách nhân viên.
+            </span>
+            <div className="shrink-0 text-slate-500">
+                Lương CB Bác sĩ: <strong>{baseSalaryDoctor.toLocaleString('vi-VN')} đ</strong>
             </div>
-            <p className="text-sm text-slate-600 mt-4">
-              Công thức:{" "}
-              <strong>Lương = (Lương cơ bản × Hệ số) + (Kinh nghiệm × 500,000) + Hoa hồng (5% bác sĩ)</strong>
-            </p>
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Search */}
-        <Card className="border-0 shadow-xl mb-6">
-          <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Tìm kiếm theo tên hoặc mã nhân viên..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+            placeholder="Tìm kiếm theo tên nhân viên hoặc mã phiếu lương..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-white shadow-sm"
+            />
+        </div>
 
-        {/* Salary List */}
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-2xl">Bảng lương tháng {selectedMonth}</CardTitle>
+        {/* Table */}
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <CardHeader className="bg-slate-50 border-b py-4">
+            <CardTitle className="text-lg">Danh sách phiếu lương</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-slate-50 border-b">
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Mã NV</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Họ tên</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Chức vụ</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hệ số</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Kinh nghiệm</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hoa hồng</th>
-                    <th className="text-right py-4 px-6 text-sm font-semibold text-slate-700">Tổng lương</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Thao tác</th>
+                  <tr className="bg-white border-b text-xs uppercase text-slate-500 tracking-wider">
+                    <th className="text-left py-3 px-6 font-semibold">Mã Phiếu</th>
+                    <th className="text-left py-3 px-6 font-semibold">Nhân viên</th>
+                    <th className="text-left py-3 px-6 font-semibold">Chức vụ</th>
+                    <th className="text-center py-3 px-6 font-semibold">Hệ số</th>
+                    <th className="text-center py-3 px-6 font-semibold">Thâm niên</th>
+                    <th className="text-right py-3 px-6 font-semibold">Hoa hồng</th>
+                    <th className="text-right py-3 px-6 font-semibold">Thực nhận</th>
+                    <th className="text-center py-3 px-6 font-semibold">Trạng thái</th>
+                    <th className="text-center py-3 px-6 font-semibold">#</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredSalaries.map((salary, index) => (
-                    <tr
-                      key={salary.id}
-                      className={`border-b hover:bg-blue-50/30 transition-colors ${
-                        index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                      }`}
-                    >
-                      <td className="py-4 px-6 font-medium text-blue-600">{salary.employeeId}</td>
-                      <td className="py-4 px-6 text-slate-900 font-medium">{salary.employeeName}</td>
-                      <td className="py-4 px-6">
-                        <Badge
-                          variant="outline"
-                          className={salary.role === "doctor" ? "border-blue-300" : "border-violet-300"}
-                        >
-                          {salary.role === "doctor" ? "Bác sĩ" : "Lễ tân"}
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-6 text-slate-700">{salary.coefficient}</td>
-                      <td className="py-4 px-6 text-slate-700">{salary.experience} năm</td>
-                      <td className="py-4 px-6 text-slate-700">
-                        {salary.commission ? `${salary.commission.toLocaleString()} VND` : "-"}
-                      </td>
-                      <td className="py-4 px-6 text-right font-bold text-emerald-600">
-                        {salary.totalSalary.toLocaleString()} VND
-                      </td>
-                      <td className="py-4 px-6">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/salary/${salary.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-slate-100">
+                  {loading ? (
+                      <tr><td colSpan={9} className="py-8 text-center text-slate-500">Đang tải dữ liệu...</td></tr>
+                  ) : filteredSalaries.length === 0 ? (
+                      <tr>
+                          <td colSpan={9} className="py-12 text-center text-slate-500 flex flex-col items-center justify-center gap-2">
+                              <span className="bg-slate-100 p-3 rounded-full"><Users className="w-6 h-6 text-slate-400"/></span>
+                              <span>Chưa có dữ liệu lương cho tháng {selectedMonth}.</span>
+                              <Button variant="link" onClick={handleCalculateSalary} className="text-blue-600">
+                                  Tạo bảng lương ngay
+                              </Button>
+                          </td>
+                      </tr>
+                  ) : (
+                    filteredSalaries.map((salary) => (
+                        <tr key={salary.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3 px-6 font-medium text-slate-600 text-sm">{salary.payrollCode}</td>
+                            <td className="py-3 px-6 text-slate-900 font-medium">{salary.employeeName}</td>
+                            <td className="py-3 px-6">{renderRoleBadge(salary.roleName)}</td>
+                            <td className="py-3 px-6 text-slate-500 text-center">{salary.coefficient}</td>
+                            <td className="py-3 px-6 text-slate-500 text-center">{salary.experience} năm</td>
+                            <td className="py-3 px-6 text-slate-500 text-right">
+                                {salary.commission > 0 ? `${salary.commission.toLocaleString('vi-VN')} đ` : "-"}
+                            </td>
+                            <td className="py-3 px-6 text-right font-bold text-emerald-600">
+                                {salary.totalSalary.toLocaleString('vi-VN')} đ
+                            </td>
+                            <td className="py-3 px-6 text-center">{renderStatusBadge(salary.status)}</td>
+                            <td className="py-3 px-6 text-center">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
+                                    <Link to={`/admin/salary/${salary.id}`}><Eye className="h-4 w-4" /></Link>
+                                </Button>
+                            </td>
+                        </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminSidebar>
   )
 }
