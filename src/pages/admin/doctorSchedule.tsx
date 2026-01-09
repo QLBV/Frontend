@@ -15,12 +15,27 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
   User,
+  XCircle,
+  RotateCcw,
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react"
 
 /* ================= TYPES ================= */
@@ -71,6 +86,13 @@ export default function DoctorSchedulePage() {
   const [error, setError] = useState("")
   const [previewLoading, setPreviewLoading] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
+  const [restoreLoading, setRestoreLoading] = useState(false)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
+  const [selectedShiftToCancel, setSelectedShiftToCancel] = useState<DoctorShift | null>(null)
+  const [selectedShiftToRestore, setSelectedShiftToRestore] = useState<DoctorShift | null>(null)
+  const [cancelReason, setCancelReason] = useState("")
+  const [previewData, setPreviewData] = useState<any>(null)
 
   // Data states
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -86,7 +108,7 @@ export default function DoctorSchedulePage() {
   const fetchDoctors = async () => {
     try {
       console.log('Fetching doctors...')
-      const response = await api.get('/api/doctors')
+      const response = await api.get('/doctors')
       if (response.data.success) {
         setDoctors(response.data.data)
         console.log('Doctors loaded:', response.data.data.length)
@@ -102,7 +124,7 @@ export default function DoctorSchedulePage() {
   const fetchShifts = async () => {
     try {
       console.log('Fetching shifts...')
-      const response = await api.get('/api/shifts')
+      const response = await api.get('/shifts')
       if (response.data.success) {
         setShifts(response.data.data)
         console.log('Shifts loaded:', response.data.data.length)
@@ -128,7 +150,7 @@ export default function DoctorSchedulePage() {
   const fetchDoctorShifts = async () => {
     try {
       console.log('Fetching doctor shifts...')
-      const response = await api.get('/api/doctor-shifts')
+      const response = await api.get('/doctor-shifts')
       
       if (response.data.success) {
         setDoctorShifts(response.data.data)
@@ -137,38 +159,8 @@ export default function DoctorSchedulePage() {
       }
     } catch (err: any) {
       console.error('Error fetching doctor shifts:', err)
-      // Use mock data as fallback
-      const mockDoctorShifts = [
-        {
-          id: 1,
-          doctorId: 1,
-          shiftId: 1,
-          workDate: new Date().toISOString().split('T')[0],
-          status: "ACTIVE" as const,
-          doctor: {
-            id: 1,
-            doctorCode: "DOC001",
-            user: { 
-              id: 1,
-              fullName: "Dr. Nguyễn Văn A",
-              email: "doctor1@example.com"
-            },
-            specialty: { 
-              id: 1,
-              name: "Tim mạch" 
-            }
-          },
-          shift: {
-            id: 1,
-            name: "MORNING",
-            startTime: "08:00",
-            endTime: "12:00"
-          }
-        }
-      ]
-      
-      setDoctorShifts(mockDoctorShifts)
-      console.log('Using mock doctor shifts data: 1')
+      setDoctorShifts([])
+      toast.error('Không thể tải danh sách ca trực')
     }
   }
 
@@ -262,94 +254,102 @@ export default function DoctorSchedulePage() {
     setShowDatePicker(true)
   }
 
-  const handleDeleteShift = async (doctorShiftId: number) => {
+  const handleCancelShiftClick = async (doctorShift: DoctorShift) => {
     try {
-      // Step 1: Get preview of what will happen if we cancel this shift
       setPreviewLoading(true)
-      const previewResponse = await api.get(`/api/doctor-shifts/${doctorShiftId}/reschedule-preview`)
+      setSelectedShiftToCancel(doctorShift)
+      setCancelReason("")
+      setPreviewData(null)
+      
+      const previewResponse = await api.get(`/doctor-shifts/${doctorShift.id}/reschedule-preview`)
       
       if (previewResponse.data.success) {
-        const previewData = previewResponse.data.data
-        
-        // Show confirmation modal with preview information
-        const confirmMessage = `
-Hủy ca trực này sẽ ảnh hưởng đến ${previewData.affectedAppointments} lịch hẹn.
-
-${previewData.hasReplacementDoctor 
-  ? `✅ Đã tìm thấy bác sĩ thay thế cùng chuyên khoa.
-📋 Tất cả lịch hẹn sẽ được tự động chuyển sang bác sĩ thay thế.` 
-  : `⚠️ CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa!
-❌ ${previewData.affectedAppointments} lịch hẹn sẽ không thể tự động chuyển.`}
-
-${previewData.warning ? `\n⚠️ ${previewData.warning}` : ''}
-
-Bạn có chắc chắn muốn tiếp tục?`
-
-        if (!confirm(confirmMessage)) {
-          return
-        }
-
-        // Step 2: Ask for cancellation reason
-        const cancelReason = prompt('Vui lòng nhập lý do hủy ca:')
-        if (!cancelReason || cancelReason.trim() === '') {
-          alert('Vui lòng cung cấp lý do hủy ca')
-          return
-        }
-
-        // Step 3: Call the reschedule API
-        setCancelLoading(true)
-        const response = await api.post(`/api/doctor-shifts/${doctorShiftId}/cancel-and-reschedule`, {
-          cancelReason: cancelReason.trim()
-        })
-
-        if (response.data.success) {
-          const result = response.data.data
-          
-          // Update UI - remove the cancelled shift
-          setDoctorShifts(prev => prev.filter(ds => ds.id !== doctorShiftId))
-          
-          // Show detailed success message
-          let successMessage = `✅ Đã hủy ca trực thành công!\n\n`
-          successMessage += `📊 Tổng số lịch hẹn xử lý: ${result.totalAppointments}\n`
-          
-          if (result.rescheduledCount > 0) {
-            successMessage += `✅ Đã chuyển thành công: ${result.rescheduledCount} lịch hẹn\n`
-          }
-          
-          if (result.failedCount > 0) {
-            successMessage += `❌ Không thể chuyển: ${result.failedCount} lịch hẹn\n`
-            successMessage += `💡 Các lịch hẹn này cần được xử lý thủ công.`
-          }
-          
-          alert(successMessage)
-          toast.success('Đã hủy ca trực và xử lý lịch hẹn thành công')
-          
-        } else {
-          throw new Error(response.data.message || 'Không thể hủy ca trực')
-        }
+        setPreviewData(previewResponse.data.data)
+        setCancelDialogOpen(true)
       } else {
         throw new Error(previewResponse.data.message || 'Không thể lấy thông tin preview')
       }
-      
     } catch (err: any) {
-      console.error('Cancel shift error:', err)
-      let errorMessage = 'Hủy ca trực thất bại'
-      
-      if (err.response?.status === 404) {
-        errorMessage = 'Không tìm thấy ca trực'
-      } else if (err.response?.status === 400) {
-        errorMessage = err.response.data.message || 'Dữ liệu không hợp lệ'
-      } else if (err.response?.status === 500) {
-        errorMessage = 'Lỗi hệ thống. Vui lòng thử lại sau'
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message
-      }
-      
-      alert(`❌ ${errorMessage}`)
-      toast.error(errorMessage)
+      console.error('Error getting preview:', err)
+      toast.error(err.response?.data?.message || 'Không thể lấy thông tin preview')
     } finally {
       setPreviewLoading(false)
+    }
+  }
+
+  const handleCancelConfirm = async () => {
+    if (!selectedShiftToCancel || !cancelReason.trim()) {
+      toast.error('Vui lòng nhập lý do hủy ca')
+      return
+    }
+
+    try {
+      setCancelLoading(true)
+      const response = await api.post(`/doctor-shifts/${selectedShiftToCancel.id}/cancel-and-reschedule`, {
+        cancelReason: cancelReason.trim()
+      })
+
+      if (response.data.success) {
+        const result = response.data.data
+        
+        // Update UI - mark as cancelled instead of removing
+        setDoctorShifts(prev => prev.map(ds => 
+          ds.id === selectedShiftToCancel.id ? { ...ds, status: 'CANCELLED' as const } : ds
+        ))
+        
+        // Show success message
+        let successMsg = `Đã hủy ca trực thành công!`
+        if (result.totalAppointments > 0) {
+          successMsg += ` ${result.rescheduledCount || 0}/${result.totalAppointments} lịch hẹn đã được xử lý.`
+        }
+        toast.success(successMsg)
+        
+        setCancelDialogOpen(false)
+        setSelectedShiftToCancel(null)
+        setCancelReason("")
+        setPreviewData(null)
+      } else {
+        throw new Error(response.data.message || 'Không thể hủy ca trực')
+      }
+    } catch (err: any) {
+      console.error('Cancel shift error:', err)
+      const errorMsg = err.response?.data?.message || 'Không thể hủy ca trực'
+      toast.error(errorMsg)
+    } finally {
       setCancelLoading(false)
+    }
+  }
+
+  const handleRestoreShiftClick = (doctorShift: DoctorShift) => {
+    setSelectedShiftToRestore(doctorShift)
+    setRestoreDialogOpen(true)
+  }
+
+  const handleRestoreConfirm = async () => {
+    if (!selectedShiftToRestore) return
+
+    try {
+      setRestoreLoading(true)
+      const response = await api.post(`/doctor-shifts/${selectedShiftToRestore.id}/restore`)
+
+      if (response.data.success) {
+        // Update UI - mark as active
+        setDoctorShifts(prev => prev.map(ds => 
+          ds.id === selectedShiftToRestore.id ? { ...ds, status: 'ACTIVE' as const } : ds
+        ))
+        
+        toast.success('Đã khôi phục ca trực thành công!')
+        setRestoreDialogOpen(false)
+        setSelectedShiftToRestore(null)
+      } else {
+        throw new Error(response.data.message || 'Không thể khôi phục ca trực')
+      }
+    } catch (err: any) {
+      console.error('Restore shift error:', err)
+      const errorMsg = err.response?.data?.message || 'Không thể khôi phục ca trực'
+      toast.error(errorMsg)
+    } finally {
+      setRestoreLoading(false)
     }
   }
 
@@ -516,44 +516,70 @@ Bạn có chắc chắn muốn tiếp tục?`
                       const dateStr = date.toISOString().split('T')[0]
                       const shiftsForDay = doctorShifts.filter(ds => 
                         ds.shiftId === shift.id && 
-                        ds.workDate === dateStr &&
-                        ds.status === 'ACTIVE'
+                        ds.workDate === dateStr
                       )
+                      
+                      const activeShifts = shiftsForDay.filter(ds => ds.status === 'ACTIVE')
+                      const cancelledShifts = shiftsForDay.filter(ds => ds.status === 'CANCELLED')
                       
                       return (
                         <div key={dayIndex} className="p-2 border-r">
-                          {shiftsForDay.length > 0 ? (
-                            shiftsForDay.map(doctorShift => (
-                              <div
-                                key={doctorShift.id}
-                                className="p-2 mb-2 rounded-lg text-xs border-l-4 bg-blue-50 border-blue-500 relative group"
-                              >
-                                <div className="font-medium">Ca trực</div>
-                                <div className="text-gray-600">{doctorShift.doctor?.user?.fullName || 'Unknown Doctor'}</div>
-                                <div className="text-gray-500 text-xs">{doctorShift.doctor?.specialty?.name || 'Unknown Specialty'}</div>
-                                
-                                {/* Nút X để xóa - chỉ hiện khi showAddEvent = true */}
-                                {showAddEvent && (
-                                  <button
-                                    onClick={() => handleDeleteShift(doctorShift.id)}
-                                    disabled={previewLoading || cancelLoading}
-                                    className={`absolute -top-1 -right-1 w-5 h-5 ${
-                                      previewLoading || cancelLoading 
-                                        ? 'bg-gray-400 cursor-not-allowed' 
-                                        : 'bg-red-500 hover:bg-red-600'
-                                    } text-white rounded-full text-xs transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100`}
-                                    title={previewLoading || cancelLoading ? "Đang xử lý..." : "Hủy ca trực"}
-                                  >
-                                    {previewLoading || cancelLoading ? (
-                                      <div className="animate-spin w-3 h-3 border border-white border-t-transparent rounded-full"></div>
-                                    ) : (
-                                      '×'
-                                    )}
-                                  </button>
-                                )}
-                              </div>
-                            ))
-                          ) : null}
+                          {/* Active shifts */}
+                          {activeShifts.map(doctorShift => (
+                            <div
+                              key={doctorShift.id}
+                              className="p-2 mb-2 rounded-lg text-xs border-l-4 bg-blue-50 border-blue-500 relative group"
+                            >
+                              <div className="font-medium">Ca trực</div>
+                              <div className="text-gray-600">{doctorShift.doctor?.user?.fullName || 'Unknown Doctor'}</div>
+                              <div className="text-gray-500 text-xs">{doctorShift.doctor?.specialty?.name || 'Unknown Specialty'}</div>
+                              
+                              {/* Cancel button - chỉ hiện khi showAddEvent = true */}
+                              {showAddEvent && (
+                                <button
+                                  onClick={() => handleCancelShiftClick(doctorShift)}
+                                  disabled={previewLoading || cancelLoading}
+                                  className={`absolute -top-1 -right-1 w-5 h-5 ${
+                                    previewLoading || cancelLoading 
+                                      ? 'bg-gray-400 cursor-not-allowed' 
+                                      : 'bg-red-500 hover:bg-red-600'
+                                  } text-white rounded-full text-xs transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100`}
+                                  title={previewLoading || cancelLoading ? "Đang xử lý..." : "Hủy ca trực"}
+                                >
+                                  {previewLoading || cancelLoading ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <XCircle className="w-3 h-3" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          
+                          {/* Cancelled shifts - hiển thị với style khác và có restore button */}
+                          {cancelledShifts.map(doctorShift => (
+                            <div
+                              key={doctorShift.id}
+                              className="p-2 mb-2 rounded-lg text-xs border-l-4 bg-gray-100 border-gray-400 relative group opacity-60"
+                            >
+                              <div className="font-medium line-through">Ca trực (Đã hủy)</div>
+                              <div className="text-gray-500 line-through">{doctorShift.doctor?.user?.fullName || 'Unknown Doctor'}</div>
+                              {showAddEvent && (
+                                <button
+                                  onClick={() => handleRestoreShiftClick(doctorShift)}
+                                  disabled={restoreLoading}
+                                  className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 hover:bg-green-600 text-white rounded-full text-xs transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                  title="Khôi phục ca trực"
+                                >
+                                  {restoreLoading ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <RotateCcw className="w-3 h-3" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )
                     })}
@@ -670,6 +696,142 @@ Bạn có chắc chắn muốn tiếp tục?`
           </div>
         </div>
       </div>
+
+      {/* Cancel Shift Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Xác nhận hủy ca trực</DialogTitle>
+            <DialogDescription>
+              Hủy ca trực cho bác sĩ {selectedShiftToCancel?.doctor?.user?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {previewData && (
+            <div className="space-y-4">
+              <div className={`p-4 rounded-lg border ${
+                previewData.hasReplacementDoctor 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-amber-50 border-amber-200'
+              }`}>
+                <div className="flex items-start gap-3">
+                  {previewData.hasReplacementDoctor ? (
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <p className="font-semibold mb-2">
+                      Sẽ ảnh hưởng đến {previewData.affectedAppointments} lịch hẹn
+                    </p>
+                    {previewData.hasReplacementDoctor ? (
+                      <p className="text-sm text-green-700">
+                        ✅ Đã tìm thấy bác sĩ thay thế cùng chuyên khoa. 
+                        Tất cả lịch hẹn sẽ được tự động chuyển sang bác sĩ thay thế.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-amber-700">
+                        ⚠️ CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa! 
+                        {previewData.affectedAppointments} lịch hẹn sẽ không thể tự động chuyển.
+                      </p>
+                    )}
+                    {previewData.warning && (
+                      <p className="text-sm text-amber-700 mt-2">⚠️ {previewData.warning}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="cancelReason">Lý do hủy ca *</Label>
+            <Textarea
+              id="cancelReason"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Nhập lý do hủy ca trực..."
+              rows={3}
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCancelDialogOpen(false)
+                setCancelReason("")
+                setPreviewData(null)
+              }}
+              disabled={cancelLoading}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelConfirm}
+              disabled={cancelLoading || !cancelReason.trim()}
+            >
+              {cancelLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Xác nhận hủy
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restore Shift Dialog */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận khôi phục ca trực</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn khôi phục ca trực cho bác sĩ{" "}
+              <strong>{selectedShiftToRestore?.doctor?.user?.fullName}</strong>?
+              <br />
+              Ca trực: {selectedShiftToRestore?.shift?.name} -{" "}
+              {new Date(selectedShiftToRestore?.workDate || "").toLocaleDateString("vi-VN")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRestoreDialogOpen(false)
+                setSelectedShiftToRestore(null)
+              }}
+              disabled={restoreLoading}
+            >
+              Hủy
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleRestoreConfirm}
+              disabled={restoreLoading}
+            >
+              {restoreLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Khôi phục
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal */}
       <ScheduleEventModal

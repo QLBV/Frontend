@@ -2,18 +2,51 @@ import api from "@/lib/api";
 import { setAccessToken, clearAccessToken, getRefreshToken, setRefreshToken, clearRefreshToken } from "@/lib/axiosAuth";
 import type { User } from "./types";
 
+// Track last login attempt to prevent too frequent logins
+let lastLoginAttempt = 0;
+const MIN_LOGIN_INTERVAL = 2000; // 2 seconds minimum between login attempts
+
 export const loginApi = async (
   email: string,
   password: string
 ): Promise<User> => {
-  const res = await api.post("/api/auth/login", { email, password });
+  // Rate limit login attempts
+  const now = Date.now();
+  if (now - lastLoginAttempt < MIN_LOGIN_INTERVAL) {
+    const waitSeconds = Math.ceil((MIN_LOGIN_INTERVAL - (now - lastLoginAttempt)) / 1000);
+    throw new Error(`Vui lòng đợi ${waitSeconds} giây trước khi thử đăng nhập lại.`);
+  }
+  lastLoginAttempt = now;
+  
+  try {
+    // Clear any existing tokens before login to avoid conflicts
+    clearAccessToken();
+    clearRefreshToken();
+    
+    // Small delay to ensure tokens are cleared
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const res = await api.post("/auth/login", { email, password });
 
-  if (res.data.success) {
-    setAccessToken(res.data.tokens.accessToken);
-    setRefreshToken(res.data.tokens.refreshToken);
-    return res.data.user;
-  } else {
-    throw new Error(res.data.message || "Login failed");
+    if (res.data.success) {
+      setAccessToken(res.data.tokens.accessToken);
+      setRefreshToken(res.data.tokens.refreshToken);
+      return res.data.user;
+    } else {
+      throw new Error(res.data.message || "Login failed");
+    }
+  } catch (error: any) {
+    // Handle 429 rate limit error specifically
+    if (error.response?.status === 429) {
+      // Block login for 60 seconds on rate limit
+      lastLoginAttempt = Date.now() + 60000;
+      const retryAfter = error.response?.headers?.['retry-after'] || 
+                        error.response?.headers?.['Retry-After'] ||
+                        error.response?.data?.retryAfter;
+      const waitTime = retryAfter ? `${retryAfter} giây` : "60 giây";
+      throw new Error(`Quá nhiều yêu cầu đăng nhập. Vui lòng đợi ${waitTime} và thử lại.`);
+    }
+    throw error;
   }
 };
 
@@ -22,7 +55,7 @@ export const registerApi = async (
   password: string,
   fullName: string
 ): Promise<User> => {
-  const res = await api.post("/api/auth/register", { 
+  const res = await api.post("/auth/register", { 
     email, 
     password, 
     fullName 
@@ -35,37 +68,119 @@ export const registerApi = async (
   }
 };
 
+// Track last refresh attempt to prevent too frequent refreshes
+let lastRefreshAttempt = 0;
+const MIN_REFRESH_INTERVAL = 5000; // 5 seconds minimum between refresh attempts (increased from 2s)
+
 export const refreshApi = async (): Promise<User> => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
     throw new Error("No refresh token available");
   }
 
-  const res = await api.post("/api/auth/refresh-token", { refreshToken });
-  
-  if (res.data.success) {
-    setAccessToken(res.data.accessToken);
+  // Rate limit refresh attempts - stricter limit
+  const now = Date.now();
+  if (now - lastRefreshAttempt < MIN_REFRESH_INTERVAL) {
+    const waitSeconds = Math.ceil((MIN_REFRESH_INTERVAL - (now - lastRefreshAttempt)) / 1000);
+    throw new Error(`Vui lòng đợi ${waitSeconds} giây trước khi thử lại.`);
+  }
+  lastRefreshAttempt = now;
+
+  try {
+    // Use deduplication to prevent multiple simultaneous refresh requests
+    const { deduplicateRequest, generateRequestKey } = await import("@/utils/requestDeduplication");
+    const requestKey = generateRequestKey("POST", "/auth/refresh-token", { refreshToken });
     
-    // Since refresh endpoint doesn't return user info, we need to get it from token or make another call
-    // For now, let's decode the JWT to get user info (this is not secure but works for demo)
-    try {
-      const payload = JSON.parse(atob(res.data.accessToken.split('.')[1]));
-      return {
-        id: payload.id,
-        email: payload.email || '',
-        fullName: payload.fullName || '',
-        role: payload.role || '',
-        roleId: payload.roleId || 3 // Default to Patient if not found
-      };
-    } catch {
-      throw new Error("Invalid token format");
+    const res = await deduplicateRequest(requestKey, () => 
+      api.post("/auth/refresh-token", { refreshToken })
+    );
+    
+    if (res.data.success) {
+      setAccessToken(res.data.accessToken);
+      
+      // ✅ Use user info from backend response (secure)
+      if (res.data.user) {
+        const user = {
+          id: res.data.user.id,
+          email: res.data.user.email || '',
+          fullName: res.data.user.fullName || '',
+          role: res.data.user.roleId?.toString() || '',
+          roleId: res.data.user.roleId || 3,
+          patientId: res.data.user.patientId || null,
+          doctorId: res.data.user.doctorId || null,
+        };
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:103',message:'REFRESH_API_USER_RETURNED',data:{userId:user.id,patientId:user.patientId,doctorId:user.doctorId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+        return user;
+      }
+      
+      // Fallback: If backend doesn't return user, fetch from profile endpoint
+      // But add longer delay to avoid rate limiting
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+        const profileRes = await api.get("/profile");
+        if (profileRes.data.success) {
+          const userData = profileRes.data.data || profileRes.data.user;
+          const user = {
+            id: userData.id,
+            email: userData.email || '',
+            fullName: userData.fullName || '',
+            role: userData.roleId?.toString() || '',
+            roleId: userData.roleId || 3,
+            patientId: userData.patientId || null,
+            doctorId: userData.doctorId || null,
+          };
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:127',message:'REFRESH_API_PROFILE_RETURNED',data:{userId:user.id,patientId:user.patientId,doctorId:user.doctorId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+          // #endregion
+          return user;
+        }
+        throw new Error("Failed to get user information");
+      } catch (profileError: any) {
+        // If 429, don't retry - just throw error
+        if (profileError.response?.status === 429) {
+          throw new Error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.");
+        }
+        throw new Error("Failed to get user information");
+      }
+    } else {
+      throw new Error(res.data.message || "Token refresh failed");
     }
-  } else {
-    throw new Error(res.data.message || "Token refresh failed");
+  } catch (error: any) {
+    // Handle 429 rate limit error - don't retry immediately
+    if (error.response?.status === 429) {
+      // Update last refresh attempt to prevent immediate retry
+      lastRefreshAttempt = Date.now() + 30000; // Block for 30 seconds
+      throw new Error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.");
+    }
+    throw error;
   }
 };
 
 export const logoutApi = async () => {
   clearAccessToken();
   clearRefreshToken();
+};
+
+export const forgotPasswordApi = async (email: string): Promise<void> => {
+  const res = await api.post("/auth/forgot-password", { email });
+
+  if (!res.data.success) {
+    throw new Error(res.data.message || "Failed to send reset email");
+  }
+};
+
+export const resetPasswordApi = async (
+  token: string,
+  newPassword: string
+): Promise<void> => {
+  const res = await api.post("/auth/reset-password", {
+    token,
+    newPassword,
+  });
+
+  if (!res.data.success) {
+    throw new Error(res.data.message || "Failed to reset password");
+  }
 };

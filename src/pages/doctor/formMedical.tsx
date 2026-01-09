@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/api"
+import { toast } from "sonner"
 import { 
   ArrowLeft, 
   User, 
@@ -50,6 +51,9 @@ const initialVitalSigns: VitalSign[] = [
 export default function FormMedical() {
   const { id } = useParams()
   const navigate = useNavigate()
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'formMedical.tsx:51',message:'FormMedical component mounted',data:{id,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   
   // Data states
   const [patientData, setPatientData] = useState<PatientData | null>(null)
@@ -72,94 +76,73 @@ export default function FormMedical() {
       
       try {
         setLoading(true)
+        const recordId = parseInt(id)
         
-        // Get appointment data by calling the appointments API and filtering by ID
-        const appointmentId = parseInt(id)
-        const today = new Date().toISOString().split('T')[0]
-        
-        // Try to get real appointment data first
-        const response = await api.get(`/api/appointments?date=${today}`)
-        
-        if (response.data.success && response.data.data.length > 0) {
-          // Find the specific appointment by ID
-          const appointment = response.data.data.find((apt: any) => apt.id === appointmentId)
-          
-          if (appointment) {
+        // First, try to fetch as visit (if patient was checked in)
+        try {
+          const visitResponse = await api.get(`/visits/${recordId}`)
+          if (visitResponse.data.success && visitResponse.data.data) {
+            const visit = visitResponse.data.data
+            const appointment = visit.appointment || {}
+            const patient = visit.patient || {}
+            const patientUser = patient.user || {}
+            
             setPatientData({
-              id: appointment.Patient.id,
-              fullName: appointment.Patient.fullName,
-              dateOfBirth: appointment.Patient.dateOfBirth,
-              gender: appointment.Patient.gender,
-              phoneNumber: appointment.Patient.phoneNumber,
-              appointmentId: appointment.id,
+              id: patient.id,
+              fullName: patientUser.fullName || patient.fullName || "Unknown",
+              dateOfBirth: patient.dateOfBirth || "",
+              gender: patient.gender || "MALE",
+              phoneNumber: patient.phoneNumber || "",
+              appointmentId: appointment.id || visit.appointmentId,
               symptomInitial: appointment.symptomInitial
             })
             setError(null)
             return
           }
+        } catch (visitErr: any) {
+          // Visit not found, try appointment instead
+          console.log("Visit not found, trying appointment:", visitErr.response?.status)
         }
         
-        // Fallback to mock data if appointment not found in API
-        const mockPatients = [
-          {
-            id: 1,
-            fullName: "Nguyễn Văn A",
-            dateOfBirth: "1990-05-15",
-            gender: "MALE" as const,
-            phoneNumber: "0123456789",
-            appointmentId: 1,
-            symptomInitial: "Đau đầu, chóng mặt, sốt nhẹ"
-          },
-          {
-            id: 2,
-            fullName: "Lê Thị C",
-            dateOfBirth: "1985-08-22",
-            gender: "FEMALE" as const,
-            phoneNumber: "0987654321",
-            appointmentId: 2,
-            symptomInitial: "Ho khan, đau họng"
-          },
-          {
-            id: 3,
-            fullName: "Phạm Văn D",
-            dateOfBirth: "1992-12-10",
-            gender: "MALE" as const,
-            phoneNumber: "0369852147",
-            appointmentId: 3,
-            symptomInitial: "Đau bụng, buồn nôn"
-          },
-          {
-            id: 4,
-            fullName: "Vũ Thị F",
-            dateOfBirth: "1988-03-18",
-            gender: "FEMALE" as const,
-            phoneNumber: "0147258369",
-            appointmentId: 4,
-            symptomInitial: "Khám tổng quát"
-          }
-        ]
+        // If visit not found, try to fetch as appointment
+        const today = new Date().toISOString().split('T')[0]
+        const response = await api.get(`/appointments`)
         
-        const patient = mockPatients.find(p => p.appointmentId === appointmentId)
-        setPatientData(patient || mockPatients[0])
-        setError(null)
+        if (response.data.success && response.data.data.length > 0) {
+          // Find the specific appointment by ID
+          const appointment = response.data.data.find((apt: any) => apt.id === recordId)
+          
+          if (appointment) {
+            const patient = appointment.patient || appointment.Patient
+            const patientUser = patient?.user || patient?.User || {}
+            
+            if (patient) {
+              setPatientData({
+                id: patient.id,
+                fullName: patientUser.fullName || patient.fullName || "Unknown",
+                dateOfBirth: patient.dateOfBirth || "",
+                gender: patient.gender || "MALE",
+                phoneNumber: patient.phoneNumber || "",
+                appointmentId: appointment.id,
+                symptomInitial: appointment.symptomInitial
+              })
+              setError(null)
+              return
+            }
+          }
+        }
+        
+        // Neither visit nor appointment found
+        toast.error('Không tìm thấy lịch hẹn hoặc thông tin khám bệnh')
+        setPatientData(null)
+        setError('Không tìm thấy lịch hẹn hoặc thông tin khám bệnh')
         
       } catch (err: any) {
         console.error('Error fetching patient data:', err)
-        setError('Failed to load patient data')
-        
-        // Fallback to mock data on error
-        const mockPatients = [
-          {
-            id: 1,
-            fullName: "Nguyễn Văn A",
-            dateOfBirth: "1990-05-15",
-            gender: "MALE" as const,
-            phoneNumber: "0123456789",
-            appointmentId: 1,
-            symptomInitial: "Đau đầu, chóng mặt, sốt nhẹ"
-          }
-        ]
-        setPatientData(mockPatients[0])
+        const errorMessage = err.response?.data?.message || 'Không thể tải thông tin bệnh nhân'
+        toast.error(errorMessage)
+        setError(errorMessage)
+        setPatientData(null)
       } finally {
         setLoading(false)
       }
@@ -182,12 +165,20 @@ export default function FormMedical() {
   const handleSaveExamination = async () => {
     if (!patientData) return
     
+    // Basic validation
+    if (!diagnosis || diagnosis.trim() === '') {
+      toast.error('Vui lòng nhập chẩn đoán')
+      setError('Vui lòng nhập chẩn đoán')
+      return
+    }
+    
     try {
       setSaving(true)
+      setError(null)
       
       // Prepare data according to backend API structure
       const visitData = {
-        diagnosis: diagnosis || "No diagnosis provided",
+        diagnosis: diagnosis.trim(),
         note: `
 CLINICAL OBSERVATIONS:
 ${observations || "No observations recorded"}
@@ -206,28 +197,21 @@ Examination completed on: ${new Date().toLocaleString()}
       
       // Try to complete the visit using the visits API
       try {
-        const response = await api.put(`/api/visits/${patientData.appointmentId}/complete`, visitData)
+        const response = await api.put(`/visits/${patientData.appointmentId}/complete`, visitData)
         
         if (response.data.success) {
           console.log('Visit completed successfully:', response.data)
+          toast.success('Lưu thông tin khám bệnh thành công!')
           navigate("/doctor/medicalList")
           return
         }
       } catch (apiError: any) {
-        console.log('API error, falling back to simulation:', apiError.response?.data?.message)
-        
-        // If API fails, simulate the save
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        console.log('Examination data saved (simulated):', {
-          appointmentId: patientData.appointmentId,
-          patientId: patientData.id,
-          diagnosis: visitData.diagnosis,
-          note: visitData.note
-        })
+        console.error('Error completing visit:', apiError)
+        const errorMessage = apiError.response?.data?.message || 'Không thể lưu thông tin khám bệnh'
+        toast.error(errorMessage)
+        setError(errorMessage)
+        return
       }
-      
-      // Navigate back to medical list
-      navigate("/doctor/medicalList")
       
     } catch (err: any) {
       console.error('Error saving examination:', err)
@@ -238,8 +222,14 @@ Examination completed on: ${new Date().toLocaleString()}
   }
 
   const handleAddPrescription = () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'formMedical.tsx:192',message:'handleAddPrescription called',data:{id,url:`/doctor/patients/${id}/prescription`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     // Navigate to prescription form
     navigate(`/doctor/patients/${id}/prescription`)
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'formMedical.tsx:196',message:'navigate called',data:{targetUrl:`/doctor/patients/${id}/prescription`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
   }
 
   const handleCancel = () => {

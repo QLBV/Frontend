@@ -95,125 +95,21 @@ export default function DoctorShiftPage() {
     try {
       setLoading(true)
       
-      const response = await api.get('/api/doctor-shifts')
+      const response = await api.get('/doctor-shifts')
       if (response.data.success) {
-        setDoctorShifts(response.data.data)
-        console.log(`Đã tải ${response.data.data.length} ca trực`)
+        setDoctorShifts(response.data.data || [])
+        console.log(`Đã tải ${response.data.data?.length || 0} ca trực`)
       } else {
         console.error('Không thể tải danh sách ca trực')
-        // Use mock data for demo
-        setDoctorShifts(getMockDoctorShifts())
+        setDoctorShifts([])
       }
     } catch (err: any) {
       console.error('Error fetching doctor shifts:', err)
-      console.log('Sử dụng dữ liệu demo')
-      // Use mock data when API fails
-      setDoctorShifts(getMockDoctorShifts())
+      setDoctorShifts([])
+      toast.error('Không thể tải danh sách ca trực')
     } finally {
       setLoading(false)
     }
-  }
-
-  // Mock data for demo
-  const getMockDoctorShifts = (): DoctorShift[] => {
-    const today = new Date().toISOString().split('T')[0]
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
-    
-    return [
-      {
-        id: 1,
-        doctorId: 1,
-        shiftId: 1,
-        workDate: today,
-        status: "ACTIVE",
-        doctor: {
-          id: 1,
-          user: {
-            fullName: "Dr. Nguyễn Văn A",
-            email: "doctor1@example.com"
-          },
-          specialty: {
-            name: "Tim mạch"
-          }
-        },
-        shift: {
-          id: 1,
-          name: "MORNING",
-          startTime: "08:00",
-          endTime: "12:00"
-        }
-      },
-      {
-        id: 2,
-        doctorId: 2,
-        shiftId: 2,
-        workDate: today,
-        status: "ACTIVE",
-        doctor: {
-          id: 2,
-          user: {
-            fullName: "Dr. Trần Thị B",
-            email: "doctor2@example.com"
-          },
-          specialty: {
-            name: "Nhi khoa"
-          }
-        },
-        shift: {
-          id: 2,
-          name: "AFTERNOON",
-          startTime: "13:00",
-          endTime: "17:00"
-        }
-      },
-      {
-        id: 3,
-        doctorId: 3,
-        shiftId: 1,
-        workDate: tomorrow,
-        status: "CANCELLED",
-        cancelReason: "Bác sĩ bị ốm",
-        doctor: {
-          id: 3,
-          user: {
-            fullName: "Dr. Lê Văn C",
-            email: "doctor3@example.com"
-          },
-          specialty: {
-            name: "Ngoại khoa"
-          }
-        },
-        shift: {
-          id: 1,
-          name: "MORNING",
-          startTime: "08:00",
-          endTime: "12:00"
-        }
-      },
-      {
-        id: 4,
-        doctorId: 4,
-        shiftId: 3,
-        workDate: tomorrow,
-        status: "ACTIVE",
-        doctor: {
-          id: 4,
-          user: {
-            fullName: "Dr. Phạm Thị D",
-            email: "doctor4@example.com"
-          },
-          specialty: {
-            name: "Da liễu"
-          }
-        },
-        shift: {
-          id: 3,
-          name: "EVENING",
-          startTime: "18:00",
-          endTime: "22:00"
-        }
-      }
-    ]
   }
 
   useEffect(() => {
@@ -238,22 +134,15 @@ export default function DoctorShiftPage() {
   const loadPreviewData = async (shift: DoctorShift) => {
     setPreviewLoading(true)
     try {
-      const response = await api.get(`/api/doctor-shifts/${shift.id}/reschedule-preview`)
+      const response = await api.get(`/doctor-shifts/${shift.id}/reschedule-preview`)
       
       if (response.data.success) {
         setPreviewData(response.data.data)
       }
     } catch (err: any) {
       console.error('Error loading preview:', err)
-      // Provide mock preview data when API fails
-      setPreviewData({
-        doctorShiftId: shift.id,
-        affectedAppointments: Math.floor(Math.random() * 5) + 1, // Random 1-5
-        hasReplacementDoctor: Math.random() > 0.5, // Random true/false
-        replacementDoctorId: Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 1 : undefined,
-        canAutoReschedule: Math.random() > 0.3, // 70% chance
-        warning: Math.random() > 0.7 ? "CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa." : undefined
-      })
+      setPreviewData(null)
+      toast.error('Không thể tải thông tin xem trước')
     } finally {
       setPreviewLoading(false)
     }
@@ -268,7 +157,7 @@ export default function DoctorShiftPage() {
 
     setCancelLoading(true)
     try {
-      const response = await api.post(`/api/doctor-shifts/${selectedShiftToCancel.id}/cancel-and-reschedule`, {
+      const response = await api.post(`/doctor-shifts/${selectedShiftToCancel.id}/cancel-and-reschedule`, {
         cancelReason: cancelReason.trim()
       })
 

@@ -6,11 +6,21 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -37,12 +47,6 @@ interface Doctor {
   }
 }
 
-interface ApiResponse {
-  success: boolean
-  data: Doctor[]
-  message?: string
-}
-
 type SortOption = "name" | "position"
 
 export default function DoctorList() {
@@ -55,6 +59,9 @@ export default function DoctorList() {
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [doctorToDelete, setDoctorToDelete] = useState<Doctor | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const itemsPerPage = 5
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -64,7 +71,7 @@ export default function DoctorList() {
       setLoading(true)
       setError("")
       
-      const response = await api.get('/api/doctors')
+      const response = await api.get('/doctors')
       
       if (response.data.success) {
         setDoctors(response.data.data)
@@ -73,9 +80,15 @@ export default function DoctorList() {
         throw new Error(response.data.message || 'Không thể tải danh sách bác sĩ')
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Không thể tải danh sách bác sĩ'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (err.response?.status === 429) {
+        const errorMessage = "Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại."
+        setError(errorMessage)
+        toast.error(errorMessage)
+      } else {
+        const errorMessage = err.response?.data?.message || err.message || 'Không thể tải danh sách bác sĩ'
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
       setLoading(false)
     }
@@ -211,6 +224,41 @@ export default function DoctorList() {
       position: "Position"
     }
     return labels[sortBy]
+  }
+
+  const handleDeleteClick = (doctor: Doctor) => {
+    setDoctorToDelete(doctor)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!doctorToDelete) return
+    
+    try {
+      setIsDeleting(true)
+      const response = await api.delete(`/doctors/${doctorToDelete.id}`)
+      
+      if (response.data.success) {
+        toast.success("Xóa bác sĩ thành công!")
+        setDeleteDialogOpen(false)
+        setDoctorToDelete(null)
+        // Refresh doctors list with delay to avoid rate limiting
+        setTimeout(async () => {
+          await fetchDoctors()
+        }, 500)
+      } else {
+        throw new Error(response.data.message || "Không thể xóa bác sĩ")
+      }
+    } catch (error: any) {
+      if (error.response?.status === 429) {
+        toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
+      } else {
+        const errorMessage = error.response?.data?.message || "Không thể xóa bác sĩ"
+        toast.error(errorMessage)
+      }
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (loading) {
@@ -374,11 +422,21 @@ export default function DoctorList() {
                         {getStatusBadge(doctor.user ? true : false)} {/* Can use doctor.user.isActive when available */}
                       </td>
                       <td className="py-4 px-6">
-                        <Link to={`/admin/doctors/${doctor.id}`}>
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                            Chi tiết
+                        <div className="flex items-center gap-2">
+                          <Link to={`/admin/doctors/${doctor.id}`}>
+                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                              Chi tiết
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            onClick={() => handleDeleteClick(doctor)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -426,6 +484,48 @@ export default function DoctorList() {
             </Button>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa bác sĩ</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn xóa bác sĩ <strong>{doctorToDelete?.user?.fullName}</strong> (Mã: {doctorToDelete?.doctorCode})? 
+                Hành động này không thể hoàn tác.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false)
+                  setDoctorToDelete(null)
+                }}
+                disabled={isDeleting}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang xóa...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Xóa
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminSidebar>
   );

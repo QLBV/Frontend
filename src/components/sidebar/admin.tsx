@@ -10,14 +10,18 @@ import {
   Blocks,
   Component,
   Bell,
+  Clock,
+  UserCheck,
+  Package,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 interface AdminSidebarProps {
-  children: ReactNode;
+  children?: ReactNode;
+  userName?: string;
 }
 
-const AdminSidebar = ({ children }: AdminSidebarProps) => {
+const AdminSidebar = ({ children, userName }: AdminSidebarProps) => {
   const location = useLocation();
 
   const adminMenu = [
@@ -32,22 +36,43 @@ const AdminSidebar = ({ children }: AdminSidebarProps) => {
       items: [
         { label: "Employee", href: "/admin/doctors", icon: <UsersRound size={24} strokeWidth={2.5} /> },
         { label: "Schedule", href: "/admin/schedule", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
-        { label: "Inventory", href: "/admin/inventory", icon: <ClipboardList size={24} strokeWidth={2.5} /> },
-        { label: "Salary", href: "/admin/salary", icon: <Banknote size={24} strokeWidth={2.5} /> }
+        { label: "Quản lý kho thuốc", href: "/admin/inventory", icon: <Package size={24} strokeWidth={2.5} /> },
+        { label: "Specialties", href: "/admin/specialties", icon: <Component size={24} strokeWidth={2.5} /> },
+        { label: "Shifts", href: "/admin/shifts", icon: <Clock size={24} strokeWidth={2.5} /> },
+        { label: "Salary", href: "/admin/salary", icon: <Banknote size={24} strokeWidth={2.5} /> },
+        { label: "Payroll Statistics", href: "/admin/payroll-statistics", icon: <FileText size={24} strokeWidth={2.5} /> },
+        { label: "Attendance", href: "/admin/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> }
       ]
     },
     {
       title: "Report",
       items: [
         { label: "Revenue", href: "/admin/revenue", icon: <FileText size={24} strokeWidth={2.5} /> },
-        { label: "Expense", href: "/admin/expense", icon: <Blocks size={24} strokeWidth={2.5} /> }
+        { label: "Expense", href: "/admin/expense", icon: <Blocks size={24} strokeWidth={2.5} /> },
+        { label: "Profit", href: "/admin/profit", icon: <FileText size={24} strokeWidth={2.5} /> },
+        { label: "Appointments", href: "/admin/reports/appointments", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
+        { label: "Patients", href: "/admin/reports/patient-statistics", icon: <UsersRound size={24} strokeWidth={2.5} /> },
+        { label: "Medicines", href: "/admin/reports/medicines", icon: <ClipboardList size={24} strokeWidth={2.5} /> },
+        { label: "Medicine Alerts", href: "/admin/reports/medicine-alerts", icon: <Bell size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    {
+      title: "User Management",
+      items: [
+        { label: "Users", href: "/admin/users", icon: <UsersRound size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    {
+      title: "System",
+      items: [
+        { label: "Audit Logs", href: "/admin/audit-logs", icon: <FileText size={24} strokeWidth={2.5} /> },
+        { label: "Permissions", href: "/admin/permissions", icon: <Component size={24} strokeWidth={2.5} /> }
       ]
     },
     {
       title: "Settings",
       items: [
-        { label: "General", href: "/admin/general", icon: <Component size={24} strokeWidth={2.5} /> },
-        { label: "Notification", href: "/admin/notification", icon: <Bell size={24} strokeWidth={2.5} /> }
+        { label: "System Settings", href: "/admin/settings", icon: <Component size={24} strokeWidth={2.5} /> }
       ]
     }
   ];
@@ -55,8 +80,8 @@ const AdminSidebar = ({ children }: AdminSidebarProps) => {
   return (
     <SidebarLayout 
       logoText="HealthCare Admin"
-      userName="Admin"
-      pageContent={children}
+      userName={userName || "Admin"}
+      pageContent={children || undefined}
     >
       {adminMenu.map((group, index) => (
         <div key={index}>

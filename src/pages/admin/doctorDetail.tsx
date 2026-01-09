@@ -10,11 +10,14 @@ import {
   Save,
   X,
   Upload,
+  Clock,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -77,6 +80,13 @@ export default function DoctorDetail() {
     fullName: ""
   });
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"overview" | "schedule">("overview")
+  
+  // Shifts state
+  const [shifts, setShifts] = useState<any[]>([])
+  const [isLoadingShifts, setIsLoadingShifts] = useState(false)
+
   // Add error boundary
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -101,7 +111,7 @@ export default function DoctorDetail() {
       setError("");
       
       console.log('Fetching doctor with ID:', id);
-      const response = await api.get(`/api/doctors/${id}`)
+      const response = await api.get(`/doctors/${id}`)
       console.log('Doctor response:', response.data);
       
       if (response.data.success && response.data.data) {
@@ -145,7 +155,7 @@ export default function DoctorDetail() {
     
     try {
       console.log('Updating doctor with data:', updateData);
-      const response = await api.put(`/api/doctors/${id}`, updateData);
+      const response = await api.put(`/doctors/${id}`, updateData);
       console.log('Update response:', response.data);
 
       if (response.data.success) {
@@ -166,6 +176,75 @@ export default function DoctorDetail() {
   useEffect(() => {
     fetchDoctor();
   }, [id]);
+
+  // Fetch doctor shifts
+  const fetchDoctorShifts = async () => {
+    if (!id) return
+    
+    try {
+      setIsLoadingShifts(true)
+      // Try the most likely endpoint first
+      const endpoint = `/doctors/${id}/shifts`
+      
+      try {
+        const response = await api.get(endpoint)
+        if (response.data.success && response.data.data) {
+          const shiftsData = Array.isArray(response.data.data) 
+            ? response.data.data 
+            : [response.data.data]
+          setShifts(shiftsData)
+          return
+        }
+      } catch (err: any) {
+        // If 429 error, show user-friendly message
+        if (err.response?.status === 429) {
+          toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
+          setShifts([])
+          return
+        }
+        // Try alternative endpoint only if first one fails with 404
+        if (err.response?.status === 404) {
+          try {
+            const altResponse = await api.get(`/doctor-shifts/doctor/${id}`)
+            if (altResponse.data.success && altResponse.data.data) {
+              const shiftsData = Array.isArray(altResponse.data.data) 
+                ? altResponse.data.data 
+                : [altResponse.data.data]
+              setShifts(shiftsData)
+              return
+            }
+          } catch (altErr: any) {
+            if (altErr.response?.status === 429) {
+              toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
+            }
+          }
+        }
+      }
+      
+      // If no data found, set empty array
+      setShifts([])
+    } catch (error: any) {
+      console.error('Error fetching shifts:', error)
+      if (error.response?.status === 429) {
+        toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
+      }
+      setShifts([])
+    } finally {
+      setIsLoadingShifts(false)
+    }
+  }
+
+  // Fetch shifts when schedule tab is active (with debouncing)
+  useEffect(() => {
+    if (activeTab === "schedule" && id) {
+      // Add a small delay to prevent rapid tab switching from causing too many requests
+      const timer = setTimeout(() => {
+        fetchDoctorShifts()
+      }, 300)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [activeTab, id])
   
   // Handlers
   const handlePersonalEdit = () => {
@@ -491,18 +570,33 @@ export default function DoctorDetail() {
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8">
-              <button className="border-b-2 border-blue-500 text-blue-600 py-2 px-1 text-sm font-medium">
+              <button 
+                onClick={() => setActiveTab("overview")}
+                className={`py-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === "overview"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
                 Overview
               </button>
-              <button className="text-gray-500 hover:text-gray-700 py-2 px-1 text-sm font-medium">
-                Schedule
+              <button 
+                onClick={() => setActiveTab("schedule")}
+                className={`py-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === "schedule"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Lịch trực
               </button>
             </nav>
           </div>
         </div>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Content based on active tab */}
+        {activeTab === "overview" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
@@ -779,6 +873,108 @@ export default function DoctorDetail() {
             </Card>
           </div>
         </div>
+        ) : (
+          /* Schedule Tab Content */
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Lịch trực của bác sĩ
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingShifts ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : shifts.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">Chưa có lịch trực</p>
+                  <p className="text-sm">Bác sĩ này chưa được phân công ca trực nào.</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => navigate(`/admin/doctors/${id}/shift`)}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Quản lý lịch trực
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-gray-50">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Ngày</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Ca trực</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Thời gian</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shifts.map((shift: any, index: number) => (
+                          <tr key={shift.id || index} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span className="font-medium text-gray-900">
+                                  {shift.date 
+                                    ? new Date(shift.date).toLocaleDateString("vi-VN", {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric"
+                                      })
+                                    : shift.shiftDate || "N/A"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-gray-700">
+                                {shift.shift?.name || shift.shiftName || "N/A"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <Clock className="h-4 w-4" />
+                                <span>
+                                  {shift.shift?.startTime || shift.startTime || "N/A"} - {shift.shift?.endTime || shift.endTime || "N/A"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  shift.status === "CANCELLED" || shift.isCancelled
+                                    ? "bg-red-50 text-red-700 border-red-200"
+                                    : "bg-green-50 text-green-700 border-green-200"
+                                }
+                              >
+                                {shift.status === "CANCELLED" || shift.isCancelled ? "Đã hủy" : "Đang hoạt động"}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/admin/doctors/${id}/shift`)}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Quản lý lịch trực
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AdminSidebar>
   );

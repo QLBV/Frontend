@@ -66,7 +66,7 @@ export default function DoctorAddPage() {
     try {
       setLoadingSpecialties(true)
       
-      const response = await api.get('/api/doctors/specialties')
+      const response = await api.get('/doctors/specialties')
       
       if (response.data.success && response.data.data.length > 0) {
         setSpecialties(response.data.data)
@@ -157,7 +157,7 @@ export default function DoctorAddPage() {
 
     try {
       // Step 1: Create User first (assuming we need to create user with doctor role)
-      const userResponse = await api.post('/api/auth/register', {
+      const userResponse = await api.post('/auth/register', {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
@@ -183,7 +183,7 @@ export default function DoctorAddPage() {
       }
 
       // Step 2: Create Doctor profile
-      const doctorResponse = await api.post('/api/doctors', {
+      const doctorResponse = await api.post('/doctors', {
         userId: userId,
         specialtyId: parseInt(formData.specialtyId),
         position: formData.position,

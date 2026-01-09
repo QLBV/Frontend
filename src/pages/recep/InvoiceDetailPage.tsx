@@ -1,190 +1,710 @@
 "use client"
 
-import { useState } from "react"
-import { useParams, Link } from "react-router-dom"
-import { ArrowLeft, Download, Printer, User, FileText, Activity, Check } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useParams, useNavigate, Link } from "react-router-dom"
+import { useAuth } from "@/auth/authContext"
+import { ArrowLeft, Download, Printer, User, FileText, Activity, Check, Loader2, Edit, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
+import { InvoiceService, type Invoice, PaymentStatus, PaymentMethod } from "@/services/invoice.service"
+import AdminSidebar from "@/components/sidebar/admin"
+import DoctorSidebar from "@/components/sidebar/doctor"
+import ReceptionistSidebar from "@/components/sidebar/recep"
+import PatientSidebar from "@/components/sidebar/patient"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function InvoiceDetailPage() {
   const { id } = useParams()
-  const [hasMedication, setHasMedication] = useState(true)
-  const [isPaid, setIsPaid] = useState(false)
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [invoice, setInvoice] = useState<Invoice | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false)
+  const [isLoadingUpdate, setIsLoadingUpdate] = useState(false)
 
-  // Mock data
-  const invoice = {
-    id: "1",
-    invoiceNumber: "INV-2025-001",
-    patientName: "Nguyễn Văn A",
-    patientId: "P001",
-    date: "2025-11-30",
-    time: "14:30",
-    doctor: "BS. Trần Thị B",
-    diagnosis: "Viêm họng cấp",
-    consultationFee: 300000,
-    medications: [
-      { name: "Amoxicillin 500mg", quantity: 20, unitPrice: 5000, total: 100000 },
-      { name: "Paracetamol 500mg", quantity: 10, unitPrice: 2000, total: 20000 },
-      { name: "Vitamin C", quantity: 30, unitPrice: 1000, total: 30000 },
-    ],
-    status: "pending" as const,
+  // Edit form state
+  const [editDiscount, setEditDiscount] = useState("")
+  const [editNote, setEditNote] = useState("")
+
+  // Payment form state
+  const [paymentAmount, setPaymentAmount] = useState("")
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH)
+  const [paymentReference, setPaymentReference] = useState("")
+  const [paymentNote, setPaymentNote] = useState("")
+
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!id) return
+      try {
+        setIsLoading(true)
+        const response = await InvoiceService.getInvoiceById(Number(id))
+        if (response.success && response.data) {
+          setInvoice(response.data)
+          setEditDiscount(response.data.discount.toString())
+          setEditNote(response.data.note || "")
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Không thể tải thông tin hóa đơn")
+        navigate(-1)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchInvoice()
+  }, [id, navigate])
+
+  const handleExportPDF = async () => {
+    if (!id) return
+    try {
+      setIsExporting(true)
+      const blob = await InvoiceService.exportInvoicePDF(Number(id))
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `HoaDon-${invoice?.invoiceCode || id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success("Xuất PDF thành công")
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Không thể xuất PDF")
+    } finally {
+      setIsExporting(false)
+    }
   }
 
-  const medicationTotal = hasMedication ? invoice.medications.reduce((sum, med) => sum + med.total, 0) : 0
-  const totalAmount = invoice.consultationFee + medicationTotal
-
-  const handleConfirmPayment = () => {
-    setIsPaid(true)
-    alert("Xác nhận thanh toán thành công!")
+  const handleUpdateInvoice = async () => {
+    if (!id || !invoice) return
+    try {
+      setIsLoadingUpdate(true)
+      const response = await InvoiceService.updateInvoice(Number(id), {
+        discount: parseFloat(editDiscount) || 0,
+        note: editNote || undefined,
+      })
+      if (response.success && response.data) {
+        setInvoice(response.data)
+        setIsEditDialogOpen(false)
+        toast.success("Cập nhật hóa đơn thành công")
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Không thể cập nhật hóa đơn")
+    } finally {
+      setIsLoadingUpdate(false)
+    }
   }
 
-  const handleExportPDF = () => {
-    alert("Xuất PDF hóa đơn...")
+  const handleAddPayment = async () => {
+    if (!id || !invoice) return
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+      toast.error("Vui lòng nhập số tiền hợp lệ")
+      return
+    }
+    try {
+      setIsLoadingPayment(true)
+      const response = await InvoiceService.addPayment(Number(id), {
+        amount: parseFloat(paymentAmount),
+        paymentMethod,
+        reference: paymentReference || undefined,
+        note: paymentNote || undefined,
+      })
+      if (response.success && response.data) {
+        setInvoice(response.data)
+        setIsPaymentDialogOpen(false)
+        setPaymentAmount("")
+        setPaymentReference("")
+        setPaymentNote("")
+        toast.success("Thêm thanh toán thành công")
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Không thể thêm thanh toán")
+    } finally {
+      setIsLoadingPayment(false)
+    }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Activity className="h-6 w-6 text-white" />
+  const getStatusBadge = (status: PaymentStatus) => {
+    const statusMap: Record<PaymentStatus, { label: string; className: string }> = {
+      UNPAID: { label: "Chưa thanh toán", className: "bg-red-50 text-red-700 border-red-200" },
+      PARTIALLY_PAID: { label: "Thanh toán một phần", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+      PAID: { label: "Đã thanh toán", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    }
+    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-50 text-gray-700 border-gray-200" }
+    return (
+      <Badge variant="outline" className={statusInfo.className}>
+        {statusInfo.label}
+      </Badge>
+    )
+  }
+
+  const getPaymentMethodLabel = (method: PaymentMethod) => {
+    const labels: Record<PaymentMethod, string> = {
+      CASH: "Tiền mặt",
+      BANK_TRANSFER: "Chuyển khoản",
+      QR_CODE: "QR Code",
+    }
+    return labels[method] || method
+  }
+
+  if (isLoading) {
+    const loadingContent = (
+      <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </div>
+    )
+    if (!user) return null
+    const role = String(user.roleId || user.role || "").toLowerCase()
+    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    if (role === "admin" || role === "1") {
+      return <AdminSidebar>{loadingContent}</AdminSidebar>
+    } else if (role === "doctor" || role === "4") {
+      return <DoctorSidebar>{loadingContent}</DoctorSidebar>
+    } else if (role === "receptionist" || role === "2") {
+      return <ReceptionistSidebar>{loadingContent}</ReceptionistSidebar>
+    } else if (role === "patient" || role === "3") {
+      return <PatientSidebar>{loadingContent}</PatientSidebar>
+    }
+    return null
+  }
+
+  if (!invoice) {
+    const errorContent = (
+      <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
+        <div className="text-center py-12">
+          <p className="text-gray-500">Không tìm thấy thông tin hóa đơn</p>
+          <Button onClick={() => navigate(-1)} className="mt-4">
+            Quay lại
+          </Button>
+        </div>
+      </div>
+    )
+    if (!user) return null
+    const role = String(user.roleId || user.role || "").toLowerCase()
+    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    if (role === "admin" || role === "1") {
+      return <AdminSidebar>{errorContent}</AdminSidebar>
+    } else if (role === "doctor" || role === "4") {
+      return <DoctorSidebar>{errorContent}</DoctorSidebar>
+    } else if (role === "receptionist" || role === "2") {
+      return <ReceptionistSidebar>{errorContent}</ReceptionistSidebar>
+    } else if (role === "patient" || role === "3") {
+      return <PatientSidebar>{errorContent}</PatientSidebar>
+    }
+    return null
+  }
+
+  if (!user) {
+    return null
+  }
+
+  const role = String(user.roleId || user.role || "").toLowerCase()
+
+  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  const canEdit = user?.roleId === 1 || user?.roleId === 2 // Admin or Receptionist
+  const remainingAmount = invoice.totalAmount - invoice.paidAmount
+  const medicineItems = invoice.items?.filter(item => item.itemType === "MEDICINE") || []
+  const examinationItems = invoice.items?.filter(item => item.itemType === "EXAMINATION") || []
+
+  const content = (
+    <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
+      <div className="space-y-6">
+        {/* Back Button */}
+        <div>
+          <Button 
+            variant="ghost" 
+            className="mb-2 pl-0 hover:bg-transparent hover:text-blue-600" 
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Quay lại
+          </Button>
+        </div>
+
+        {/* Invoice Header Card */}
+        <Card className="border-0 shadow-xl shadow-slate-900/5 mb-8 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  {getStatusBadge(invoice.paymentStatus)}
+                </div>
+                <h1 className="text-4xl font-bold mb-2">Chi tiết hóa đơn</h1>
+                <div className="flex items-center gap-4 text-blue-100">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    <span>{invoice.invoiceCode}</span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{invoice.patient?.fullName || "N/A"}</span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    <span>
+                      {new Date(invoice.createdAt).toLocaleDateString("vi-VN", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                HealthCare Plus
-              </span>
-            </Link>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/invoices">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Invoices
-              </Link>
-            </Button>
+              <div className="flex gap-2">
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+                    onClick={() => setIsEditDialogOpen(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Chỉnh sửa
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+                  onClick={handleExportPDF}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  Xuất PDF
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </header>
 
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        {/* Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Chi tiết hóa đơn</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
-            <Button variant="outline" size="sm">
-              <Printer className="h-4 w-4 mr-2" />
-              Print
-            </Button>
+          {/* Quick Info */}
+          <div className="grid grid-cols-4 divide-x bg-white">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Mã hóa đơn</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {invoice.invoiceCode}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Bệnh nhân</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {invoice.patient?.fullName || "N/A"}
+                  </p>
+                  {invoice.patient?.patientCode && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      {invoice.patient.patientCode}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 rounded-full bg-violet-500/10 flex items-center justify-center">
+                  <DollarSign className="h-5 w-5 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Tổng tiền</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                  <Check className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Đã thanh toán</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {invoice.paidAmount.toLocaleString("vi-VN")} VND
+                  </p>
+                  {remainingAmount > 0 && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Còn lại: {remainingAmount.toLocaleString("vi-VN")} VND
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </Card>
 
-        {/* Invoice Card */}
-        <Card className="border-0 shadow-xl mb-6">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-            <div className="flex items-center justify-between">
+        {/* Details Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Patient Information */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-blue-600" />
+                Thông tin bệnh nhân
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
               <div>
-                <CardTitle className="text-2xl mb-2">{invoice.invoiceNumber}</CardTitle>
-                <p className="text-blue-100">
-                  {invoice.date} - {invoice.time}
+                <p className="text-xs text-slate-500 mb-1">Họ và tên</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {invoice.patient?.fullName || "N/A"}
                 </p>
               </div>
-              <Badge
-                variant="outline"
-                className={
-                  isPaid ? "bg-emerald-500/20 text-white border-white/30" : "bg-amber-500/20 text-white border-white/30"
-                }
-              >
-                {isPaid ? "Đã thanh toán" : "Chờ thanh toán"}
-              </Badge>
-            </div>
+              {invoice.patient?.patientCode && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Mã bệnh nhân</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {invoice.patient.patientCode}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Doctor Information */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-emerald-600" />
+                Thông tin bác sĩ
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Họ và tên</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {invoice.doctor?.fullName || "N/A"}
+                </p>
+              </div>
+              {invoice.visit?.diagnosis && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Chẩn đoán</p>
+                  <p className="text-sm text-slate-900">
+                    {invoice.visit.diagnosis}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Payment Details Card */}
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-purple-600" />
+              Chi tiết thanh toán
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <div className="flex items-center gap-2 text-slate-600 mb-1">
-                  <User className="h-4 w-4" />
-                  <span className="text-sm font-medium">Bệnh nhân</span>
-                </div>
-                <div className="text-lg font-semibold text-slate-900">{invoice.patientName}</div>
-                <div className="text-sm text-slate-500">{invoice.patientId}</div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-slate-600 mb-1">
-                  <FileText className="h-4 w-4" />
-                  <span className="text-sm font-medium">Bác sĩ điều trị</span>
-                </div>
-                <div className="text-lg font-semibold text-slate-900">{invoice.doctor}</div>
-                <div className="text-sm text-slate-500">{invoice.diagnosis}</div>
-              </div>
-            </div>
+          <CardContent className="pt-6 space-y-4">
+            <div className="space-y-3">
+                {/* Examination Fee */}
+                {examinationItems.length > 0 && (
+                  <div className="flex justify-between py-2">
+                    <span className="text-slate-600">Phí khám bệnh</span>
+                    <span className="font-semibold text-slate-900">
+                      {invoice.examinationFee.toLocaleString("vi-VN")} VND
+                    </span>
+                  </div>
+                )}
 
-            <div className="border-t pt-6">
-              <h3 className="font-semibold text-lg text-slate-900 mb-4">Chi tiết thanh toán</h3>
-
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between py-2">
-                  <span className="text-slate-600">Phí khám bệnh</span>
-                  <span className="font-semibold text-slate-900">{invoice.consultationFee.toLocaleString()} VND</span>
-                </div>
-
-                {/* Medication Toggle */}
-                <div className="flex items-center justify-between py-3 bg-blue-50/50 rounded-lg px-4">
-                  <Label htmlFor="medication-toggle" className="text-slate-700 font-medium cursor-pointer">
-                    Sử dụng thuốc
-                  </Label>
-                  <Switch id="medication-toggle" checked={hasMedication} onCheckedChange={setHasMedication} />
-                </div>
-
-                {hasMedication && (
+                {/* Medicine Items */}
+                {medicineItems.length > 0 && (
                   <div className="border rounded-lg p-4 space-y-2">
                     <div className="font-medium text-slate-900 mb-3">Danh sách thuốc:</div>
-                    {invoice.medications.map((med, idx) => (
-                      <div key={idx} className="flex justify-between py-2 border-b last:border-0">
+                    {medicineItems.map((item) => (
+                      <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
                         <div className="flex-1">
-                          <div className="font-medium text-slate-900">{med.name}</div>
+                          <div className="font-medium text-slate-900">{item.description}</div>
                           <div className="text-sm text-slate-500">
-                            {med.quantity} x {med.unitPrice.toLocaleString()} VND
+                            {item.quantity} x {item.unitPrice.toLocaleString("vi-VN")} VND
                           </div>
                         </div>
-                        <div className="font-semibold text-slate-900">{med.total.toLocaleString()} VND</div>
+                        <div className="font-semibold text-slate-900">
+                          {item.subtotal.toLocaleString("vi-VN")} VND
+                        </div>
                       </div>
                     ))}
                     <div className="flex justify-between py-2 pt-3 border-t">
                       <span className="text-slate-600">Tổng tiền thuốc</span>
-                      <span className="font-semibold text-slate-900">{medicationTotal.toLocaleString()} VND</span>
+                      <span className="font-semibold text-slate-900">
+                        {invoice.medicineTotalAmount.toLocaleString("vi-VN")} VND
+                      </span>
                     </div>
+                  </div>
+                )}
+
+                {/* Discount */}
+                {invoice.discount > 0 && (
+                  <div className="flex justify-between py-2 text-red-600">
+                    <span>Giảm giá</span>
+                    <span className="font-semibold">-{invoice.discount.toLocaleString("vi-VN")} VND</span>
+                  </div>
+                )}
+
+                {/* Payment Summary */}
+                {invoice.paymentStatus !== PaymentStatus.UNPAID && (
+                  <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Tổng cộng</span>
+                      <span className="font-semibold text-slate-900">
+                        {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Đã thanh toán</span>
+                      <span className="font-semibold text-emerald-600">
+                        {invoice.paidAmount.toLocaleString("vi-VN")} VND
+                      </span>
+                    </div>
+                    {remainingAmount > 0 && (
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="text-slate-700 font-medium">Còn lại</span>
+                        <span className="font-bold text-amber-600">
+                          {remainingAmount.toLocaleString("vi-VN")} VND
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
-              <div className="border-t-2 pt-4 flex justify-between items-center">
-                <span className="text-xl font-bold text-slate-900">Tổng cộng</span>
-                <span className="text-2xl font-bold text-blue-600">{totalAmount.toLocaleString()} VND</span>
-              </div>
-            </div>
+              {invoice.paymentStatus === PaymentStatus.UNPAID && (
+                <div className="pt-4 border-t">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-slate-900">Tổng cộng</span>
+                    <span className="text-2xl font-bold text-blue-600">
+                      {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                    </span>
+                  </div>
+                </div>
+              )}
 
-            {!isPaid && (
-              <div className="mt-6">
-                <Button
-                  onClick={handleConfirmPayment}
-                  className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-                  size="lg"
-                >
-                  <Check className="h-5 w-5 mr-2" />
-                  Xác nhận thanh toán
-                </Button>
-              </div>
-            )}
+              {/* Actions */}
+              {canEdit && invoice.paymentStatus !== PaymentStatus.PAID && (
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => setIsPaymentDialogOpen(true)}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+                    size="lg"
+                  >
+                    <DollarSign className="h-5 w-5 mr-2" />
+                    Thêm thanh toán
+                  </Button>
+                </div>
+              )}
           </CardContent>
         </Card>
+
+        {/* Payment History Card */}
+        {invoice.payments && invoice.payments.length > 0 && (
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-cyan-50/50 border-b">
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-cyan-600" />
+                Lịch sử thanh toán
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                {invoice.payments.map((payment) => (
+                  <div key={payment.id} className="flex justify-between items-center py-3 border-b last:border-0">
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        {payment.amount.toLocaleString("vi-VN")} VND
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        {getPaymentMethodLabel(payment.paymentMethod)} -{" "}
+                        {new Date(payment.paymentDate).toLocaleString("vi-VN")}
+                      </div>
+                      {payment.reference && (
+                        <div className="text-xs text-slate-400 mt-1">Mã tham chiếu: {payment.reference}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Note Card */}
+        {invoice.note && (
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-orange-50/50 border-b">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-orange-600" />
+                Ghi chú
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="text-slate-700">{invoice.note}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa hóa đơn</DialogTitle>
+              <DialogDescription>Cập nhật giảm giá và ghi chú cho hóa đơn</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="discount">Giảm giá (VND)</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  min="0"
+                  value={editDiscount}
+                  onChange={(e) => setEditDiscount(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="note">Ghi chú</Label>
+                <Textarea
+                  id="note"
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  placeholder="Nhập ghi chú..."
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button onClick={handleUpdateInvoice} disabled={isLoadingUpdate}>
+                {isLoadingUpdate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Lưu
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Dialog */}
+        <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Thêm thanh toán</DialogTitle>
+              <DialogDescription>
+                Số tiền còn lại: {remainingAmount.toLocaleString("vi-VN")} VND
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="paymentAmount">Số tiền (VND) *</Label>
+                <Input
+                  id="paymentAmount"
+                  type="number"
+                  min="0.01"
+                  max={remainingAmount}
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="Nhập số tiền"
+                />
+              </div>
+              <div>
+                <Label htmlFor="paymentMethod">Phương thức thanh toán *</Label>
+                <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PaymentMethod.CASH}>Tiền mặt</SelectItem>
+                    <SelectItem value={PaymentMethod.BANK_TRANSFER}>Chuyển khoản</SelectItem>
+                    <SelectItem value={PaymentMethod.QR_CODE}>QR Code</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="paymentReference">Mã tham chiếu</Label>
+                <Input
+                  id="paymentReference"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="Nhập mã tham chiếu (nếu có)"
+                />
+              </div>
+              <div>
+                <Label htmlFor="paymentNote">Ghi chú</Label>
+                <Textarea
+                  id="paymentNote"
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  placeholder="Nhập ghi chú..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button onClick={handleAddPayment} disabled={isLoadingPayment}>
+                {isLoadingPayment ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Xác nhận
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
-  )
+      </div>
+    )
+
+  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  if (role === "admin" || role === "1") {
+    return <AdminSidebar>{content}</AdminSidebar>
+  } else if (role === "doctor" || role === "4") {
+    return <DoctorSidebar>{content}</DoctorSidebar>
+  } else if (role === "receptionist" || role === "2") {
+    return <ReceptionistSidebar>{content}</ReceptionistSidebar>
+  } else if (role === "patient" || role === "3") {
+    return <PatientSidebar>{content}</PatientSidebar>
+  }
+
+  return null
 }

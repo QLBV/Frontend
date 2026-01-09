@@ -5,14 +5,16 @@ import {
   LayoutDashboard, 
   ClipboardList,   
   CalendarDays,    
-  FileText         
+  FileText,
+  UserCheck
 } from 'lucide-react';
 
 interface ReceptionistLayoutProps {
   children?: ReactNode;
+  userName?: string;
 }
 
-const ReceptionistSidebar = ({ children }: ReceptionistLayoutProps) => {
+const ReceptionistSidebar = ({ children, userName }: ReceptionistLayoutProps) => {
   const location = useLocation(); 
 
   const receptionistMenu = [
@@ -40,13 +42,25 @@ const ReceptionistSidebar = ({ children }: ReceptionistLayoutProps) => {
       items: [
         { label: "Invoice", href: "/invoices", icon: <FileText size={24} strokeWidth={2.5} /> }
       ]
+    },
+    {
+      title: "Attendance",
+      items: [
+        { label: "Chấm công", href: "/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    {
+      title: "Payroll",
+      items: [
+        { label: "Lương của tôi", href: "/my-payrolls", icon: <FileText size={24} strokeWidth={2.5} /> }
+      ]
     }
   ];
 
   return (
     <SidebarLayout 
       logoText="HealthCare"
-      userName="Receptionist"
+      userName={userName || "Receptionist"}
       pageContent={
         <div className="h-full space-y-6">
           {children} 

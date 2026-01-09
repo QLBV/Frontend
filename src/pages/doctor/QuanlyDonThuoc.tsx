@@ -1,9 +1,29 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import DoctorSidebar from '@/components/sidebar/doctor'
+import api from "@/lib/api"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { 
   ArrowLeft, 
   Plus,
@@ -17,7 +37,9 @@ import {
   Pill,
   FileText,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Filter,
+  X
 } from "lucide-react"
 
 interface Medicine {
@@ -36,10 +58,18 @@ interface Prescription {
   patientId: number
   patientName: string
   visitId: number
+  status?: string
   medicines: Medicine[]
   note: string
   createdAt: string
   updatedAt: string
+}
+
+interface PaginationInfo {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 export default function QuanlyDonThuoc() {
@@ -52,122 +82,111 @@ export default function QuanlyDonThuoc() {
   const [showDetails, setShowDetails] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<number | null>(null)
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<string>("ALL")
+  const [patientIdFilter, setPatientIdFilter] = useState<string>("")
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 0
+  })
 
-  // Fetch prescriptions on mount
+  // Fetch prescriptions when filters or pagination change
   useEffect(() => {
     fetchPrescriptions()
-  }, [])
+  }, [currentPage, pageSize, statusFilter, patientIdFilter])
 
   const fetchPrescriptions = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      // Mock data thay vì gọi API
-      const mockPrescriptions: Prescription[] = [
-        {
-          id: 1,
-          patientId: 1,
-          patientName: "Nguyễn Văn A",
-          visitId: 1,
-          medicines: [
-            {
-              medicineId: 1,
-              name: "Paracetamol 500mg",
-              dosageMorning: 1,
-              dosageNoon: 1,
-              dosageAfternoon: 1,
-              dosageEvening: 1,
-              quantity: 20,
-              instruction: "Uống sau ăn, ngày 3 lần"
-            },
-            {
-              medicineId: 2,
-              name: "Amoxicillin 250mg",
-              dosageMorning: 1,
-              dosageNoon: 0,
-              dosageAfternoon: 1,
-              dosageEvening: 0,
-              quantity: 14,
-              instruction: "Uống trước ăn 30 phút"
-            }
-          ],
-          note: "Uống đủ nước, nghỉ ngơi nhiều",
-          createdAt: "2024-12-27T08:30:00Z",
-          updatedAt: "2024-12-27T08:30:00Z"
-        },
-        {
-          id: 2,
-          patientId: 2,
-          patientName: "Trần Thị B",
-          visitId: 2,
-          medicines: [
-            {
-              medicineId: 3,
-              name: "Ibuprofen 400mg",
-              dosageMorning: 1,
-              dosageNoon: 0,
-              dosageAfternoon: 0,
-              dosageEvening: 1,
-              quantity: 10,
-              instruction: "Uống khi đau"
-            }
-          ],
-          note: "Tái khám sau 1 tuần",
-          createdAt: "2024-12-26T14:15:00Z",
-          updatedAt: "2024-12-26T14:15:00Z"
-        },
-        {
-          id: 3,
-          patientId: 3,
-          patientName: "Lê Văn C",
-          visitId: 3,
-          medicines: [
-            {
-              medicineId: 4,
-              name: "Vitamin C 1000mg",
-              dosageMorning: 1,
-              dosageNoon: 0,
-              dosageAfternoon: 0,
-              dosageEvening: 0,
-              quantity: 30,
-              instruction: "Uống sau bữa sáng"
-            },
-            {
-              medicineId: 5,
-              name: "Cetirizine 10mg",
-              dosageMorning: 0,
-              dosageNoon: 0,
-              dosageAfternoon: 0,
-              dosageEvening: 1,
-              quantity: 7,
-              instruction: "Uống trước khi ngủ"
-            }
-          ],
-          note: "Tránh tiếp xúc với chất gây dị ứng",
-          createdAt: "2024-12-25T10:45:00Z",
-          updatedAt: "2024-12-25T10:45:00Z"
+      // Build query parameters
+      const params: any = {
+        page: currentPage,
+        limit: pageSize
+      }
+      
+      if (statusFilter && statusFilter !== "ALL") {
+        params.status = statusFilter
+      }
+      
+      if (patientIdFilter) {
+        params.patientId = parseInt(patientIdFilter)
+      }
+      
+      // Fetch from API with filters
+      const response = await api.get('/prescriptions', { params })
+      
+      if (response.data.success) {
+        // Transform backend data to frontend format
+        const transformedPrescriptions: Prescription[] = response.data.data.map((prescription: any) => ({
+          id: prescription.id,
+          patientId: prescription.patientId,
+          patientName: prescription.patient?.user?.fullName || 'N/A',
+          visitId: prescription.visitId,
+          status: prescription.status,
+          medicines: prescription.details?.map((detail: any) => ({
+            medicineId: detail.medicineId,
+            name: detail.Medicine?.name || detail.medicine?.name || 'Unknown',
+            dosageMorning: detail.dosageMorning || 0,
+            dosageNoon: detail.dosageNoon || 0,
+            dosageAfternoon: detail.dosageAfternoon || 0,
+            dosageEvening: detail.dosageEvening || 0,
+            quantity: detail.quantity || 0,
+            instruction: detail.instruction || ''
+          })) || [],
+          note: prescription.note || '',
+          createdAt: prescription.createdAt,
+          updatedAt: prescription.updatedAt
+        }))
+        
+        setPrescriptions(transformedPrescriptions)
+        
+        // Update pagination info
+        if (response.data.pagination) {
+          setPagination(response.data.pagination)
         }
-      ]
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      setPrescriptions(mockPrescriptions)
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch prescriptions')
+      }
     } catch (err: any) {
       console.error('Error fetching prescriptions:', err)
-      setError('Lỗi khi tải dữ liệu')
+      const errorMessage = err.response?.data?.message || err.message || 'Lỗi khi tải dữ liệu'
+      setError(errorMessage)
+      toast.error(errorMessage)
+      
+      // Fallback to empty array instead of mock data
+      setPrescriptions([])
     } finally {
       setLoading(false)
     }
   }
 
-  // Filter prescriptions based on search
+  // Filter prescriptions based on search (client-side for name/ID search)
   const filteredPrescriptions = prescriptions.filter(prescription =>
+    searchTerm === "" || 
     prescription.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     prescription.id.toString().includes(searchTerm) ||
     prescription.patientId.toString().includes(searchTerm)
   )
+  
+  // Reset filters
+  const handleResetFilters = () => {
+    setStatusFilter("ALL")
+    setPatientIdFilter("")
+    setSearchTerm("")
+    setCurrentPage(1)
+  }
+  
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== "ALL" || patientIdFilter !== "" || searchTerm !== ""
 
   // View prescription details
   const handleViewDetails = (prescription: Prescription) => {
@@ -180,24 +199,31 @@ export default function QuanlyDonThuoc() {
     navigate(`/doctor/prescriptions/${prescriptionId}/edit`)
   }
 
-  // Delete prescription
+  // Delete prescription (cancel via API)
   const handleDelete = async (prescriptionId: number) => {
-    if (!window.confirm('Bạn có chắc muốn xóa đơn thuốc này?')) {
+    if (!window.confirm('Bạn có chắc muốn hủy đơn thuốc này?')) {
       return
     }
 
     try {
       setDeleting(prescriptionId)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Remove from local state
-      setPrescriptions(prescriptions.filter(p => p.id !== prescriptionId))
       setError(null)
+      
+      // Call API to cancel prescription
+      const response = await api.post(`/prescriptions/${prescriptionId}/cancel`)
+      
+      if (response.data.success) {
+        // Refresh prescriptions list after successful deletion
+        fetchPrescriptions()
+        toast.success('Đã hủy đơn thuốc thành công')
+      } else {
+        throw new Error(response.data.message || 'Không thể hủy đơn thuốc')
+      }
     } catch (err: any) {
       console.error('Error deleting prescription:', err)
-      setError('Lỗi khi xóa đơn thuốc')
+      const errorMessage = err.response?.data?.message || 'Lỗi khi hủy đơn thuốc'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setDeleting(null)
     }
@@ -215,6 +241,24 @@ export default function QuanlyDonThuoc() {
   // Calculate total dosage
   const calculateTotalDosage = (medicine: Medicine) => {
     return medicine.dosageMorning + medicine.dosageNoon + medicine.dosageAfternoon + medicine.dosageEvening
+  }
+  
+  // Get status badge
+  const getStatusBadge = (status?: string) => {
+    if (!status) return null
+    
+    switch (status) {
+      case 'DRAFT':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Nháp</Badge>
+      case 'LOCKED':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Đã khóa</Badge>
+      case 'DISPENSED':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Đã phát thuốc</Badge>
+      case 'CANCELLED':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Đã hủy</Badge>
+      default:
+        return <Badge variant="secondary">{status}</Badge>
+    }
   }
 
   if (loading) {
@@ -250,7 +294,7 @@ export default function QuanlyDonThuoc() {
           </div>
           
           <Button
-            onClick={() => navigate("/doctor/patients")}
+            onClick={() => navigate("/doctor/medicalList")}
             className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -269,9 +313,29 @@ export default function QuanlyDonThuoc() {
           </div>
         )}
 
-        {/* Search Bar */}
+        {/* Filters and Search */}
         <Card className="border-0 shadow-lg">
-          <CardContent className="p-4">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-blue-600" />
+                Bộ Lọc & Tìm Kiếm
+              </CardTitle>
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Xóa bộ lọc
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Search Bar */}
             <div className="relative">
               <Input
                 placeholder="Tìm kiếm theo tên bệnh nhân, ID đơn thuốc..."
@@ -281,33 +345,101 @@ export default function QuanlyDonThuoc() {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
+            
+            {/* Filter Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="status-filter" className="text-sm font-medium text-slate-700">
+                  Trạng thái
+                </Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger id="status-filter" className="w-full">
+                    <SelectValue placeholder="Tất cả trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
+                    <SelectItem value="DRAFT">Nháp</SelectItem>
+                    <SelectItem value="LOCKED">Đã khóa</SelectItem>
+                    <SelectItem value="DISPENSED">Đã phát thuốc</SelectItem>
+                    <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Patient ID Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="patient-id-filter" className="text-sm font-medium text-slate-700">
+                  ID Bệnh nhân
+                </Label>
+                <Input
+                  id="patient-id-filter"
+                  type="number"
+                  placeholder="Nhập ID bệnh nhân..."
+                  value={patientIdFilter}
+                  onChange={(e) => {
+                    setPatientIdFilter(e.target.value)
+                    setCurrentPage(1) // Reset to first page when filter changes
+                  }}
+                  className="border-gray-300 focus:border-blue-500"
+                />
+              </div>
+              
+              {/* Page Size Selector */}
+              <div className="space-y-2">
+                <Label htmlFor="page-size" className="text-sm font-medium text-slate-700">
+                  Số lượng mỗi trang
+                </Label>
+                <Select 
+                  value={pageSize.toString()} 
+                  onValueChange={(value) => {
+                    setPageSize(parseInt(value))
+                    setCurrentPage(1) // Reset to first page when page size changes
+                  }}
+                >
+                  <SelectTrigger id="page-size" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Prescriptions List */}
-        {filteredPrescriptions.length === 0 ? (
+        {filteredPrescriptions.length === 0 && !loading ? (
           <Card className="border-0 shadow-lg">
             <CardContent className="p-12">
               <div className="text-center">
                 <Pill className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                 <p className="text-slate-600 font-medium">
-                  {searchTerm ? "Không tìm thấy đơn thuốc phù hợp" : "Chưa có đơn thuốc nào"}
+                  {hasActiveFilters ? "Không tìm thấy đơn thuốc phù hợp" : "Chưa có đơn thuốc nào"}
                 </p>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {filteredPrescriptions.map((prescription) => (
+          <>
+            <div className="grid gap-4">
+              {filteredPrescriptions.map((prescription) => (
               <Card key={prescription.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-6">
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-lg font-bold text-slate-900">
-                            Đơn Thuốc #{prescription.id}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-bold text-slate-900">
+                              Đơn Thuốc #{prescription.id}
+                            </h3>
+                            {getStatusBadge(prescription.status)}
+                          </div>
                           <p className="text-sm text-slate-600 mt-1 flex items-center gap-2">
                             <User className="w-4 h-4" />
                             {prescription.patientName} (ID: {prescription.patientId})
@@ -392,8 +524,90 @@ export default function QuanlyDonThuoc() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <Card className="border-0 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-600">
+                      Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, pagination.total)} trong tổng số {pagination.total} đơn thuốc
+                    </div>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              if (currentPage > 1) {
+                                setCurrentPage(currentPage - 1)
+                                window.scrollTo({ top: 0, behavior: 'smooth' })
+                              }
+                            }}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        
+                        {/* Page Numbers */}
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                          let pageNum: number
+                          if (pagination.totalPages <= 5) {
+                            pageNum = i + 1
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1
+                          } else if (currentPage >= pagination.totalPages - 2) {
+                            pageNum = pagination.totalPages - 4 + i
+                          } else {
+                            pageNum = currentPage - 2 + i
+                          }
+                          
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setCurrentPage(pageNum)
+                                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                                }}
+                                isActive={currentPage === pageNum}
+                                className="cursor-pointer"
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        })}
+                        
+                        {pagination.totalPages > 5 && currentPage < pagination.totalPages - 2 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        
+                        <PaginationItem>
+                          <PaginationNext
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              if (currentPage < pagination.totalPages) {
+                                setCurrentPage(currentPage + 1)
+                                window.scrollTo({ top: 0, behavior: 'smooth' })
+                              }
+                            }}
+                            className={currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
 
         {/* Details Modal */}

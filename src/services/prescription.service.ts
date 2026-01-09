@@ -13,7 +13,7 @@ export class PrescriptionService {
   // Get prescription by ID
   static async getPrescriptionById(id: number): Promise<PrescriptionApiResponse> {
     try {
-      const response = await api.get(`/api/prescriptions/${id}`)
+      const response = await api.get(`/prescriptions/${id}`)
       return response.data
     } catch (error: any) {
       throw error
@@ -23,7 +23,7 @@ export class PrescriptionService {
   // Get prescriptions by patient ID
   static async getPrescriptionsByPatient(patientId: number): Promise<PrescriptionApiResponse> {
     try {
-      const response = await api.get(`/api/prescriptions/patient/${patientId}`)
+      const response = await api.get(`/prescriptions/patient/${patientId}`)
       return response.data
     } catch (error: any) {
       throw error
@@ -33,7 +33,7 @@ export class PrescriptionService {
   // Get prescription by visit ID
   static async getPrescriptionByVisit(visitId: number): Promise<PrescriptionApiResponse> {
     try {
-      const response = await api.get(`/api/prescriptions/visit/${visitId}`)
+      const response = await api.get(`/prescriptions/visit/${visitId}`)
       return response.data
     } catch (error: any) {
       throw error
@@ -56,7 +56,7 @@ export class PrescriptionService {
     note?: string
   }): Promise<PrescriptionApiResponse> {
     try {
-      const response = await api.post('/api/prescriptions', data)
+      const response = await api.post('/prescriptions', data)
       return response.data
     } catch (error: any) {
       throw error
@@ -77,7 +77,7 @@ export class PrescriptionService {
     note?: string
   }): Promise<PrescriptionApiResponse> {
     try {
-      const response = await api.put(`/api/prescriptions/${id}`, data)
+      const response = await api.put(`/prescriptions/${id}`, data)
       return response.data
     } catch (error: any) {
       throw error
@@ -87,7 +87,17 @@ export class PrescriptionService {
   // Cancel prescription
   static async cancelPrescription(id: number): Promise<PrescriptionApiResponse> {
     try {
-      const response = await api.post(`/api/prescriptions/${id}/cancel`)
+      const response = await api.post(`/prescriptions/${id}/cancel`)
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  }
+
+  // Delete prescription (hard delete)
+  static async deletePrescription(id: number): Promise<PrescriptionApiResponse> {
+    try {
+      const response = await api.delete(`/prescriptions/${id}`)
       return response.data
     } catch (error: any) {
       throw error
@@ -97,9 +107,19 @@ export class PrescriptionService {
   // Export prescription as PDF
   static async exportPrescriptionPDF(id: number): Promise<Blob> {
     try {
-      const response = await api.get(`/api/prescriptions/${id}/pdf`, {
+      const response = await api.get(`/prescriptions/${id}/pdf`, {
         responseType: 'blob'
       })
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  }
+
+  // Dispense prescription (Receptionist/Admin)
+  static async dispensePrescription(id: number): Promise<PrescriptionApiResponse> {
+    try {
+      const response = await api.put(`/prescriptions/${id}/dispense`)
       return response.data
     } catch (error: any) {
       throw error

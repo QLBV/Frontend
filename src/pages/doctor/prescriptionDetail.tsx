@@ -1,9 +1,21 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { useAuth } from "@/auth/authContext"
 import DoctorSidebar from '@/components/sidebar/doctor'
+import ReceptionistSidebar from '@/components/sidebar/recep'
+import AdminSidebar from '@/components/sidebar/admin'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
 import { 
   ArrowLeft, 
   User,
@@ -38,12 +50,16 @@ import {
 export default function PrescriptionDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   
   const [prescription, setPrescription] = useState<Prescription | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [exportingPDF, setExportingPDF] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isDispensing, setIsDispensing] = useState(false)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [dispenseDialogOpen, setDispenseDialogOpen] = useState(false)
 
   // Helper functions for JSX elements
   const getStatusBadge = (status: string) => {
@@ -98,114 +114,18 @@ export default function PrescriptionDetail() {
             return
           }
         } catch (apiError: any) {
-          console.warn('API call failed, falling back to mock data:', apiError.message)
+          console.error('Error fetching prescription:', apiError)
           
-          // If API fails, use mock data for development
-          if (apiError.response?.status === 404 || apiError.response?.status === 500) {
-            console.log('Using mock data for development...')
-            
-            // Mock prescription data for development
-            const mockPrescription: Prescription = {
-              id: parseInt(id),
-              prescriptionCode: `RX-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(id).padStart(5, '0')}`,
-              visitId: 1,
-              doctorId: 1,
-              patientId: 1,
-              totalAmount: 285000,
-              status: "DRAFT",
-              note: "Bệnh nhân cần uống đủ nước, nghỉ ngơi nhiều. Tái khám sau 1 tuần nếu không có cải thiện.",
-              createdAt: "2024-12-27T08:30:00Z",
-              updatedAt: "2024-12-27T08:30:00Z",
-              patient: {
-                id: 1,
-                fullName: "Nguyễn Văn A",
-                dateOfBirth: "1990-05-15",
-                gender: "MALE",
-                phoneNumber: "0123456789",
-                email: "nguyenvana@email.com",
-                address: "123 Đường ABC, Phường XYZ, Quận 1, TP.HCM",
-                cccd: "123456789012"
-              },
-              doctor: {
-                id: 1,
-                fullName: "BS. Trần Thị Lan",
-                specialty: "Nội khoa",
-                degree: "Thạc sĩ Y khoa",
-                position: "Bác sĩ chuyên khoa I",
-                phoneNumber: "0987654321",
-                email: "bs.tranthilan@hospital.com"
-              },
-              visit: {
-                id: 1,
-                checkInTime: "2024-12-27T08:00:00Z",
-                diagnosis: "Viêm họng cấp tính, cảm cúm",
-                symptoms: "Đau họng, sốt nhẹ, ho khan, mệt mỏi",
-                vitalSigns: {
-                  bloodPressure: "120/80",
-                  heartRate: "72",
-                  temperature: "37.5",
-                  weight: "70"
-                }
-              },
-              details: [
-                {
-                  id: 1,
-                  prescriptionId: parseInt(id),
-                  medicineId: 1,
-                  medicineName: "Paracetamol 500mg",
-                  quantity: 20,
-                  unit: "viên",
-                  unitPrice: 2500,
-                  dosageMorning: 1,
-                  dosageNoon: 1,
-                  dosageAfternoon: 1,
-                  dosageEvening: 1,
-                  instruction: "Uống sau ăn, ngày 3 lần. Uống khi sốt hoặc đau.",
-                  createdAt: "2024-12-27T08:30:00Z",
-                  updatedAt: "2024-12-27T08:30:00Z"
-                },
-                {
-                  id: 2,
-                  prescriptionId: parseInt(id),
-                  medicineId: 2,
-                  medicineName: "Amoxicillin 250mg",
-                  quantity: 21,
-                  unit: "viên",
-                  unitPrice: 8000,
-                  dosageMorning: 1,
-                  dosageNoon: 1,
-                  dosageAfternoon: 1,
-                  dosageEvening: 0,
-                  instruction: "Uống trước ăn 30 phút, ngày 3 lần trong 7 ngày. Không được bỏ liều.",
-                  createdAt: "2024-12-27T08:30:00Z",
-                  updatedAt: "2024-12-27T08:30:00Z"
-                },
-                {
-                  id: 3,
-                  prescriptionId: parseInt(id),
-                  medicineId: 3,
-                  medicineName: "Vitamin C 1000mg",
-                  quantity: 10,
-                  unit: "viên",
-                  unitPrice: 3500,
-                  dosageMorning: 1,
-                  dosageNoon: 0,
-                  dosageAfternoon: 0,
-                  dosageEvening: 0,
-                  instruction: "Uống sau bữa sáng, ngày 1 lần.",
-                  createdAt: "2024-12-27T08:30:00Z",
-                  updatedAt: "2024-12-27T08:30:00Z"
-                }
-              ]
-            }
-            
-            setPrescription(mockPrescription)
-            console.log('Mock prescription loaded successfully:', mockPrescription)
+          if (apiError.response?.status === 404) {
+            toast.error('Không tìm thấy đơn thuốc')
+            navigate('/doctor/prescriptions')
             return
           }
           
-          // For other errors, throw them
-          throw apiError
+          const errorMessage = apiError.response?.data?.message || 'Không thể tải đơn thuốc'
+          toast.error(errorMessage)
+          setPrescription(null)
+          setError(errorMessage)
         }
         
       } catch (err: any) {
@@ -255,6 +175,7 @@ export default function PrescriptionDetail() {
       window.URL.revokeObjectURL(url)
       
       setSuccessMessage('Đã tải xuống PDF thành công!')
+      toast.success('Đã tải xuống PDF thành công!')
       
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -276,12 +197,8 @@ export default function PrescriptionDetail() {
   }
 
   // Handle cancel prescription
-  const handleCancelPrescription = async () => {
+  const handleCancelConfirm = async () => {
     if (!prescription) return
-    
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn thuốc này? Hành động này không thể hoàn tác.')) {
-      return
-    }
 
     try {
       setError(null)
@@ -293,24 +210,33 @@ export default function PrescriptionDetail() {
         // Update prescription status locally
         setPrescription(prev => prev ? { ...prev, status: 'CANCELLED' } : null)
         setSuccessMessage('Đã hủy đơn thuốc thành công!')
+        toast.success('Đã hủy đơn thuốc thành công!')
+        setCancelDialogOpen(false)
         
         // Clear success message after 3 seconds
         setTimeout(() => {
           setSuccessMessage(null)
         }, 3000)
       } else {
-        setError(response.message || 'Không thể hủy đơn thuốc')
+        const errorMsg = response.message || 'Không thể hủy đơn thuốc'
+        setError(errorMsg)
+        toast.error(errorMsg)
       }
     } catch (error: any) {
       console.error('Error cancelling prescription:', error)
       if (error.response?.status === 400) {
         setError('Không thể hủy đơn thuốc đã được thanh toán')
+        toast.error('Không thể hủy đơn thuốc đã được thanh toán')
       } else if (error.response?.status === 404) {
         setError('Không tìm thấy đơn thuốc')
+        toast.error('Không tìm thấy đơn thuốc')
       } else if (error.response?.status === 403) {
         setError('Bạn không có quyền hủy đơn thuốc này')
+        toast.error('Bạn không có quyền hủy đơn thuốc này')
       } else {
-        setError(error.response?.data?.message || 'Không thể hủy đơn thuốc. Vui lòng thử lại.')
+        const errorMsg = error.response?.data?.message || 'Không thể hủy đơn thuốc. Vui lòng thử lại.'
+        setError(errorMsg)
+        toast.error(errorMsg)
       }
     }
   }
@@ -323,44 +249,138 @@ export default function PrescriptionDetail() {
     navigate(`/doctor/prescriptions/${prescription.id}/edit`)
   }
 
+  // Handle dispense prescription (Receptionist/Admin)
+  const handleDispenseConfirm = async () => {
+    if (!prescription) return
+
+    try {
+      setIsDispensing(true)
+      setError(null)
+      setSuccessMessage(null)
+
+      const response = await PrescriptionService.dispensePrescription(prescription.id)
+
+      if (response.success) {
+        // Use response data if available, otherwise update status manually
+        if (response.data) {
+          const transformedPrescription = PrescriptionService.transformPrescriptionData(response.data)
+          setPrescription(transformedPrescription)
+        } else {
+          setPrescription((prev) =>
+            prev ? { ...prev, status: "DISPENSED" as Prescription["status"] } : null
+          )
+        }
+        setSuccessMessage("Đã phát thuốc thành công!")
+        toast.success("Đã phát thuốc thành công!")
+        setDispenseDialogOpen(false)
+
+        setTimeout(() => {
+          setSuccessMessage(null)
+        }, 3000)
+      } else {
+        const errorMsg = response.message || "Không thể phát thuốc"
+        setError(errorMsg)
+        toast.error(errorMsg)
+      }
+    } catch (error: any) {
+      console.error("Error dispensing prescription:", error)
+      if (error.response?.status === 400) {
+        const errorMsg = "Không thể phát thuốc cho đơn thuốc đã được phát hoặc đã hủy"
+        setError(errorMsg)
+        toast.error(errorMsg)
+      } else if (error.response?.status === 404) {
+        const errorMsg = "Không tìm thấy đơn thuốc"
+        setError(errorMsg)
+        toast.error(errorMsg)
+      } else if (error.response?.status === 403) {
+        const errorMsg = "Bạn không có quyền phát thuốc"
+        setError(errorMsg)
+        toast.error(errorMsg)
+      } else {
+        const errorMsg = error.response?.data?.message || "Không thể phát thuốc. Vui lòng thử lại."
+        setError(errorMsg)
+        toast.error(errorMsg)
+      }
+    } finally {
+      setIsDispensing(false)
+    }
+  }
+
+  // Get sidebar based on role
+  const getSidebarComponent = () => {
+    if (!user) return DoctorSidebar
+    const role = String(user.roleId || user.role || "").toLowerCase()
+    switch (role) {
+      case "admin":
+      case "1":
+        return AdminSidebar
+      case "doctor":
+      case "2":
+        return DoctorSidebar
+      case "receptionist":
+      case "4":
+        return ReceptionistSidebar
+      default:
+        return DoctorSidebar
+    }
+  }
+
+  const canEdit = prescription?.status === "DRAFT" && (user?.roleId === 2) // Doctor
+  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  const canCancel = prescription?.status === "DRAFT" && (user?.roleId === 4) // Doctor
+  const canDispense =
+    prescription?.status === "LOCKED" &&
+    (user?.roleId === 1 || user?.roleId === 2) // Admin or Receptionist
+
   // Handle print prescription
   const handlePrint = () => {
     if (!prescription) return
     printPrescription(prescription, setError)
   }
 
+  const SidebarComponent = getSidebarComponent()
+  const userName = user?.fullName || user?.email || ""
+
+  if (!SidebarComponent) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <DoctorSidebar>
+      <SidebarComponent userName={userName}>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
             <p className="text-slate-600">Đang tải chi tiết đơn thuốc...</p>
           </div>
         </div>
-      </DoctorSidebar>
+      </SidebarComponent>
     )
   }
 
   if (error || !prescription) {
     return (
-      <DoctorSidebar>
+      <SidebarComponent userName={userName}>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
             <p className="text-lg font-medium text-slate-900 mb-2">Lỗi tải dữ liệu</p>
             <p className="text-slate-600 mb-4">{error || 'Không tìm thấy đơn thuốc'}</p>
-            <Button onClick={() => navigate("/doctor/prescriptions")}>
-              Quay lại danh sách
+            <Button onClick={() => navigate(-1)}>
+              Quay lại
             </Button>
           </div>
         </div>
-      </DoctorSidebar>
+      </SidebarComponent>
     )
   }
 
   return (
-    <DoctorSidebar>
+    <SidebarComponent userName={userName}>
       <div className="space-y-6">
         
         {/* Header */}
@@ -444,7 +464,7 @@ export default function PrescriptionDetail() {
                   <Printer className="w-4 h-4 mr-2" />
                   In đơn
                 </Button>
-                {prescription.status === 'DRAFT' && (
+                {canEdit && (
                   <Button 
                     size="sm" 
                     className="bg-blue-600 hover:bg-blue-700"
@@ -452,6 +472,27 @@ export default function PrescriptionDetail() {
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Chỉnh sửa
+                  </Button>
+                )}
+                {canCancel && (
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => setCancelDialogOpen(true)}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Hủy đơn
+                  </Button>
+                )}
+                {canDispense && (
+                  <Button 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => setDispenseDialogOpen(true)}
+                    disabled={isDispensing}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Phát thuốc
                   </Button>
                 )}
               </div>
@@ -776,7 +817,7 @@ export default function PrescriptionDetail() {
               <Button
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50"
-                onClick={handleCancelPrescription}
+                onClick={() => setCancelDialogOpen(true)}
               >
                 Hủy đơn thuốc
               </Button>
@@ -790,7 +831,77 @@ export default function PrescriptionDetail() {
             </>
           )}
         </div>
+
+        {/* Cancel Confirmation Dialog */}
+        <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận hủy đơn thuốc</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn hủy đơn thuốc <strong>{prescription.prescriptionCode}</strong>? 
+                Hành động này không thể hoàn tác.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setCancelDialogOpen(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelConfirm}
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Xác nhận hủy
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dispense Confirmation Dialog */}
+        <Dialog open={dispenseDialogOpen} onOpenChange={setDispenseDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận phát thuốc</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn phát thuốc cho đơn thuốc <strong>{prescription.prescriptionCode}</strong>?
+                <br />
+                <span className="font-semibold text-green-600">
+                  Tổng tiền: {formatCurrency(prescription.totalAmount)}
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDispenseDialogOpen(false)}
+                disabled={isDispensing}
+              >
+                Hủy
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleDispenseConfirm}
+                disabled={isDispensing}
+              >
+                {isDispensing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Xác nhận phát thuốc
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </DoctorSidebar>
+    </SidebarComponent>
   )
 }

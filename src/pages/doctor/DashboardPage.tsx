@@ -1,12 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import { CalendarIcon, Users, Clock, Eye } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { CalendarIcon, Users, Clock, Eye, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
 import DoctorSidebar from "@/components/sidebar/doctor"
+import UpcomingAppointmentsWidget from "@/components/UpcomingAppointmentsWidget"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 // --- Interfaces ---
 interface Appointment {
@@ -16,33 +20,169 @@ interface Appointment {
   status: "arrived" | "examining" | "waiting"
 }
 
-// --- Mock Data ---
-const mockAppointments: Appointment[] = [
-  { id: "1", patientName: "Nguyễn Văn A", time: "09:00", status: "arrived" },
-  { id: "2", patientName: "Trần Thị B", time: "10:30", status: "examining" },
-  { id: "3", patientName: "Lê Văn C", time: "14:00", status: "waiting" },
-  { id: "4", patientName: "Phạm Thị D", time: "15:30", status: "waiting" },
-]
-
 export default function DoctorDashboardPage() {
+  const navigate = useNavigate()
   const [date, setDate] = useState<Date | undefined>(new Date())
+  const [loading, setLoading] = useState(false)
+  const [dashboardData, setDashboardData] = useState<any>(null)
 
-  const todayAppointments = 12
-  const todayPatients = 8
-  const patientChange = 15
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Fetch both appointments and visits for today
+      const [appointmentsRes, visitsRes] = await Promise.all([
+        api.get(`/appointments?date=${today}`),
+        api.get(`/visits?startDate=${today}&endDate=${today}`)
+      ])
+      
+      if (appointmentsRes.data.success && visitsRes.data.success) {
+        const appointments = appointmentsRes.data.data || []
+        const visits = visitsRes.data.data || []
+        
+        // Debug: Log visits data
+        console.log("🔍 Doctor Dashboard - Visits:", visits.length, visits)
+        console.log("🔍 Doctor Dashboard - Appointments:", appointments.length, appointments)
+        
+        // Combine appointments and visits
+        // Visits are for patients who have checked in (status EXAMINING)
+        // Appointments are for patients who haven't checked in yet (status WAITING, CHECKED_IN)
+        const allPatients = [
+          ...visits.map((visit: any) => {
+            const visitDate = visit.checkInTime 
+              ? new Date(visit.checkInTime).toISOString().split('T')[0] 
+              : today
+            return {
+              id: visit.id,
+              visitId: visit.id,
+              appointmentId: visit.appointmentId,
+              patientId: visit.patientId,
+              patient: visit.patient,
+              shift: visit.appointment?.shift || { startTime: 'N/A', endTime: 'N/A' },
+              date: visitDate,
+              status: visit.status === 'EXAMINING' ? 'CHECKED_IN' : visit.status,
+              isVisit: true,
+            }
+          }),
+          ...appointments
+            .filter((apt: any) => apt.status === 'WAITING' || apt.status === 'CHECKED_IN')
+            .filter((apt: any) => !visits.some((v: any) => v.appointmentId === apt.id))
+            .map((apt: any) => ({
+              ...apt,
+              isVisit: false,
+            }))
+        ]
+        
+        console.log("🔍 Doctor Dashboard - All Patients:", allPatients.length, allPatients)
+        
+        const todayAppointmentsCount = allPatients.length
+        const todayPatientsCount = new Set(allPatients.map((p: any) => p.patientId)).size
+        const completedVisits = visits.filter((v: any) => v.status === 'COMPLETED').length
+        const pendingAppointments = allPatients.filter((p: any) => 
+          p.status === 'WAITING' || p.status === 'CHECKED_IN' || p.status === 'EXAMINING'
+        ).length
+        
+        setDashboardData({
+          stats: {
+            todayAppointments: todayAppointmentsCount,
+            todayPatients: todayPatientsCount,
+            patientChange: 0, // Calculate from previous day if needed
+            completedVisits,
+            pendingAppointments,
+          },
+          appointments: allPatients.slice(0, 10), // Show first 10
+        })
+      } else {
+        // Fallback to empty data
+        setDashboardData({
+          stats: {
+            todayAppointments: 0,
+            todayPatients: 0,
+            patientChange: 0,
+            completedVisits: 0,
+            pendingAppointments: 0,
+          },
+          appointments: [],
+        })
+      }
+    } catch (err: any) {
+      console.error('Error fetching dashboard data:', err)
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      })
+      // Show error toast for debugging
+      if (import.meta.env.DEV) {
+        toast.error(`Error: ${err.response?.data?.message || err.message}`)
+      }
+      // Fallback to empty data
+      setDashboardData({
+        stats: {
+          todayAppointments: 0,
+          todayPatients: 0,
+          patientChange: 0,
+          completedVisits: 0,
+          pendingAppointments: 0,
+        },
+        appointments: [],
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getStatusBadge = (status: Appointment["status"]) => {
-    const config = {
-      arrived: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
-      examining: "bg-blue-500/10 text-blue-700 border-blue-200",
-      waiting: "bg-amber-500/10 text-amber-700 border-amber-200",
+    const config: Record<string, string> = {
+      CHECKED_IN: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+      WAITING: "bg-amber-500/10 text-amber-700 border-amber-200",
+      CANCELLED: "bg-red-500/10 text-red-700 border-red-200",
+      NO_SHOW: "bg-gray-500/10 text-gray-700 border-gray-200",
     }
-    const labels = { arrived: "Đã đến", examining: "Đang khám", waiting: "Chờ khám" }
+    const labels: Record<string, string> = {
+      CHECKED_IN: "Đã đến",
+      WAITING: "Chờ khám",
+      CANCELLED: "Đã hủy",
+      NO_SHOW: "Không đến",
+    }
 
     return (
-      <Badge variant="outline" className={config[status]}>
-        {labels[status]}
+      <Badge variant="outline" className={config[status] || "bg-gray-500/10 text-gray-700 border-gray-200"}>
+        {labels[status] || status}
       </Badge>
+    )
+  }
+
+  const formatTime = (timeString: string) => {
+    // Format "HH:mm:ss" to "HH:mm"
+    return timeString.substring(0, 5)
+  }
+
+  const stats = dashboardData?.stats || {
+    todayAppointments: 0,
+    todayPatients: 0,
+    patientChange: 0,
+    completedVisits: 0,
+    pendingAppointments: 0,
+  }
+
+  const appointments = dashboardData?.appointments || []
+
+  if (loading) {
+    return (
+      <DoctorSidebar>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-slate-600">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      </DoctorSidebar>
     )
   }
 
@@ -70,7 +210,7 @@ export default function DoctorDashboardPage() {
                     <CalendarIcon className="h-5 w-5 text-blue-600" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-4xl font-bold text-slate-900">{todayAppointments}</div>
+                    <div className="text-4xl font-bold text-slate-900">{stats.todayAppointments}</div>
                   </CardContent>
                 </Card>
 
@@ -80,11 +220,16 @@ export default function DoctorDashboardPage() {
                     <Users className="h-5 w-5 text-emerald-600" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-4xl font-bold text-slate-900 mb-1">{todayPatients}</div>
-                    <div className="text-sm text-emerald-600 font-medium">+{patientChange}% vs yesterday</div>
+                    <div className="text-4xl font-bold text-slate-900 mb-1">{stats.todayPatients}</div>
+                    <div className={`text-sm font-medium ${stats.patientChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {stats.patientChange >= 0 ? '+' : ''}{stats.patientChange.toFixed(1)}% vs yesterday
+                    </div>
                   </CardContent>
                 </Card>
               </div>
+
+              {/* --- Upcoming Appointments Widget --- */}
+              <UpcomingAppointmentsWidget limit={10} />
 
               {/* --- Appointments List Section --- */}
               <Card className="border-0 shadow-xl">
@@ -103,36 +248,61 @@ export default function DoctorDashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {mockAppointments.map((appointment, index) => (
-                          <tr
-                            key={appointment.id}
-                            className={`border-b hover:bg-blue-50/30 transition-colors ${
-                              index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                            }`}
-                          >
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                  {appointment.patientName.charAt(0)}
-                                </div>
-                                <span className="font-medium text-slate-900">{appointment.patientName}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-slate-400" />
-                                {appointment.time}
-                              </div>
-                            </td>
-                            <td className="py-4 px-6">{getStatusBadge(appointment.status)}</td>
-                            <td className="py-4 px-6">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Xem
-                              </Button>
+                        {appointments.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-8 px-6 text-center text-slate-500">
+                              Không có lịch hẹn sắp tới
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          appointments.map((appointment, index) => (
+                            <tr
+                              key={appointment.id}
+                              className={`border-b hover:bg-blue-50/30 transition-colors ${
+                                index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                              }`}
+                            >
+                              <td className="py-4 px-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                                    {appointment.patient?.fullName?.charAt(0) || 'N'}
+                                  </div>
+                                  <span className="font-medium text-slate-900">
+                                    {appointment.patient?.fullName || 'N/A'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-4 px-6">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-slate-400" />
+                                  {appointment.shift ? formatTime(appointment.shift.startTime) : 'N/A'}
+                                </div>
+                              </td>
+                              <td className="py-4 px-6">{getStatusBadge(appointment.status)}</td>
+                              <td className="py-4 px-6">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    if (appointment.isVisit && appointment.visitId) {
+                                      // Navigate to medical form with visit ID
+                                      navigate(`/doctor/patients/${appointment.visitId}`)
+                                    } else if (appointment.appointmentId) {
+                                      // Navigate to medical form with appointment ID (for appointments that haven't been checked in yet)
+                                      navigate(`/doctor/patients/${appointment.appointmentId}`)
+                                    } else {
+                                      // Navigate to appointment detail
+                                      navigate(`/appointments/${appointment.id}`)
+                                    }
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  {appointment.isVisit ? 'Khám' : 'Xem'}
+                                </Button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -157,7 +327,9 @@ export default function DoctorDashboardPage() {
                     <div className="text-sm font-medium text-slate-900 mb-2">
                       Lịch hẹn ngày {date?.toLocaleDateString("vi-VN")}
                     </div>
-                    <div className="text-xs text-slate-600">12 lịch hẹn</div>
+                    <div className="text-xs text-slate-600">
+                      {appointments.filter(apt => apt.date === date?.toISOString().split('T')[0]).length} lịch hẹn
+                    </div>
                   </div>
                 </CardContent>
               </Card>

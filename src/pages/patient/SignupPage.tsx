@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lock, Mail, Heart, User, Loader2 } from "lucide-react"
 import { useAuth } from "@/auth/authContext"
+import { toast } from "sonner"
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -63,15 +64,27 @@ export default function SignupPage() {
     }
 
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SignupPage.tsx:67',message:'Attempting registration',data:{email:formData.email},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+
       // 3. Gọi API register
       await register(formData.email, formData.password, formData.fullName)
 
-      console.log("Tài khoản được tạo thành công!")
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SignupPage.tsx:72',message:'Registration successful',data:{email:formData.email},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+
+      // Success toast
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.")
       
-      // 4. Chuyển hướng về trang chủ
-      navigate("/") 
+      // 4. Chuyển hướng về trang đăng nhập
+      navigate("/login") 
 
     } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SignupPage.tsx:81',message:'Registration error',data:{error:err.message,response:err.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       console.error("Lỗi đăng ký:", err)
       // Xử lý lỗi thân thiện với người dùng
       const errorMessage = err.response?.data?.message || err.message || "Không thể tạo tài khoản. Vui lòng thử lại."

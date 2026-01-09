@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/auth/authContext"
 import {
   Activity,
   Search,
@@ -14,102 +15,118 @@ import {
   TrendingDown,
   Calendar,
   XCircle,
+  Trash2,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
+import SidebarLayout from "@/components/sidebar_layout"
+import AdminSidebar from "@/components/sidebar/admin"
+import ReceptionistSidebar from "@/components/sidebar/recep"
+import DoctorSidebar from "@/components/sidebar/doctor"
+import { MedicineService, type Medicine, MedicineStatus, MedicineUnit } from "@/services/medicine.service"
+import { format } from "date-fns"
 
-interface Medication {
-  id: string
-  name: string
-  group: string
-  quantity: number
-  unit: string
-  price: number
-  costPrice: number
-  profitMargin: number
-  expiryDate: string
-  batchNumber: string
-  status: "in-stock" | "low-stock" | "near-expiry" | "expired"
+const getUnitLabel = (unit: MedicineUnit): string => {
+  const unitMap: Record<MedicineUnit, string> = {
+    [MedicineUnit.VIEN]: "viên",
+    [MedicineUnit.ML]: "ml",
+    [MedicineUnit.HOP]: "hộp",
+    [MedicineUnit.CHAI]: "chai",
+    [MedicineUnit.TUYP]: "tuýp",
+    [MedicineUnit.GOI]: "gói",
+  }
+  return unitMap[unit] || unit
 }
 
-const medications: Medication[] = [
-  {
-    id: "1",
-    name: "Paracetamol 500mg",
-    group: "Giảm đau - Hạ sốt",
-    quantity: 500,
-    unit: "viên",
-    price: 2000,
-    costPrice: 1500,
-    profitMargin: 33.33,
-    expiryDate: "2026-12-31",
-    batchNumber: "LOT001",
-    status: "in-stock",
-  },
-  {
-    id: "2",
-    name: "Amoxicillin 500mg",
-    group: "Kháng sinh",
-    quantity: 50,
-    unit: "viên",
-    price: 5000,
-    costPrice: 3800,
-    profitMargin: 31.58,
-    expiryDate: "2025-03-15",
-    batchNumber: "LOT002",
-    status: "low-stock",
-  },
-  {
-    id: "3",
-    name: "Vitamin C 1000mg",
-    group: "Vitamin & Khoáng chất",
-    quantity: 200,
-    unit: "viên",
-    price: 3000,
-    costPrice: 2200,
-    profitMargin: 36.36,
-    expiryDate: "2025-01-20",
-    batchNumber: "LOT003",
-    status: "near-expiry",
-  },
-  {
-    id: "4",
-    name: "Ibuprofen 400mg",
-    group: "Giảm đau - Hạ sốt",
-    quantity: 0,
-    unit: "viên",
-    price: 4000,
-    costPrice: 3000,
-    profitMargin: 33.33,
-    expiryDate: "2024-11-30",
-    batchNumber: "LOT004",
-    status: "expired",
-  },
-  {
-    id: "5",
-    name: "Omeprazole 20mg",
-    group: "Tiêu hóa",
-    quantity: 300,
-    unit: "viên",
-    price: 6000,
-    costPrice: 4500,
-    profitMargin: 33.33,
-    expiryDate: "2026-06-30",
-    batchNumber: "LOT005",
-    status: "in-stock",
-  },
-]
-
-const medicationGroups = ["Tất cả", "Giảm đau - Hạ sốt", "Kháng sinh", "Vitamin & Khoáng chất", "Tiêu hóa"]
+const getMedicineStatus = (medicine: Medicine): "in-stock" | "low-stock" | "near-expiry" | "expired" => {
+  if (medicine.status === MedicineStatus.EXPIRED) {
+    return "expired"
+  }
+  
+  const expiryDate = new Date(medicine.expiryDate)
+  const today = new Date()
+  const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (daysUntilExpiry < 0) {
+    return "expired"
+  }
+  if (daysUntilExpiry <= 30) {
+    return "near-expiry"
+  }
+  if (medicine.quantity <= medicine.minStockLevel) {
+    return "low-stock"
+  }
+  return "in-stock"
+}
 
 export default function PharmacyPage() {
+  const { user } = useAuth()
+  const [medicines, setMedicines] = useState<Medicine[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedGroup, setSelectedGroup] = useState("Tất cả")
   const [selectedStatus, setSelectedStatus] = useState("all")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [medicineToDelete, setMedicineToDelete] = useState<Medicine | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const getStatusBadge = (status: Medication["status"]) => {
+  useEffect(() => {
+    fetchMedicines()
+  }, [])
+
+  const fetchMedicines = async () => {
+    try {
+      setIsLoading(true)
+      const response = await MedicineService.getMedicines({
+        page: 1,
+        limit: 1000, // Get all for now
+      })
+      if (response.medicines) {
+        setMedicines(response.medicines)
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Không thể tải danh sách thuốc")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteClick = (medicine: Medicine) => {
+    setMedicineToDelete(medicine)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!medicineToDelete) return
+    
+    try {
+      setIsDeleting(true)
+      await MedicineService.deleteMedicine(medicineToDelete.id)
+      toast.success("Xóa thuốc thành công!")
+      setDeleteDialogOpen(false)
+      setMedicineToDelete(null)
+      fetchMedicines()
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Không thể xóa thuốc"
+      toast.error(errorMessage)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const getStatusBadge = (status: "in-stock" | "low-stock" | "near-expiry" | "expired") => {
     const statusConfig = {
       "in-stock": {
         label: "Còn hàng",
@@ -143,66 +160,85 @@ export default function PharmacyPage() {
     )
   }
 
-  const filteredMedications = medications.filter((med) => {
+  const medicationGroups = ["Tất cả", ...Array.from(new Set(medicines.map(m => m.group)))]
+
+  const filteredMedications = medicines.filter((med) => {
+    const status = getMedicineStatus(med)
     const matchesSearch =
       med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      med.batchNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      med.medicineCode.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesGroup = selectedGroup === "Tất cả" || med.group === selectedGroup
-    const matchesStatus = selectedStatus === "all" || med.status === selectedStatus
+    const matchesStatus = selectedStatus === "all" || status === selectedStatus
     return matchesSearch && matchesGroup && matchesStatus
   })
 
-  const lowStockCount = medications.filter((m) => m.status === "low-stock").length
-  const nearExpiryCount = medications.filter((m) => m.status === "near-expiry").length
-  const expiredCount = medications.filter((m) => m.status === "expired").length
+  const lowStockCount = medicines.filter((m) => getMedicineStatus(m) === "low-stock").length
+  const nearExpiryCount = medicines.filter((m) => getMedicineStatus(m) === "near-expiry").length
+  const expiredCount = medicines.filter((m) => getMedicineStatus(m) === "expired").length
+
+  const isAdmin = user?.roleId === 1 || String(user?.role || "").toLowerCase() === "admin"
+
+  const getSidebar = () => {
+    if (!user) return null
+    const role = String(user.roleId || user.role || "").toLowerCase()
+    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    if (role === "admin" || role === "1") {
+      return <AdminSidebar />
+    }
+    if (role === "doctor" || role === "4") {
+      return <DoctorSidebar />
+    }
+    if (role === "receptionist" || role === "2") {
+      return <ReceptionistSidebar />
+    }
+    return null
+  }
+
+  const sidebar = getSidebar()
+
+  if (!sidebar) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Activity className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                HealthCare Plus
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/patients">Patients</Link>
-              </Button>
-              <Button variant="outline" size="sm">
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
+    <SidebarLayout userName={user?.fullName || user?.email}>
+      {sidebar}
+      <div className="space-y-6">
         {/* Page Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Kho thuốc</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Kho thuốc</h1>
             <p className="text-slate-600">Quản lý thuốc và vật tư y tế</p>
           </div>
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
-            asChild
-          >
-            <Link to="/pharmacy/import">
-              <Plus className="h-5 w-5 mr-2" />
-              Nhập thuốc
-            </Link>
-          </Button>
+          {isAdmin && (
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                asChild
+              >
+                <Link to="/admin/medicines/create">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Tạo thuốc mới
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
+                asChild
+              >
+                <Link to="/admin/pharmacy/import">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Nhập thuốc
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Warning Cards */}
@@ -340,85 +376,161 @@ export default function PharmacyPage() {
           <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
             <CardTitle className="text-2xl text-slate-900">Danh sách thuốc</CardTitle>
             <p className="text-sm text-slate-600 mt-1">
-              Hiển thị {filteredMedications.length} / {medications.length} thuốc
+              Hiển thị {filteredMedications.length} / {medicines.length} thuốc
             </p>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-slate-50 border-b">
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Tên thuốc</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Nhóm thuốc</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Số lượng</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Giá bán</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Lãi suất</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hạn dùng</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMedications.map((medication, index) => (
-                    <tr
-                      key={medication.id}
-                      className={`border-b hover:bg-blue-50/30 transition-colors ${
-                        index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                      }`}
-                    >
-                      <td className="py-4 px-6">
-                        <div>
-                          <div className="font-medium text-slate-900">{medication.name}</div>
-                          <div className="text-xs text-slate-500">Lô: {medication.batchNumber}</div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-slate-700">{medication.group}</td>
-                      <td className="py-4 px-6">
-                        <span
-                          className={`font-medium ${medication.quantity < 100 ? "text-amber-600" : "text-slate-900"}`}
-                        >
-                          {medication.quantity} {medication.unit}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div>
-                          <div className="font-medium text-slate-900">{medication.price.toLocaleString()} đ</div>
-                          <div className="text-xs text-slate-500">
-                            Giá vốn: {medication.costPrice.toLocaleString()} đ
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-emerald-600 font-medium">+{medication.profitMargin.toFixed(2)}%</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <Calendar className="h-4 w-4 text-slate-400" />
-                          {medication.expiryDate}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">{getStatusBadge(medication.status)}</td>
-                      <td className="py-4 px-6">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          asChild
-                        >
-                          <Link to={`/pharmacy/${medication.id}`}>
-                            Chi tiết
-                            <ChevronRight className="h-4 w-4 ml-1" />
-                          </Link>
-                        </Button>
-                      </td>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-slate-50 border-b">
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Mã thuốc</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Tên thuốc</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Nhóm thuốc</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Số lượng</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Giá bán</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Lãi suất</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hạn dùng</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredMedications.map((medication, index) => {
+                      const status = getMedicineStatus(medication)
+                      const profitMargin = medication.importPrice > 0
+                        ? ((medication.salePrice - medication.importPrice) / medication.importPrice) * 100
+                        : 0
+                      
+                      return (
+                        <tr
+                          key={medication.id}
+                          className={`border-b hover:bg-blue-50/30 transition-colors ${
+                            index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
+                          }`}
+                        >
+                          <td className="py-4 px-6">
+                            <Badge variant="outline" className="font-mono">
+                              {medication.medicineCode}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div>
+                              <div className="font-medium text-slate-900">{medication.name}</div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-slate-700">{medication.group}</td>
+                          <td className="py-4 px-6">
+                            <span
+                              className={`font-medium ${
+                                medication.quantity <= medication.minStockLevel ? "text-amber-600" : "text-slate-900"
+                              }`}
+                            >
+                              {medication.quantity} {getUnitLabel(medication.unit)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div>
+                              <div className="font-medium text-slate-900">
+                                {medication.salePrice.toLocaleString("vi-VN")} VND
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                Giá vốn: {medication.importPrice.toLocaleString("vi-VN")} VND
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="text-emerald-600 font-medium">+{profitMargin.toFixed(2)}%</span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2 text-slate-700">
+                              <Calendar className="h-4 w-4 text-slate-400" />
+                              {format(new Date(medication.expiryDate), "dd/MM/yyyy")}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">{getStatusBadge(status)}</td>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                asChild
+                              >
+                                <Link to={`/pharmacy/${medication.id}`}>
+                                  Chi tiết
+                                  <ChevronRight className="h-4 w-4 ml-1" />
+                                </Link>
+                              </Button>
+                              {isAdmin && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleDeleteClick(medication)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa thuốc</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn xóa thuốc <strong>{medicineToDelete?.name}</strong>? 
+                Hành động này không thể hoàn tác.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false)
+                  setMedicineToDelete(null)
+                }}
+                disabled={isDeleting}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang xóa...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Xóa
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </SidebarLayout>
   )
 }

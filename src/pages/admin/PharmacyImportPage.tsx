@@ -90,7 +90,7 @@ export default function PharmacyImportPage() {
     // Here you would typically send the data to your backend
     console.log("Importing medications:", importItems)
     alert("Nhập thuốc thành công!")
-    navigate("/pharmacy")
+    navigate("/admin/inventory")
   }
 
   const totalCost = importItems.reduce((sum, item) => sum + item.costPrice * item.quantity, 0)
@@ -102,7 +102,7 @@ export default function PharmacyImportPage() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/pharmacy" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Link to="/admin/inventory" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Activity className="h-6 w-6 text-white" />
               </div>
@@ -111,7 +111,7 @@ export default function PharmacyImportPage() {
               </span>
             </Link>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/pharmacy">
+              <Link to="/admin/inventory">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Quay lại
               </Link>
@@ -327,7 +327,7 @@ export default function PharmacyImportPage() {
 
             <div className="flex gap-4">
               <Button type="button" variant="outline" size="lg" asChild>
-                <Link to="/pharmacy">Hủy</Link>
+                <Link to="/admin/inventory">Hủy</Link>
               </Button>
               <Button
                 type="submit"

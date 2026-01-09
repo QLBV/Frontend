@@ -146,7 +146,7 @@ export default function RevenueReport() {
         params.append("month", month);
       }
 
-      const response = await api.get(`/api/reports/revenue?${params.toString()}`);
+      const response = await api.get(`/reports/revenue?${params.toString()}`);
       if (response.data.success) {
         setReportData(response.data.data);
         toast.success("Tải dữ liệu báo cáo thành công");
@@ -210,7 +210,7 @@ export default function RevenueReport() {
         params.append("month", month);
       }
 
-      const response = await api.get(`/api/reports/revenue/pdf?${params.toString()}`, {
+      const response = await api.get(`/reports/revenue/pdf?${params.toString()}`, {
         responseType: "blob",
       });
 

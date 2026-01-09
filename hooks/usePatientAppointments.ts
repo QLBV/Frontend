@@ -1,75 +1,82 @@
-import { useState, useMemo } from "react";
-import type { IAppointment } from "../src/types/appointment"; 
-
-// --- MOCK DATA ---
-const MOCK_DATA: { upcoming: IAppointment[]; past: IAppointment[] } = {
-  upcoming: [
-    {
-      id: "1",
-      date: "2025-12-20",
-      time: "09:00 AM",
-      doctor: { id: 1, name: "Dr. Sarah Johnson", specialty: "Cardiology", image: "/female-doctor.png" },
-      type: "In-person",
-      location: "Room 203, Building A",
-      reason: "Follow-up consultation",
-      status: "Confirmed",
-    },
-    {
-      id: "2",
-      date: "2025-12-22",
-      time: "02:30 PM",
-      doctor: { id: 2, name: "Dr. Mark Wilson", specialty: "Dermatology", image: "/male-doctor.png" },
-      type: "Video Call",
-      location: "Online",
-      reason: "Skin allergy check",
-      status: "Pending", 
-    },
-  ],
-  past: [
-    {
-        id: "3",
-        date: "2025-11-15",
-        time: "10:00 AM",
-        doctor: { id: 1, name: "Dr. Sarah Johnson", specialty: "Cardiology", image: "/female-doctor.png" },
-        type: "In-person",
-        location: "Room 203, Building A",
-        reason: "Regular heart checkup",
-        status: "Completed",
-        diagnosis: "Normal rhythm",
-        prescription: "None",
-        nextSteps: "Maintain healthy diet"
-    },
-    {
-        id: "4",
-        date: "2025-10-05",
-        time: "04:00 PM",
-        doctor: { id: 3, name: "Dr. Emily Chen", specialty: "Pediatrics", image: "/female-doctor-2.png" },
-        type: "In-person",
-        location: "Room 101, Building B",
-        reason: "Flu symptoms",
-        status: "Cancelled",
-        notes: "Cancelled by Patient: Feeling better, no longer needed."
-    },
-    {
-        id: "5",
-        date: "2025-09-20",
-        time: "09:00 AM",
-        doctor: { id: 2, name: "Dr. Mark Wilson", specialty: "Dermatology", image: "/male-doctor.png" },
-        type: "In-person",
-        location: "Room 405, Building C",
-        reason: "Annual Skin Screening",
-        status: "Completed",
-        diagnosis: "Benign mole removed",
-        nextSteps: "Apply sunscreen daily"
-    }
-  ],
-};
+import { useState, useMemo, useEffect } from "react";
+import type { IAppointment } from "../src/types/appointment";
+import { getMyAppointments, cancelAppointment as cancelAppointmentAPI, type Appointment } from "../src/services/appointment.service";
+import { toast } from "sonner";
 
 export function usePatientAppointments() {
   // --- STATE MANAGEMENT ---
-  const [appointments, setAppointments] = useState<{ upcoming: IAppointment[]; past: IAppointment[] }>(MOCK_DATA);
+  const [appointments, setAppointments] = useState<{ upcoming: IAppointment[]; past: IAppointment[] }>({
+    upcoming: [],
+    past: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<IAppointment | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // --- FETCH APPOINTMENTS FROM API ---
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:19',message:'Fetching appointments from API',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+
+        setIsLoading(true);
+        const data = await getMyAppointments();
+
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:26',message:'Appointments fetched',data:{count:data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+
+        // Convert API format to IAppointment format
+        const now = new Date();
+        const upcoming: IAppointment[] = [];
+        const past: IAppointment[] = [];
+
+        data.forEach((apt: Appointment) => {
+          const aptDate = new Date(apt.date);
+          const isUpcoming = aptDate >= now && apt.status === "WAITING";
+
+          const convertedAppointment: IAppointment = {
+            id: apt.id.toString(),
+            date: aptDate.toISOString().split('T')[0],
+            time: apt.shift?.startTime || "N/A",
+            doctor: {
+              id: apt.doctorId,
+              name: apt.doctor?.fullName || "Unknown Doctor",
+              specialty: apt.doctor?.specialty?.name || "General",
+              image: "/placeholder.svg"
+            },
+            type: apt.bookingType === "ONLINE" ? "Online" : "In-person",
+            location: "Clinic",
+            reason: apt.symptomInitial || "No reason provided",
+            status: apt.status === "WAITING" ? "Confirmed" : 
+                    apt.status === "COMPLETED" ? "Completed" :
+                    apt.status === "CANCELLED" ? "Cancelled" : apt.status
+          };
+
+          if (isUpcoming) {
+            upcoming.push(convertedAppointment);
+          } else {
+            past.push(convertedAppointment);
+          }
+        });
+
+        setAppointments({ upcoming, past });
+      } catch (error: any) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:60',message:'Error fetching appointments',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+
+        console.error("Error fetching appointments:", error);
+        toast.error(error.response?.data?.message || "Không thể tải danh sách lịch hẹn");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   // --- STATISTICS ---
   const stats = useMemo(() => {
@@ -83,22 +90,44 @@ export function usePatientAppointments() {
   }, [appointments]);
 
   // --- ACTIONS ---
-  const cancelAppointment = (id: string, reason: string) => {
-    setAppointments((prev) => {
-      const aptToCancel = prev.upcoming.find((a) => a.id === id);
-      if (!aptToCancel) return prev;
+  const cancelAppointment = async (id: string, reason: string) => {
+    try {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:78',message:'Cancelling appointment',data:{appointmentId:id,reason},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
 
-      const cancelledApt: IAppointment = {
-        ...aptToCancel,
-        status: "Cancelled",
-        notes: `Reason: ${reason}`,
-      };
+      await cancelAppointmentAPI(Number(id));
 
-      return {
-        upcoming: prev.upcoming.filter((a) => a.id !== id),
-        past: [cancelledApt, ...prev.past], 
-      };
-    });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:83',message:'Appointment cancelled successfully',data:{appointmentId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+
+      // Update local state optimistically
+      setAppointments((prev) => {
+        const aptToCancel = prev.upcoming.find((a) => a.id === id);
+        if (!aptToCancel) return prev;
+
+        const cancelledApt: IAppointment = {
+          ...aptToCancel,
+          status: "Cancelled",
+          notes: `Reason: ${reason}`,
+        };
+
+        return {
+          upcoming: prev.upcoming.filter((a) => a.id !== id),
+          past: [cancelledApt, ...prev.past], 
+        };
+      });
+
+      toast.success("Hủy lịch hẹn thành công!");
+    } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:104',message:'Error cancelling appointment',data:{error:error.message,appointmentId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+
+      console.error("Error cancelling appointment:", error);
+      toast.error(error.response?.data?.message || "Không thể hủy lịch hẹn");
+    }
   };
 
   const viewDetails = (apt: IAppointment) => {
@@ -120,5 +149,6 @@ export function usePatientAppointments() {
     viewDetails,
     closeDetails,
     cancelAppointment,
+    isLoading,
   };
 }

@@ -3,17 +3,19 @@ import { useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard,
   ClipboardList,
-  HeartPulse,
   Pill,
-  ScrollText,
+  Calendar,
+  UserCheck,
+  FileText,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 interface DoctorSidebarProps {
-  children: ReactNode;
+  children?: ReactNode;
+  userName?: string;
 }
 
-const DoctorSidebar = ({ children }: DoctorSidebarProps) => {
+const DoctorSidebar = ({ children, userName }: DoctorSidebarProps) => {
   const location = useLocation();
 
   const doctorMenu = [
@@ -24,10 +26,15 @@ const DoctorSidebar = ({ children }: DoctorSidebarProps) => {
       ]
     },
     {
+      title: "Schedule",
+      items: [
+        { label: "My Shifts", href: "/doctor/shift", icon: <Calendar size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    {
       title: "Examination",
       items: [
-        { label: "Patient List", href: "/doctor/medicalList", icon: <ClipboardList size={24} strokeWidth={2.5} /> },
-        { label: "Diagnose", href: "/doctor/diagnose", icon: <HeartPulse size={24} strokeWidth={2.5} /> }
+        { label: "Patient List", href: "/doctor/medicalList", icon: <ClipboardList size={24} strokeWidth={2.5} /> }
       ]
     },
     {
@@ -37,9 +44,15 @@ const DoctorSidebar = ({ children }: DoctorSidebarProps) => {
       ]
     },
     {
-      title: "Payment",
+      title: "Attendance",
       items: [
-        { label: "Invoice List", href: "/doctor/invoices", icon: <ScrollText size={24} strokeWidth={2.5} /> }
+        { label: "Chấm công", href: "/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    {
+      title: "Payroll",
+      items: [
+        { label: "Lương của tôi", href: "/my-payrolls", icon: <FileText size={24} strokeWidth={2.5} /> }
       ]
     }
   ];
@@ -47,8 +60,8 @@ const DoctorSidebar = ({ children }: DoctorSidebarProps) => {
   return (
     <SidebarLayout 
       logoText="HealthCare Doctor"
-      userName="Doctor"
-      pageContent={children}
+      userName={userName || "Doctor"}
+      pageContent={children || undefined}
     >
       {doctorMenu.map((group, index) => (
         <div key={index}>

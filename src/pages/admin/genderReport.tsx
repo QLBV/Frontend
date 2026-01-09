@@ -41,7 +41,7 @@ const getVietnameseName = (gender: string): string => {
 };
 
 const fetchGenderReport = async (): Promise<GenderReportResponse> => {
-  const response = await api.get("/api/reports/patients-by-gender");
+  const response = await api.get("/reports/patients-by-gender");
   if (response.data?.success) {
     return response.data.data;
   }
@@ -73,7 +73,7 @@ export default function GenderReport() {
 
   const handleExportPDF = async () => {
     try {
-      const response = await api.get("/api/reports/patients-by-gender/pdf", {
+      const response = await api.get("/reports/patients-by-gender/pdf", {
         responseType: "blob",
       });
 
@@ -114,7 +114,7 @@ export default function GenderReport() {
   const chartData = data.byGender.map((item) => ({
     name: getVietnameseName(item.gender),
     count: item.count,
-    percentage: parseFloat(item.percentage.toFixed(2)),
+    percentage: parseFloat((item.percentage || 0).toFixed(2)),
     averageAge: item.averageAge || 0,
   }));
 
@@ -180,7 +180,7 @@ export default function GenderReport() {
                     {item.count}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    ({item.percentage.toFixed(1)}%)
+                    ({(item.percentage || 0).toFixed(1)}%)
                   </div>
                 </div>
                 {item.averageAge !== null && (
@@ -406,7 +406,7 @@ export default function GenderReport() {
                         {item.count.toLocaleString("vi-VN")}
                       </td>
                       <td className="text-right py-3 px-4 text-slate-700 dark:text-slate-300">
-                        {item.percentage.toFixed(2)}%
+                        {(item.percentage || 0).toFixed(2)}%
                       </td>
                       <td className="text-right py-3 px-4 text-slate-700 dark:text-slate-300">
                         {item.averageAge !== null ? `${item.averageAge} tuổi` : "N/A"}

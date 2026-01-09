@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import api from "@/lib/api"
+import { useAuth } from "@/auth/authContext"
+import { useNavigate } from "react-router-dom"
 import { 
   Calendar, 
   Clock, 
@@ -70,6 +72,8 @@ const timeSlots = [
 ]
 
 export default function DoctorShiftPage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [doctorShifts, setDoctorShifts] = useState<DoctorShift[]>([])
@@ -106,87 +110,98 @@ export default function DoctorShiftPage() {
     try {
       setLoading(true)
       
-      // Get current doctor's ID from auth context (you might need to implement this)
-      // For now, we'll use a placeholder
-      const currentDoctorId = 1 // This should come from auth context
+      // Get current doctor's ID from auth context
+      if (!user?.doctorId) {
+        toast.error("Không tìm thấy thông tin bác sĩ. Vui lòng đăng nhập lại.")
+        navigate("/login")
+        return
+      }
+      
+      const currentDoctorId = user.doctorId
       
       // Fetch doctor shifts
+      let fetchedShifts: DoctorShift[] = []
       try {
-        const shiftsResponse = await api.get(`/api/doctors/${currentDoctorId}/shifts`)
+        const shiftsResponse = await api.get(`/doctors/${currentDoctorId}/shifts`)
+        console.log("🔍 Doctor Shifts Response:", shiftsResponse.data)
         if (shiftsResponse.data.success) {
-          setDoctorShifts(shiftsResponse.data.data)
+          fetchedShifts = shiftsResponse.data.data || []
+          console.log("🔍 Doctor Shifts Data:", fetchedShifts)
+          setDoctorShifts(fetchedShifts)
+        } else {
+          console.warn("⚠️ Doctor shifts response not successful:", shiftsResponse.data)
+          setDoctorShifts([])
         }
-      } catch (err) {
-        console.log('Failed to fetch doctor shifts, using mock data')
-        // Use mock data as fallback
-        const mockShifts = [
-          {
-            id: 1,
-            doctorId: currentDoctorId,
-            shiftId: 1,
-            workDate: new Date().toISOString().split('T')[0],
-            status: "ACTIVE" as const,
-            shift: {
-              id: 1,
-              name: "MORNING",
-              startTime: "08:00",
-              endTime: "12:00"
-            }
-          }
-        ]
-        setDoctorShifts(mockShifts)
+      } catch (err: any) {
+        console.error('Failed to fetch doctor shifts:', err)
+        console.error('Error details:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        })
+        setDoctorShifts([])
+        toast.error(err.response?.data?.message || 'Không thể tải danh sách ca trực')
       }
 
       // Fetch doctor appointments
+      let fetchedAppointments: Appointment[] = []
       try {
-        const appointmentsResponse = await api.get(`/api/appointments?doctorId=${currentDoctorId}`)
+        const appointmentsResponse = await api.get(`/appointments?doctorId=${currentDoctorId}`)
+        console.log("🔍 Doctor Appointments Response:", appointmentsResponse.data)
         if (appointmentsResponse.data.success) {
-          setAppointments(appointmentsResponse.data.data)
+          fetchedAppointments = appointmentsResponse.data.data || []
+          console.log("🔍 Doctor Appointments Data:", fetchedAppointments)
+          setAppointments(fetchedAppointments)
+        } else {
+          setAppointments([])
         }
-      } catch (err) {
-        console.log('Failed to fetch appointments, using mock data')
-        // Use mock data as fallback
-        const mockAppointments = [
-          {
-            id: 1,
-            appointmentDate: new Date().toISOString().split('T')[0],
-            appointmentTime: "09:00",
-            status: "PENDING" as const,
-            patient: {
-              id: 1,
-              user: {
-                fullName: "Nguyễn Văn A",
-                phone: "0123456789"
-              }
-            }
-          }
-        ]
-        setAppointments(mockAppointments)
+      } catch (err: any) {
+        console.error('Failed to fetch appointments:', err)
+        console.error('Error details:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        })
+        setAppointments([])
+        toast.error(err.response?.data?.message || 'Không thể tải danh sách lịch hẹn')
       }
 
-      // Create combined personal schedule
-      createPersonalSchedule()
+      // Create combined personal schedule with fetched data
+      createPersonalSchedule(fetchedShifts, fetchedAppointments)
       
     } catch (err: any) {
       console.error('Error fetching doctor data:', err)
       toast.error('Không thể tải dữ liệu')
-      
-      // Use mock data for demo
-      createMockSchedule()
+      setDoctorShifts([])
+      setAppointments([])
+      setPersonalSchedule([])
     } finally {
       setLoading(false)
     }
   }
 
   // Create personal schedule from shifts and appointments
-  const createPersonalSchedule = () => {
+  const createPersonalSchedule = (shifts: DoctorShift[] = doctorShifts, apts: Appointment[] = appointments) => {
     const schedule: PersonalSchedule[] = []
 
+    console.log("🔍 Creating schedule from:", {
+      doctorShifts: shifts.length,
+      appointments: apts.length,
+    })
+
     // Add shifts to schedule
-    doctorShifts.forEach(shift => {
+    shifts.forEach(shift => {
+      if (!shift.shift) {
+        console.warn("⚠️ Shift missing shift data:", shift)
+        return
+      }
+      
+      // Ensure workDate is in YYYY-MM-DD format
+      const workDate = shift.workDate ? shift.workDate.split('T')[0] : shift.workDate
+      
       schedule.push({
         id: `shift-${shift.id}`,
-        date: shift.workDate,
+        date: workDate,
         time: `${shift.shift.startTime} - ${shift.shift.endTime}`,
         type: "shift",
         title: `Ca trực ${shift.shift.name}`,
@@ -194,92 +209,99 @@ export default function DoctorShiftPage() {
         status: shift.status === "ACTIVE" ? "active" : 
                shift.status === "CANCELLED" ? "cancelled" : "active"
       })
+      
+      console.log(`🔍 Added shift to schedule:`, {
+        id: shift.id,
+        date: workDate,
+        time: `${shift.shift.startTime} - ${shift.shift.endTime}`,
+        shiftName: shift.shift.name
+      })
     })
+    
+    console.log("🔍 Schedule after adding shifts:", schedule.length)
 
     // Add appointments to schedule
-    appointments.forEach(apt => {
+    apts.forEach(apt => {
+      const appointmentDate = apt.date || apt.appointmentDate
+      const appointmentTime = apt.shift?.startTime || apt.appointmentTime || ""
+      const patientName = apt.patient?.fullName || apt.patient?.user?.fullName || "Unknown"
+      
       schedule.push({
         id: `appointment-${apt.id}`,
-        date: apt.appointmentDate,
-        time: apt.appointmentTime,
+        date: appointmentDate,
+        time: appointmentTime,
         type: "appointment",
         title: "Khám bệnh",
-        description: `Khám cho ${apt.patient.user.fullName}`,
+        description: `Khám cho ${patientName}`,
         status: apt.status === "COMPLETED" ? "completed" :
                apt.status === "CANCELLED" ? "cancelled" : "active",
-        patientName: apt.patient.user.fullName
+        patientName: patientName
       })
     })
 
+    console.log("🔍 Final schedule:", schedule.length, schedule)
     setPersonalSchedule(schedule)
   }
 
-  // Create mock schedule for demo
-  const createMockSchedule = () => {
-    const today = new Date().toISOString().split('T')[0]
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
-    
-    const mockSchedule: PersonalSchedule[] = [
-      {
-        id: "shift-1",
-        date: today,
-        time: "08:00 - 12:00",
-        type: "shift",
-        title: "Ca trực MORNING",
-        description: "Ca sáng",
-        status: "active"
-      },
-      {
-        id: "appointment-1",
-        date: today,
-        time: "09:00",
-        type: "appointment",
-        title: "Khám bệnh",
-        description: "Khám cho Nguyễn Văn A",
-        status: "active",
-        patientName: "Nguyễn Văn A"
-      },
-      {
-        id: "appointment-2",
-        date: today,
-        time: "10:30",
-        type: "appointment",
-        title: "Khám bệnh",
-        description: "Khám cho Trần Thị B",
-        status: "active",
-        patientName: "Trần Thị B"
-      },
-      {
-        id: "shift-2",
-        date: tomorrow,
-        time: "13:00 - 17:00",
-        type: "shift",
-        title: "Ca trực AFTERNOON",
-        description: "Ca chiều",
-        status: "active"
-      }
-    ]
-    
-    setPersonalSchedule(mockSchedule)
-  }
 
   useEffect(() => {
     fetchDoctorData()
   }, [currentWeek])
 
+  // Debug: Log personalSchedule when it changes
+  useEffect(() => {
+    console.log("🔍 personalSchedule updated:", personalSchedule.length, personalSchedule)
+  }, [personalSchedule])
+
   // Get schedule for selected date
   const getScheduleForDate = (date: string) => {
-    return personalSchedule.filter(item => item.date === date)
+    const filtered = personalSchedule.filter(item => {
+      // Normalize dates for comparison (handle both YYYY-MM-DD formats)
+      const itemDate = item.date ? item.date.split('T')[0] : ''
+      const targetDate = date ? date.split('T')[0] : ''
+      return itemDate === targetDate
+    })
+    console.log(`🔍 getScheduleForDate for ${date}:`, filtered.length, filtered)
+    return filtered
   }
 
   // Get schedule for time slot
   const getScheduleForTimeSlot = (date: string, slotIndex: number) => {
     const scheduleForDay = getScheduleForDate(date)
+    console.log(`🔍 getScheduleForTimeSlot for date ${date}, slotIndex ${slotIndex}, scheduleForDay:`, scheduleForDay)
+    
     return scheduleForDay.filter(item => {
-      const hour = parseInt(item.time.split(':')[0])
-      if (slotIndex === 0) return hour >= 8 && hour < 12  // Morning
-      if (slotIndex === 1) return hour >= 13 && hour < 17 // Afternoon  
-      if (slotIndex === 2) return hour >= 18 && hour < 22 // Evening
+      // Parse time - could be "07:00 - 12:00" or "14:30"
+      let startHour = 0
+      let endHour = 0
+      
+      if (item.time.includes(' - ')) {
+        // Format: "07:00 - 12:00"
+        const [start, end] = item.time.split(' - ')
+        startHour = parseInt(start.split(':')[0])
+        endHour = parseInt(end.split(':')[0])
+      } else {
+        // Format: "14:30"
+        startHour = parseInt(item.time.split(':')[0])
+        endHour = startHour + 1 // Assume 1 hour duration
+      }
+      
+      console.log(`🔍 Item ${item.id}: time="${item.time}", startHour=${startHour}, endHour=${endHour}`)
+      
+      // Check if the item overlaps with the time slot
+      if (slotIndex === 0) {
+        // Morning: 8 AM - 12 PM
+        // Item overlaps if it starts before 12 and ends after 8
+        return (startHour < 12 && endHour > 8) || (startHour >= 8 && startHour < 12)
+      }
+      if (slotIndex === 1) {
+        // Afternoon: 1 PM - 5 PM
+        return (startHour < 17 && endHour > 13) || (startHour >= 13 && startHour < 17)
+      }
+      if (slotIndex === 2) {
+        // Evening: 6 PM - 10 PM
+        return (startHour < 22 && endHour > 18) || (startHour >= 18 && startHour < 22)
+      }
       return false
     })
   }
@@ -328,22 +350,15 @@ export default function DoctorShiftPage() {
     setPreviewLoading(true)
     try {
       const shiftId = shift.id.replace('shift-', '')
-      const response = await api.get(`/api/doctor-shifts/${shiftId}/reschedule-preview`)
+      const response = await api.get(`/doctor-shifts/${shiftId}/reschedule-preview`)
       
       if (response.data.success) {
         setPreviewData(response.data.data)
       }
     } catch (err: any) {
       console.error('Error loading preview:', err)
-      // Provide mock preview data when API fails
-      setPreviewData({
-        doctorShiftId: parseInt(shift.id.replace('shift-', '')),
-        affectedAppointments: Math.floor(Math.random() * 5) + 1,
-        hasReplacementDoctor: Math.random() > 0.5,
-        replacementDoctorId: Math.random() > 0.5 ? Math.floor(Math.random() * 10) + 1 : undefined,
-        canAutoReschedule: Math.random() > 0.3,
-        warning: Math.random() > 0.7 ? "CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa." : undefined
-      })
+      setPreviewData(null)
+      toast.error('Không thể tải thông tin xem trước')
     } finally {
       setPreviewLoading(false)
     }
@@ -362,7 +377,7 @@ export default function DoctorShiftPage() {
       const shiftId = selectedShiftToCancel.id.replace('shift-', '')
       
       // Call API to cancel shift using reschedule system
-      const response = await api.post(`/api/doctor-shifts/${shiftId}/cancel-and-reschedule`, {
+      const response = await api.post(`/doctor-shifts/${shiftId}/cancel-and-reschedule`, {
         cancelReason: cancelReason.trim()
       })
 
@@ -530,8 +545,8 @@ export default function DoctorShiftPage() {
                                 }
                                 <span className="font-medium">{item.title}</span>
                                 
-                                {/* Cancel button for shifts */}
-                                {item.type === 'shift' && item.status === 'active' && (
+                                {/* Cancel button for shifts - DISABLED: Only admin can cancel shifts */}
+                                {/* {item.type === 'shift' && item.status === 'active' && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -541,7 +556,7 @@ export default function DoctorShiftPage() {
                                   >
                                     <X className="w-3 h-3 text-red-600" />
                                   </Button>
-                                )}
+                                )} */}
                               </div>
                               <div className="text-gray-600">{item.time}</div>
                               <div className="text-gray-500">{item.description}</div>
@@ -656,105 +671,105 @@ export default function DoctorShiftPage() {
             </Card>
           </div>
         </div>
+      </div>
 
-        {/* Cancel Shift Modal */}
-        <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <X className="w-5 h-5 text-red-600" />
-                Hủy Ca Trực
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {selectedShiftToCancel && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="font-medium text-sm mb-1">
-                    {selectedShiftToCancel.title}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {selectedShiftToCancel.time} - {new Date(selectedShiftToCancel.date).toLocaleDateString('vi-VN')}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {selectedShiftToCancel.description}
-                  </div>
+      {/* Cancel Shift Modal - DISABLED: Only admin can cancel shifts */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <X className="w-5 h-5 text-red-600" />
+              Hủy Ca Trực
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {selectedShiftToCancel && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="font-medium text-sm mb-1">
+                  {selectedShiftToCancel.title}
                 </div>
-              )}
-
-              {/* Preview Information */}
-              {previewLoading && (
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm text-blue-700">Đang tải thông tin preview...</span>
-                  </div>
+                <div className="text-sm text-gray-600">
+                  {selectedShiftToCancel.time} - {new Date(selectedShiftToCancel.date).toLocaleDateString('vi-VN')}
                 </div>
-              )}
+                <div className="text-sm text-gray-500">
+                  {selectedShiftToCancel.description}
+                </div>
+              </div>
+            )}
 
-              {previewData && !previewLoading && (
-                <div className={`p-3 rounded-lg ${previewData.warning ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}`}>
-                  <div className="text-sm font-medium mb-2">
-                    📋 Thông tin tác động:
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <div>• Số lịch hẹn bị ảnh hưởng: <span className="font-medium">{previewData.affectedAppointments}</span></div>
-                    {previewData.hasReplacementDoctor ? (
-                      <div className="text-green-700">• ✅ Có bác sĩ thay thế (ID: {previewData.replacementDoctorId})</div>
-                    ) : (
-                      <div className="text-yellow-700">• ⚠️ Không có bác sĩ thay thế cùng chuyên khoa</div>
-                    )}
-                    {previewData.canAutoReschedule ? (
-                      <div className="text-green-700">• ✅ Có thể tự động chuyển lịch hẹn</div>
-                    ) : (
-                      <div className="text-yellow-700">• ⚠️ Không thể tự động chuyển lịch hẹn</div>
-                    )}
-                  </div>
-                  {previewData.warning && (
-                    <div className="mt-2 p-2 bg-yellow-100 rounded text-xs text-yellow-800">
-                      {previewData.warning}
-                    </div>
+            {/* Preview Information */}
+            {previewLoading && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-blue-700">Đang tải thông tin preview...</span>
+                </div>
+              </div>
+            )}
+
+            {previewData && !previewLoading && (
+              <div className={`p-3 rounded-lg ${previewData.warning ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}`}>
+                <div className="text-sm font-medium mb-2">
+                  📋 Thông tin tác động:
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div>• Số lịch hẹn bị ảnh hưởng: <span className="font-medium">{previewData.affectedAppointments}</span></div>
+                  {previewData.hasReplacementDoctor ? (
+                    <div className="text-green-700">• ✅ Có bác sĩ thay thế (ID: {previewData.replacementDoctorId})</div>
+                  ) : (
+                    <div className="text-yellow-700">• ⚠️ Không có bác sĩ thay thế cùng chuyên khoa</div>
+                  )}
+                  {previewData.canAutoReschedule ? (
+                    <div className="text-green-700">• ✅ Có thể tự động chuyển lịch hẹn</div>
+                  ) : (
+                    <div className="text-yellow-700">• ⚠️ Không thể tự động chuyển lịch hẹn</div>
                   )}
                 </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="cancel-reason">
-                  Lý do yêu cầu hủy ca trực <span className="text-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="cancel-reason"
-                  placeholder="Vui lòng nhập lý do yêu cầu hủy ca trực..."
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  rows={4}
-                  className="resize-none"
-                />
-                <p className="text-xs text-gray-500">
-                  Ca trực sẽ được hủy và hệ thống sẽ tự động xử lý các lịch hẹn liên quan.
-                </p>
+                {previewData.warning && (
+                  <div className="mt-2 p-2 bg-yellow-100 rounded text-xs text-yellow-800">
+                    {previewData.warning}
+                  </div>
+                )}
               </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="cancel-reason">
+                Lý do yêu cầu hủy ca trực <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="cancel-reason"
+                placeholder="Vui lòng nhập lý do yêu cầu hủy ca trực..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+              <p className="text-xs text-gray-500">
+                Ca trực sẽ được hủy và hệ thống sẽ tự động xử lý các lịch hẹn liên quan.
+              </p>
             </div>
+          </div>
 
-            <DialogFooter className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={closeCancelModal}
-                disabled={cancelLoading}
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={submitCancelShift}
-                disabled={cancelLoading || !cancelReason.trim() || previewLoading}
-              >
-                {cancelLoading ? "Đang xử lý..." : "Xác nhận hủy ca"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={closeCancelModal}
+              disabled={cancelLoading}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={submitCancelShift}
+              disabled={cancelLoading || !cancelReason.trim() || previewLoading}
+            >
+              {cancelLoading ? "Đang xử lý..." : "Xác nhận hủy ca"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DoctorSidebar>
   )
 }

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/api"
+import { toast } from "sonner"
 import { 
   ArrowLeft, 
   User, 
@@ -68,6 +69,9 @@ interface Medication {
 export default function PrescribeMed() {
   const { id } = useParams()
   const navigate = useNavigate()
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:70',message:'PrescribeMed component mounted',data:{id,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   
   // Data states
   const [patientData, setPatientData] = useState<PatientData | null>(null)
@@ -103,13 +107,21 @@ export default function PrescribeMed() {
   // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:105',message:'fetchData useEffect started',data:{id,hasId:!!id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      if (!id) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:108',message:'id is missing, early return',data:{id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        return
+      }
       
       try {
         setLoading(true)
         
         // Fetch medicines list
-        const medicinesResponse = await api.get('/api/medicines')
+        const medicinesResponse = await api.get('/medicines')
         if (medicinesResponse.data.success) {
           setMedicines(medicinesResponse.data.data)
         }
@@ -118,20 +130,23 @@ export default function PrescribeMed() {
         const appointmentId = parseInt(id)
         const today = new Date().toISOString().split('T')[0]
         
-        const appointmentsResponse = await api.get(`/api/appointments?date=${today}`)
+        const appointmentsResponse = await api.get(`/appointments?date=${today}`)
         if (appointmentsResponse.data.success && appointmentsResponse.data.data.length > 0) {
           const appointment = appointmentsResponse.data.data.find((apt: any) => apt.id === appointmentId)
           
           if (appointment) {
-            setPatientData({
-              id: appointment.Patient.id,
-              fullName: appointment.Patient.fullName,
-              dateOfBirth: appointment.Patient.dateOfBirth,
-              gender: appointment.Patient.gender,
-              phoneNumber: appointment.Patient.phoneNumber,
-              appointmentId: appointment.id,
-              symptomInitial: appointment.symptomInitial
-            })
+            const patient = appointment.patient || appointment.Patient
+            if (patient) {
+              setPatientData({
+                id: patient.id,
+                fullName: patient.fullName,
+                dateOfBirth: patient.dateOfBirth,
+                gender: patient.gender,
+                phoneNumber: patient.phoneNumber,
+                appointmentId: appointment.id,
+                symptomInitial: appointment.symptomInitial
+              })
+            }
             
             // Mock diagnosis data for now
             setDiagnosisData({
@@ -145,17 +160,29 @@ export default function PrescribeMed() {
               }
             })
           } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:149',message:'Appointment not found',data:{appointmentId:appointmentId,appointmentsCount:appointmentsResponse.data.data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             setError('Appointment not found')
           }
         } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:152',message:'No appointments found for today',data:{today,responseSuccess:appointmentsResponse.data.success},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           setError('No appointments found for today')
         }
         
       } catch (err: any) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:156',message:'Error in fetchData',data:{error:err.message,stack:err.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         console.error('Error fetching data:', err)
         setError('Failed to load data')
       } finally {
         setLoading(false)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:160',message:'fetchData completed',data:{hasPatientData:!!patientData,hasDiagnosisData:!!diagnosisData,error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
       }
     }
 
@@ -252,22 +279,51 @@ export default function PrescribeMed() {
     
     try {
       setSaving(true)
+      setError(null)
+      
+      // Form validation
+      const validMedications = medications.filter(med => med.medicineId && med.quantity > 0)
+      
+      if (validMedications.length === 0) {
+        toast.error('Vui lòng thêm ít nhất một loại thuốc vào đơn')
+        setError('Vui lòng thêm ít nhất một loại thuốc vào đơn')
+        return
+      }
+      
+      // Validate each medicine has at least one dosage > 0
+      for (let i = 0; i < validMedications.length; i++) {
+        const med = validMedications[i]
+        const totalDosage = (med.dosageMorning || 0) + 
+                           (med.dosageNoon || 0) + 
+                           (med.dosageAfternoon || 0) + 
+                           (med.dosageEvening || 0)
+        
+        if (totalDosage <= 0) {
+          toast.error(`Thuốc "${med.name || 'thứ ' + (i + 1)}" phải có ít nhất một liều dùng lớn hơn 0`)
+          setError(`Thuốc "${med.name || 'thứ ' + (i + 1)}" phải có ít nhất một liều dùng lớn hơn 0`)
+          return
+        }
+        
+        if (!med.medicineId) {
+          toast.error(`Vui lòng chọn thuốc cho dòng thứ ${i + 1}`)
+          setError(`Vui lòng chọn thuốc cho dòng thứ ${i + 1}`)
+          return
+        }
+      }
       
       // Prepare prescription data according to backend API
       const prescriptionData = {
         visitId: patientData.appointmentId, // Using appointment ID as visit ID
         patientId: patientData.id,
-        medicines: medications
-          .filter(med => med.medicineId && med.quantity > 0)
-          .map(med => ({
-            medicineId: med.medicineId,
-            quantity: med.quantity,
-            dosageMorning: med.dosageMorning,
-            dosageNoon: med.dosageNoon,
-            dosageAfternoon: med.dosageAfternoon,
-            dosageEvening: med.dosageEvening,
-            instruction: med.instruction || "Uống theo chỉ dẫn của bác sĩ"
-          })),
+        medicines: validMedications.map(med => ({
+          medicineId: med.medicineId,
+          quantity: med.quantity,
+          dosageMorning: med.dosageMorning || 0,
+          dosageNoon: med.dosageNoon || 0,
+          dosageAfternoon: med.dosageAfternoon || 0,
+          dosageEvening: med.dosageEvening || 0,
+          instruction: med.instruction || "Uống theo chỉ dẫn của bác sĩ"
+        })),
         note: additionalNotes
       }
       
@@ -275,19 +331,20 @@ export default function PrescribeMed() {
       
       // Try to save prescription via API
       try {
-        const response = await api.post('/api/prescriptions', prescriptionData)
+        const response = await api.post('/prescriptions', prescriptionData)
         
         if (response.data.success) {
           console.log('Prescription saved successfully:', response.data)
+          toast.success('Lưu đơn thuốc thành công!')
           navigate("/doctor/medicalList")
           return
         }
       } catch (apiError: any) {
-        console.log('API error, falling back to simulation:', apiError.response?.data?.message)
-        
-        // Simulate save if API fails
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        console.log('Prescription saved (simulated):', prescriptionData)
+        const errorMessage = apiError.response?.data?.message || 'Không thể lưu đơn thuốc'
+        console.error('API error:', errorMessage)
+        toast.error(errorMessage)
+        setError(errorMessage)
+        return
       }
       
       // Navigate back to medical list
@@ -295,7 +352,9 @@ export default function PrescribeMed() {
       
     } catch (err: any) {
       console.error('Error saving prescription:', err)
-      setError(err.response?.data?.message || 'Failed to save prescription')
+      const errorMessage = err.response?.data?.message || 'Failed to save prescription'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setSaving(false)
     }
@@ -331,16 +390,18 @@ export default function PrescribeMed() {
         }
         
         try {
-          await api.post('/api/prescriptions', prescriptionData)
+          await api.post('/prescriptions', prescriptionData)
           console.log('Prescription saved successfully')
+          toast.success('Đã lưu đơn thuốc thành công!')
         } catch (prescriptionError: any) {
           console.log('Prescription save failed, continuing with appointment update:', prescriptionError.response?.data?.message)
+          toast.error('Không thể lưu đơn thuốc: ' + (prescriptionError.response?.data?.message || 'Lỗi không xác định'))
         }
       }
       
-      // 2. Cập nhật status appointment thành COMPLETED
-      await api.patch(`/api/appointments/${patientData.appointmentId}/complete`)
-      console.log('Appointment status updated to COMPLETED')
+      // 2. Appointment status sẽ được update tự động khi visit được complete
+      // Không cần gọi API riêng để update appointment status
+      console.log('Prescription saved, appointment will be updated via visit completion')
       
       // 3. Navigate back to examination form
       navigate(`/doctor/patients/${id}/examination`)
@@ -385,7 +446,12 @@ export default function PrescribeMed() {
     )
   }
 
-  if (!patientData || !diagnosisData) return null
+  if (!patientData || !diagnosisData) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prescribeMed.tsx:391',message:'Early return - missing data',data:{hasPatientData:!!patientData,hasDiagnosisData:!!diagnosisData,loading,error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    return null
+  }
 
   return (
     <DoctorSidebar>
@@ -590,31 +656,46 @@ export default function PrescribeMed() {
                       <td className="p-3">
                         <Input
                           type="number"
+                          min="0"
                           placeholder="0"
                           value={medication.dosageMorning || ""}
-                          onChange={(e) => updateMedication(medication.id, 'dosageMorning', parseInt(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0
+                            if (value >= 0) {
+                              updateMedication(medication.id, 'dosageMorning', value)
+                            }
+                          }}
                           className="border-gray-300 focus:border-blue-500 text-center"
-                          min="0"
                         />
                       </td>
                       <td className="p-3">
                         <Input
                           type="number"
+                          min="0"
                           placeholder="0"
                           value={medication.dosageAfternoon || ""}
-                          onChange={(e) => updateMedication(medication.id, 'dosageAfternoon', parseInt(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0
+                            if (value >= 0) {
+                              updateMedication(medication.id, 'dosageAfternoon', value)
+                            }
+                          }}
                           className="border-gray-300 focus:border-blue-500 text-center"
-                          min="0"
                         />
                       </td>
                       <td className="p-3">
                         <Input
                           type="number"
+                          min="0"
                           placeholder="0"
                           value={medication.dosageEvening || ""}
-                          onChange={(e) => updateMedication(medication.id, 'dosageEvening', parseInt(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0
+                            if (value >= 0) {
+                              updateMedication(medication.id, 'dosageEvening', value)
+                            }
+                          }}
                           className="border-gray-300 focus:border-blue-500 text-center"
-                          min="0"
                         />
                       </td>
                       <td className="p-3">

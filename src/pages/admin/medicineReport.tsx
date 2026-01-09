@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { AlertTriangle, TrendingDown } from "lucide-react";
+import { AlertTriangle, TrendingDown, Download } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -32,31 +32,32 @@ interface TopMedicine {
 
 interface ExpiringMedicine {
   id: number;
-  name: string;
-  code: string;
-  stock: number;
-  unit: string;
-  expiryDate: string;
-  daysUntilExpiry: number;
+  medicineCode: string;
+  medicineName: string;
+  currentQuantity: number;
+  minStockLevel: number;
+  expiryDate?: string;
+  daysUntilExpiry?: number;
+  alertType: 'expiring';
 }
 
 interface LowStockMedicine {
   id: number;
-  name: string;
-  code: string;
-  stock: number;
-  unit: string;
-  unitPrice: number;
+  medicineCode: string;
+  medicineName: string;
+  currentQuantity: number;
+  minStockLevel: number;
+  alertType: 'low-stock';
 }
 
 interface ExpiredMedicine {
   id: number;
-  name: string;
-  code: string;
-  stock: number;
-  unit: string;
-  expiryDate: string;
-  value: number;
+  medicineCode: string;
+  medicineName: string;
+  currentQuantity: number;
+  minStockLevel: number;
+  expiryDate?: string;
+  alertType: 'expired';
 }
 
 interface TopMedicinesResponse {
@@ -64,18 +65,14 @@ interface TopMedicinesResponse {
 }
 
 interface MedicineAlertsResponse {
-  expiring: {
-    count: number;
-    medicines: ExpiringMedicine[];
-  };
-  lowStock: {
-    count: number;
-    medicines: LowStockMedicine[];
-  };
-  expired: {
-    count: number;
-    totalValue: number;
-    medicines: ExpiredMedicine[];
+  lowStockMedicines: LowStockMedicine[];
+  expiringMedicines: ExpiringMedicine[];
+  expiredMedicines: ExpiredMedicine[];
+  summary: {
+    totalLowStock: number;
+    totalExpiring: number;
+    totalExpired: number;
+    urgentCount: number;
   };
 }
 
@@ -111,7 +108,7 @@ export default function MedicineReport() {
       params.append("limit", limit);
       if (month) params.append("month", month);
 
-      const response = await api.get(`/api/reports/top-medicines?${params.toString()}`);
+      const response = await api.get(`/reports/top-medicines?${params.toString()}`);
       if (response.data.success) {
         setTopMedicinesData(response.data.data);
       } else {
@@ -133,8 +130,14 @@ export default function MedicineReport() {
       params.append("daysUntilExpiry", daysUntilExpiry);
       params.append("minStock", minStock);
 
-      const response = await api.get(`/api/reports/medicine-alerts?${params.toString()}`);
+      const response = await api.get(`/reports/medicine-alerts?${params.toString()}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'medicineReport.tsx:136',message:'API response received',data:{success:response.data.success,hasData:!!response.data.data,dataKeys:response.data.data?Object.keys(response.data.data):null,hasExpiring:!!response.data.data?.expiring,hasLowStock:!!response.data.data?.lowStock,hasSummary:!!response.data.data?.summary},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       if (response.data.success) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'medicineReport.tsx:138',message:'Setting medicineAlertsData',data:{hasSummary:!!response.data.data?.summary,hasLowStockMedicines:!!response.data.data?.lowStockMedicines,hasExpiringMedicines:!!response.data.data?.expiringMedicines},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         setMedicineAlertsData(response.data.data);
       } else {
         toast.error(response.data.message || "Không thể tải dữ liệu cảnh báo");
@@ -151,6 +154,37 @@ export default function MedicineReport() {
     fetchTopMedicines();
     fetchMedicineAlerts();
   }, []);
+
+  const handleExportPDF = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append("year", year.toString());
+      params.append("limit", limit);
+      if (month) {
+        params.append("month", month);
+      }
+
+      const response = await api.get(`/reports/top-medicines/pdf?${params.toString()}`, {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `top-medicines-report-${year}${month ? `-${month}` : ""}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      toast.success("Tải báo cáo thành công");
+    } catch (error: any) {
+      console.error("Error exporting PDF:", error);
+      if (error.response?.status === 429) {
+        toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.");
+      } else {
+        toast.error(error.response?.data?.message || "Lỗi khi tải báo cáo");
+      }
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -217,6 +251,14 @@ export default function MedicineReport() {
                     <Button onClick={fetchTopMedicines} disabled={loadingTop} className="flex-1">
                       {loadingTop ? "Đang tải..." : "Tìm kiếm"}
                     </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      disabled={!topMedicinesData || loadingTop}
+                      variant="outline"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      PDF
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -237,7 +279,7 @@ export default function MedicineReport() {
                       <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                       <YAxis yAxisId="left" />
                       <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
-                      <Tooltip formatter={(value: any, name?: string) => name === "revenue" ? [formatCurrency(value), "Doanh thu"] : [value, "Số lượng"]} />
+                      <Tooltip formatter={(value: any, name) => String(name) === "revenue" ? [formatCurrency(value), "Doanh thu"] : [value, "Số lượng"]} />
                       <Legend />
                       <Bar yAxisId="left" dataKey="quantity" fill="#3b82f6" name="Số lượng" radius={[4, 4, 0, 0]} />
                       <Bar yAxisId="right" dataKey="revenue" fill="#10b981" name="Doanh thu" radius={[4, 4, 0, 0]} />
@@ -288,17 +330,23 @@ export default function MedicineReport() {
 
             {medicineAlertsData && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SummaryCard title="Sắp hết hạn" count={medicineAlertsData.expiring.count} icon={<AlertTriangle className="text-orange-600" />} colorClass="bg-orange-50" />
-                <SummaryCard title="Tồn kho thấp" count={medicineAlertsData.lowStock.count} icon={<TrendingDown className="text-yellow-600" />} colorClass="bg-yellow-50" />
-                <SummaryCard title="Đã hết hạn" count={medicineAlertsData.expired.count} icon={<AlertTriangle className="text-red-600" />} colorClass="bg-red-50" />
+                {/* #region agent log */}
+                {(() => {
+                  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'medicineReport.tsx:328',message:'Accessing medicineAlertsData.summary',data:{hasMedicineAlertsData:!!medicineAlertsData,hasSummary:!!medicineAlertsData?.summary,summaryKeys:medicineAlertsData?.summary?Object.keys(medicineAlertsData.summary):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                  return null;
+                })()}
+                {/* #endregion */}
+                <SummaryCard title="Sắp hết hạn" count={medicineAlertsData.summary?.totalExpiring ?? 0} icon={<AlertTriangle className="text-orange-600" />} colorClass="bg-orange-50" />
+                <SummaryCard title="Tồn kho thấp" count={medicineAlertsData.summary?.totalLowStock ?? 0} icon={<TrendingDown className="text-yellow-600" />} colorClass="bg-yellow-50" />
+                <SummaryCard title="Đã hết hạn" count={medicineAlertsData.summary?.totalExpired ?? 0} icon={<AlertTriangle className="text-red-600" />} colorClass="bg-red-50" />
               </div>
             )}
 
             {/* Expiring Table */}
-            {medicineAlertsData && medicineAlertsData.expiring.medicines.length > 0 && (
+            {medicineAlertsData && medicineAlertsData.expiringMedicines && medicineAlertsData.expiringMedicines.length > 0 && (
               <AlertTable 
                 title="Thuốc sắp hết hạn" 
-                data={medicineAlertsData.expiring.medicines} 
+                data={medicineAlertsData.expiringMedicines} 
                 type="expiring"
               />
             )}
@@ -341,10 +389,10 @@ function AlertTable({ title, data, type }: any) {
             <tbody>
               {data.map((med: any, i: number) => (
                 <tr key={i} className="border-b">
-                  <td className="py-3 px-4">{med.name}</td>
-                  <td className="text-right py-3 px-4">{med.stock} {med.unit}</td>
+                  <td className="py-3 px-4">{med.medicineName || med.name}</td>
+                  <td className="text-right py-3 px-4">{med.currentQuantity || med.stock} {med.unit || ''}</td>
                   <td className="py-3 px-4">
-                    {type === 'expiring' ? `${med.daysUntilExpiry} ngày` : 'Cần nhập thêm'}
+                    {type === 'expiring' ? `${med.daysUntilExpiry ?? 'N/A'} ngày` : 'Cần nhập thêm'}
                   </td>
                 </tr>
               ))}

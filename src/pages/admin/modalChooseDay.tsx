@@ -79,17 +79,13 @@ export default function ScheduleEventModal({
         workDate: selectedDate
       }
       
-      const response = await api.post('/api/doctor-shifts', payload)
+      const response = await api.post('/doctor-shifts', payload)
       
       if (response.data.success) {
         toast.success('Đã phân công bác sĩ thành công')
         
-        // Truyền schedule data để update UI
-        onSuccess({
-          doctorId: doctor.id,
-          shiftId: selectedShiftId,
-          workDate: selectedDate
-        })
+        // Call onSuccess to trigger refetch in parent component
+        onSuccess()
         
         onClose() // Đóng modal
       } else {

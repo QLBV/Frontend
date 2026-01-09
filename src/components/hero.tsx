@@ -17,7 +17,7 @@ export function Hero() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="gap-2" asChild>
-                <Link to="/book-appointment">
+                <Link to="/patient/book-appointment">
                   <Calendar className="h-5 w-5" />
                   Schedule Appointment
                 </Link>

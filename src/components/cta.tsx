@@ -16,7 +16,7 @@ export function CTA() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Button size="lg" variant="secondary" className="gap-2" asChild>
-                <Link to="/book-appointment">
+                <Link to="/patient/book-appointment">
                   <Calendar className="h-5 w-5" />
                   Book Appointment
                 </Link>

@@ -11,7 +11,8 @@ import {
 } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useAuth } from "@/context/AuthContext" // Import hook lấy dữ liệu user
+import { useAuth } from "@/auth/authContext"
+import { logError } from "@/utils/logger"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -22,8 +23,8 @@ export function Header() {
   // Lấy user & hàm logout từ AuthContext
   const { user, logout } = useAuth(); 
   
-  // Xác định tên hiển thị (ưu tiên displayName, nếu không có thì lấy email)
-  const patientName = user?.displayName || user?.email?.split('@')[0] || "Patient";
+  // Xác định tên hiển thị (ưu tiên fullName, nếu không có thì lấy email)
+  const patientName = user?.fullName || user?.email?.split('@')[0] || "Patient";
 
   const handleLogout = async () => {
     try {
@@ -31,7 +32,7 @@ export function Header() {
       setIsProfileOpen(false);
       navigate("/login"); // Quay về trang login sau khi đăng xuất
     } catch (error) {
-      console.error("Failed to log out", error);
+      logError("Failed to log out", error);
     }
   };
 

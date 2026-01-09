@@ -73,7 +73,7 @@ export default function ExpenseReport() {
         params.append("month", month);
       }
 
-      const response = await api.get(`/api/reports/expense?${params.toString()}`);
+      const response = await api.get(`/reports/expense?${params.toString()}`);
       if (response.data.success) {
         setReportData(response.data.data);
         toast.success("Tải dữ liệu báo cáo thành công");
@@ -141,7 +141,7 @@ export default function ExpenseReport() {
         params.append("month", month);
       }
 
-      const response = await api.get(`/api/reports/expense/pdf?${params.toString()}`, {
+      const response = await api.get(`/reports/expense/pdf?${params.toString()}`, {
         responseType: "blob",
       });
 
@@ -257,7 +257,7 @@ export default function ExpenseReport() {
                     <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                       {formatCurrency(summaryData.medicineExpense)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">{summaryData.medicinePercentage.toFixed(1)}%</p>
+                    <p className="text-xs text-gray-500 mt-2">{(summaryData.medicinePercentage || 0).toFixed(1)}%</p>
                   </div>
                 </CardContent>
               </Card>
@@ -269,7 +269,7 @@ export default function ExpenseReport() {
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                       {formatCurrency(summaryData.salaryExpense)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">{summaryData.salaryPercentage.toFixed(1)}%</p>
+                    <p className="text-xs text-gray-500 mt-2">{(summaryData.salaryPercentage || 0).toFixed(1)}%</p>
                   </div>
                 </CardContent>
               </Card>

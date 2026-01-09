@@ -2,27 +2,52 @@ import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { 
   Calendar, 
-  Settings,
   X,         
 } from 'lucide-react';
-import Topbar from '@/components/topbar'; 
+import Topbar from '@/components/topbar';
+import { useAuth } from '@/auth/authContext'; 
 
 interface SidebarLayoutProps {
   children: ReactNode;     
   pageContent?: ReactNode;  
   logoText?: string; 
   userName?: string;
+  patientCode?: string;
+  userRole?: string;
 }
 
 const SidebarLayout = ({ 
   children, 
   pageContent, 
   logoText = "Logo Placeholder", 
-  userName 
+  userName,
+  patientCode,
+  userRole
 }: SidebarLayoutProps) => {
+  const { user } = useAuth();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false); // State for desktop collapse
+
+  // Determine user role label based on roleId
+  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  const getUserRoleLabel = () => {
+    if (userRole) return userRole; // Use provided role if available
+    
+    const roleId = user?.roleId;
+    switch (roleId) {
+      case 1:
+        return "Quản trị viên";
+      case 2:
+        return "Lễ tân";
+      case 3:
+        return "Bệnh nhân";
+      case 4:
+        return "Bác sĩ";
+      default:
+        return "";
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -124,18 +149,7 @@ const SidebarLayout = ({
             </div>
           )}
 
-          {/* Settings Button */}
-          <button className={`
-            flex items-center gap-3 text-left hover:bg-gray-50 p-2 rounded-lg transition-colors
-            ${isCollapsed ? 'justify-center w-full' : 'w-full -ml-2'}
-          `}>
-            <Settings className="text-black" size={32} strokeWidth={2} />
-            {!isCollapsed && (
-              <span className="font-extrabold text-2xl text-black">
-                Cài đặt
-              </span>
-            )}
-          </button>
+          {/* Settings button removed - already included in PatientSidebar menu */}
         </div>
       </aside>
 
@@ -145,6 +159,8 @@ const SidebarLayout = ({
           <Topbar 
             onMenuClick={handleMenuClick} 
             userName={userName}
+            userRole={getUserRoleLabel()}
+            patientCode={patientCode}
           />
 
           <div className="mt-2">
