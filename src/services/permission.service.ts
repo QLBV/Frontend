@@ -41,7 +41,8 @@ export class PermissionService {
     try {
       const response = await api.get('/permissions')
       if (response.data.success) {
-        return response.data.data || []
+        const data = response.data.data
+        return Array.isArray(data) ? data : []
       }
       return []
     } catch (error: any) {
@@ -59,7 +60,14 @@ export class PermissionService {
     try {
       const response = await api.get('/permissions/modules')
       if (response.data.success) {
-        return response.data.data || []
+        const data = response.data.data
+        if (Array.isArray(data)) {
+          return data.map((m: any) => ({
+            ...m,
+            permissions: Array.isArray(m.permissions) ? m.permissions : []
+          }))
+        }
+        return []
       }
       return []
     } catch (error: any) {

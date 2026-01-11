@@ -42,6 +42,14 @@ export interface Visit {
   diagnosis?: string
   notes?: string
   status: string
+  vitalSigns?: {
+    bloodPressure?: string
+    heartRate?: number
+    temperature?: number
+    respiratoryRate?: number
+    weight?: number
+    height?: number
+  }
   createdAt: string
   updatedAt: string
   patient?: Patient
@@ -107,24 +115,12 @@ export const setupPatientProfile = async (data: {
  * Get patient by ID
  */
 export const getPatientById = async (patientId: number): Promise<Patient> => {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'patient.service.ts:84',message:'API_CALL_START',data:{patientId,url:`/patients/${patientId}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-  // #endregion
   const response = await api.get(`/patients/${patientId}`)
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'patient.service.ts:87',message:'API_RESPONSE_RECEIVED',data:{hasResponse:!!response,hasData:!!response?.data,hasPatient:!!response?.data?.patient,hasDataField:!!response?.data?.data,responseKeys:Object.keys(response?.data || {})},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-  // #endregion
   // Backend returns { success: true, patient: {...} }
   if (response.data.patient) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'patient.service.ts:90',message:'RETURNING_PATIENT_FROM_RESPONSE',data:{patientId:response.data.patient?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
     return response.data.patient
   }
   // Fallback for other response formats
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'patient.service.ts:94',message:'USING_FALLBACK_RESPONSE',data:{hasDataField:!!response.data.data,hasData:!!response.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-  // #endregion
   return response.data.data || response.data
 }
 

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/auth/authContext"
 import AdminSidebar from "@/components/sidebar/admin"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,7 +29,6 @@ import {
   XCircle,
   Loader2,
   Search,
-  User,
   Filter,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -38,7 +36,6 @@ import { AttendanceService, type Attendance, AttendanceStatus } from "@/services
 import { format } from "date-fns"
 
 export default function AttendanceManagementPage() {
-  const { user } = useAuth()
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [pagination, setPagination] = useState({
@@ -62,7 +59,7 @@ export default function AttendanceManagementPage() {
     checkInTime: "",
     checkOutTime: "",
     status: "" as "" | AttendanceStatus,
-    notes: "",
+    note: "",
   })
 
   useEffect(() => {
@@ -112,7 +109,7 @@ export default function AttendanceManagementPage() {
       checkInTime: attendance.checkInTime ? format(new Date(attendance.checkInTime), "yyyy-MM-dd'T'HH:mm") : "",
       checkOutTime: attendance.checkOutTime ? format(new Date(attendance.checkOutTime), "yyyy-MM-dd'T'HH:mm") : "",
       status: attendance.status,
-      notes: attendance.notes || "",
+      note: attendance.note || "",
     })
     setIsEditDialogOpen(true)
   }
@@ -125,7 +122,7 @@ export default function AttendanceManagementPage() {
         checkInTime: editData.checkInTime || undefined,
         checkOutTime: editData.checkOutTime || undefined,
         status: editData.status || undefined,
-        notes: editData.notes || undefined,
+        note: editData.note || undefined,
       })
       toast.success("Cập nhật chấm công thành công!")
       setIsEditDialogOpen(false)
@@ -136,13 +133,29 @@ export default function AttendanceManagementPage() {
     }
   }
 
+  const handleAutoMark = async () => {
+    const date = window.prompt("Nhập ngày muốn chạy tự động (YYYY-MM-DD), để trống để mặc định ngày hôm qua:")
+    try {
+      setIsLoading(true)
+      const response = await AttendanceService.runAutoAbsence(date || undefined)
+      toast.success(`Đã đánh dấu vắng mặt cho ${response.count} nhân viên.`)
+      await fetchAttendances()
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const getStatusBadge = (status: AttendanceStatus) => {
     const config: Record<AttendanceStatus, { label: string; className: string }> = {
       PRESENT: { label: "Có mặt", className: "bg-emerald-500/10 text-emerald-700 border-emerald-200" },
       ABSENT: { label: "Vắng mặt", className: "bg-red-500/10 text-red-700 border-red-200" },
       LATE: { label: "Đi muộn", className: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
       LEAVE: { label: "Nghỉ phép", className: "bg-blue-500/10 text-blue-700 border-blue-200" },
-      HALF_DAY: { label: "Nửa ngày", className: "bg-orange-500/10 text-orange-700 border-orange-200" },
+      SICK_LEAVE: { label: "Nghỉ ốm", className: "bg-purple-500/10 text-purple-700 border-purple-200" },
+      EARLY_LEAVE: { label: "Về sớm", className: "bg-orange-500/10 text-orange-700 border-orange-200" },
+      HALF_DAY: { label: "Nửa ngày", className: "bg-slate-500/10 text-slate-700 border-slate-200" },
     }
     const statusInfo = config[status] || { label: status, className: "bg-gray-500/10 text-gray-700 border-gray-200" }
     return (
@@ -163,9 +176,15 @@ export default function AttendanceManagementPage() {
     <AdminSidebar>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Quản lý chấm công</h1>
-          <p className="text-slate-600">Xem và quản lý chấm công của tất cả nhân viên</p>
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Quản lý chấm công</h1>
+            <p className="text-slate-600">Xem và quản lý chấm công của tất cả nhân viên</p>
+          </div>
+          <Button onClick={handleAutoMark} variant="destructive">
+            <XCircle className="h-4 w-4 mr-2" />
+            Tự động đánh dấu vắng mặt
+          </Button>
         </div>
 
         {/* Stats */}
@@ -324,6 +343,7 @@ export default function AttendanceManagementPage() {
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Check-in</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Check-out</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Ghi chú</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Thao tác</th>
                     </tr>
                   </thead>
@@ -375,6 +395,11 @@ export default function AttendanceManagementPage() {
                           )}
                         </td>
                         <td className="py-4 px-6">{getStatusBadge(attendance.status)}</td>
+                        <td className="py-4 px-6 max-w-xs">
+                          <p className="text-sm text-gray-500 truncate" title={attendance.note}>
+                            {attendance.note || "-"}
+                          </p>
+                        </td>
                         <td className="py-4 px-6">
                           <Button
                             variant="outline"
@@ -488,11 +513,11 @@ export default function AttendanceManagementPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="notes">Ghi chú</Label>
+                <Label htmlFor="note">Ghi chú</Label>
                 <Input
-                  id="notes"
-                  value={editData.notes}
-                  onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                  id="note"
+                  value={editData.note}
+                  onChange={(e) => setEditData({ ...editData, note: e.target.value })}
                   placeholder="Ghi chú..."
                 />
               </div>

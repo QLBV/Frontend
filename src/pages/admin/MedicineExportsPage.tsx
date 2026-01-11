@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, Search, Calendar, Package, User, Loader2, FileText } from "lucide-react"
+import { ArrowLeft, Search, Calendar, Package, Loader2, FileText, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -152,6 +152,7 @@ export default function MedicineExportsPage() {
                       <th className="text-left p-4 font-semibold text-slate-700">Số lượng</th>
                       <th className="text-left p-4 font-semibold text-slate-700">Người xuất</th>
                       <th className="text-left p-4 font-semibold text-slate-700">Ngày xuất</th>
+                      <th className="text-right p-4 font-semibold text-slate-700">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -188,6 +189,13 @@ export default function MedicineExportsPage() {
                               locale: vi,
                             })}
                           </div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/admin/medicines/exports/${exportItem.id}`}>
+                              <Eye className="h-4 w-4 text-slate-500 hover:text-blue-600" />
+                            </Link>
+                          </Button>
                         </td>
                       </tr>
                     ))}

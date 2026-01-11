@@ -20,14 +20,21 @@ export default function NotificationBell() {
 
   // Fetch unread count
   const fetchUnreadCount = async () => {
+    if (isLoading) return; // Prevent multiple simultaneous requests
+
     try {
+      setIsLoading(true)
       const count = await getUnreadCount()
       setUnreadCount(count)
     } catch (error: any) {
-      // Silent fail - don't show error toast for background polling
-      if (import.meta.env.DEV) {
-        console.error("Failed to fetch unread count:", error)
+      // Silent fail for 429 errors - don't spam logs
+      if (error?.response?.status !== 429) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to fetch unread count:", error)
+        }
       }
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -36,11 +43,11 @@ export default function NotificationBell() {
     fetchUnreadCount()
   }, [])
 
-  // Poll for unread count every 30 seconds
+  // Poll for unread count every 60 seconds (increased from 30)
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       fetchUnreadCount()
-    }, 30000) // 30 seconds
+    }, 60000) // 60 seconds to reduce API calls
 
     return () => {
       if (intervalRef.current) {

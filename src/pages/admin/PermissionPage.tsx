@@ -44,7 +44,7 @@ const ROLES = [
 export default function PermissionPage() {
   const [modules, setModules] = useState<Module[]>([])
   const [permissions, setPermissions] = useState<Permission[]>([])
-  const [rolePermissions, setRolePermissions] = useState<RolePermission | null>(null)
+
   const [selectedRoleId, setSelectedRoleId] = useState<number>(1)
   const [loading, setLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -80,8 +80,8 @@ export default function PermissionPage() {
         PermissionService.getModules(),
         PermissionService.getPermissions(),
       ])
-      setModules(modulesRes)
-      setPermissions(permissionsRes)
+      setModules(Array.isArray(modulesRes) ? modulesRes : [])
+      setPermissions(Array.isArray(permissionsRes) ? permissionsRes : [])
     } catch (error: any) {
       if (error.response?.status !== 429) {
         toast.error(error.response?.data?.message || "Không thể tải dữ liệu permissions")
@@ -94,7 +94,7 @@ export default function PermissionPage() {
   const fetchRolePermissions = async (roleId: number) => {
     try {
       const data = await PermissionService.getRolePermissions(roleId)
-      setRolePermissions(data)
+      // setRolePermissions(data)
       setSelectedPermissionIds(data.permissions.map(p => p.id))
     } catch (error: any) {
       if (error.response?.status !== 429) {
@@ -110,7 +110,7 @@ export default function PermissionPage() {
     }
 
     try {
-      const created = await PermissionService.createPermission(newPermission)
+      await PermissionService.createPermission(newPermission)
       toast.success("Tạo permission thành công!")
       setIsCreateDialogOpen(false)
       setNewPermission({ name: "", module: "", action: "", description: "" })
@@ -297,7 +297,7 @@ export default function PermissionPage() {
                       <div key={module.id} className="border rounded-lg p-4">
                         <h3 className="font-semibold text-gray-900 mb-3">{module.name}</h3>
                         <div className="space-y-2">
-                          {module.permissions.map((permission) => (
+                          {(module.permissions || []).map((permission) => (
                             <div key={permission.id} className="flex items-center gap-2">
                               <Checkbox
                                 checked={selectedPermissionIds.includes(permission.id)}

@@ -1,4 +1,4 @@
-import SidebarLayout from "@/components/sidebar_layout";
+import SidebarLayout from "@/components/SidebarLayout";
 import { useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard,

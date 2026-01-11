@@ -55,7 +55,7 @@ export default function VisitDetailPage() {
   const getSidebarComponent = () => {
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    const userName = user.fullName || user.email || ""
+
     switch (role) {
       case "admin":
       case "1":

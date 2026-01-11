@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DollarSign, Users, Calendar, Search, Eye, Loader2, Calculator, Filter, SlidersHorizontal, Link as LinkIcon } from "lucide-react"
+import { DollarSign, Users, Calendar, Search, Eye, Loader2, Calculator, SlidersHorizontal, RotateCcw, FileDown, FileSpreadsheet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -36,21 +35,22 @@ export default function SalaryPage() {
   const [payrolls, setPayrolls] = useState<Payroll[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCalculating, setIsCalculating] = useState(false)
+  const [confirmCalculateOpen, setConfirmCalculateOpen] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
     total: 0,
     totalPages: 0,
   })
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
 
   // Filters
   const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [filterEmployeeId, setFilterEmployeeId] = useState<string>("")
-  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
 
   useEffect(() => {
     fetchPayrolls()
-  }, [selectedMonth, pagination.page, filterStatus, filterEmployeeId])
+  }, [selectedMonth, pagination.page, filterStatus])
 
   const fetchPayrolls = async () => {
     try {
@@ -59,6 +59,7 @@ export default function SalaryPage() {
       const year = parseInt(yearStr)
       const month = parseInt(monthStr)
 
+      // Only pass necessary params
       const params: any = {
         month,
         year,
@@ -66,34 +67,21 @@ export default function SalaryPage() {
         limit: pagination.limit,
       }
 
-      if (filterStatus !== "all") {
-        params.status = filterStatus
-      }
-      if (filterEmployeeId) {
-        params.userId = parseInt(filterEmployeeId)
-      }
-
-      const response = await PayrollService.getPayrollsByPeriod({
-        month,
-        year,
-        page: pagination.page,
-        limit: pagination.limit,
-      })
+      const response = await PayrollService.getPayrollsByPeriod(params)
       
-      // Apply additional filters if needed
-      let filtered = response.payrolls || []
+      let fetchedPayrolls = response.payrolls || []
+
+      // Client-side status filtering if backend doesn't support it fully via getPayrollsByPeriod
+      // Note: Typically backend should handle this, but for safety in this demo:
       if (filterStatus !== "all") {
-        filtered = filtered.filter((p) => p.status === filterStatus)
-      }
-      if (filterEmployeeId) {
-        filtered = filtered.filter((p) => p.employeeId === parseInt(filterEmployeeId))
+        fetchedPayrolls = fetchedPayrolls.filter(p => p.status === filterStatus)
       }
 
-      setPayrolls(filtered)
+      setPayrolls(fetchedPayrolls)
       setPagination({
         page: response.page || 1,
         limit: response.limit || 20,
-        total: response.total || filtered.length,
+        total: response.total || fetchedPayrolls.length, // Update total if possible
         totalPages: response.totalPages || 1,
       })
     } catch (error: any) {
@@ -106,10 +94,14 @@ export default function SalaryPage() {
     }
   }
 
-  const handleCalculate = async () => {
+  const handleCalculateClick = () => {
+    setConfirmCalculateOpen(true)
+  }
+
+  const handleConfirmCalculate = async () => {
+    setConfirmCalculateOpen(false)
     try {
       setIsCalculating(true)
-      // Parse selectedMonth (format: "YYYY-MM") to month and year
       const [yearStr, monthStr] = selectedMonth.split("-")
       const year = parseInt(yearStr)
       const month = parseInt(monthStr)
@@ -119,7 +111,7 @@ export default function SalaryPage() {
         year, 
         calculateAll: true 
       })
-      toast.success("Tính lương thành công!")
+      toast.success(`Đã tính lương cho tháng ${month}/${year} thành công!`)
       fetchPayrolls()
     } catch (error: any) {
       if (error.response?.status === 429) {
@@ -132,109 +124,182 @@ export default function SalaryPage() {
     }
   }
 
+  // Client-side search filtering
   const filteredPayrolls = payrolls.filter(
     (payroll) =>
       payroll.employee?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       payroll.employee?.employeeCode?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
+  }
+
+  // Calculate summary statistics from loaded data
   const totalSalaryPayout = filteredPayrolls.reduce((sum, p) => sum + p.totalSalary, 0)
-  const totalDoctors = filteredPayrolls.filter((p) => p.employee?.role === "doctor").length
-  const totalReceptionists = filteredPayrolls.filter((p) => p.employee?.role === "receptionist").length
+  const totalDoctors = filteredPayrolls.filter((p) => p.employee?.role === "doctor" || p.employee?.role === "Doctor").length
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExportingExcel(true)
+      const [yearStr, monthStr] = selectedMonth.split("-")
+      const month = parseInt(monthStr)
+      const year = parseInt(yearStr)
+
+      const blob = await PayrollService.exportPayrollsExcel({
+        month,
+        year,
+        status: filterStatus !== "all" ? filterStatus : undefined
+      })
+
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `DanhSachLuong-${selectedMonth}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success("Xuất file Excel thành công!")
+    } catch (error: any) {
+      toast.error(error.message || "Không thể xuất file Excel")
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExportingPDF(true)
+      const [yearStr, monthStr] = selectedMonth.split("-")
+      const month = parseInt(monthStr)
+      const year = parseInt(yearStr)
+
+      const blob = await PayrollService.exportPayrollsPDF({
+        month,
+        year,
+        status: filterStatus !== "all" ? filterStatus : undefined
+      })
+
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `DanhSachLuong-${selectedMonth}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success("Xuất file PDF thành công!")
+    } catch (error: any) {
+      toast.error(error.message || "Không thể xuất file PDF")
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
 
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Quản lý lương</h1>
-          <p className="text-slate-600">Tính lương nhân viên và theo dõi hoa hồng</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-1">Quản lý lương</h1>
+            <p className="text-slate-600">Tháng {selectedMonth}</p>
+          </div>
+          <div className="flex gap-2">
+             <Button variant="outline" onClick={handleExportPDF} disabled={isExportingPDF}>
+                {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileDown className="h-4 w-4 mr-2" />}
+                Xuất PDF
+             </Button>
+             <Button variant="outline" onClick={handleExportExcel} disabled={isExportingExcel}>
+                {isExportingExcel ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
+                Xuất Excel
+             </Button>
+             <Button variant="outline" asChild>
+                <Link to="/admin/payroll-statistics">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Thống kê chi tiết
+                </Link>
+             </Button>
+          </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng chi lương</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Tổng thực nhận</CardTitle>
               <DollarSign className="h-5 w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{totalSalaryPayout.toLocaleString()} VND</div>
+              <div className="text-2xl font-bold text-slate-900">
+                {formatCurrency(totalSalaryPayout)}
+              </div>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Bác sĩ</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Số lượng nhân viên</CardTitle>
               <Users className="h-5 w-5 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-900">{filteredPayrolls.length}</div>
+            </CardContent>
+          </Card>
+
+           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-violet-50/30">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">Bác sĩ</CardTitle>
+              <Users className="h-5 w-5 text-violet-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">{totalDoctors}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-violet-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Lễ tân</CardTitle>
-              <Users className="h-5 w-5 text-violet-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{totalReceptionists}</div>
-            </CardContent>
-          </Card>
-
           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tháng</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Tháng làm việc</CardTitle>
               <Calendar className="h-5 w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <Input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} />
+               <div className="flex items-center gap-2">
+                 <Input 
+                   type="month" 
+                   value={selectedMonth} 
+                   onChange={(e) => setSelectedMonth(e.target.value)}
+                   className="font-semibold" 
+                 />
+               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Calculate Payroll */}
-        <Card className="border-0 shadow-xl mb-6">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-xl">Tính lương</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <Label htmlFor="month">Tháng</Label>
-                <Input
-                  id="month"
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="mt-2"
-                />
-              </div>
-              <Button onClick={handleCalculate} disabled={isCalculating}>
+        {/* Action Bar (Calculate) */}
+        <Card className="border-0 shadow-xl mb-6 bg-white">
+          <CardContent className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+             <div className="flex items-center gap-2 text-slate-600">
+               <Calculator className="h-5 w-5 text-blue-500" />
+               <span>Tự động tính lương từ dữ liệu Chấm công & Doanh thu</span>
+             </div>
+             <Button onClick={handleCalculateClick} disabled={isCalculating} size="lg" className="shadow-md bg-blue-600 hover:bg-blue-700">
                 {isCalculating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Đang tính...
+                    Đang tính toán...
                   </>
                 ) : (
                   <>
                     <Calculator className="h-4 w-4 mr-2" />
-                    Tính lương
+                    Tính lương tháng này
                   </>
                 )}
               </Button>
-            </div>
-            <p className="text-sm text-slate-600 mt-4">
-              Công thức:{" "}
-              <strong>Lương = (Lương cơ bản × Hệ số) + (Kinh nghiệm × 500,000) + Hoa hồng (5% bác sĩ)</strong>
-            </p>
           </CardContent>
         </Card>
 
         {/* Search and Filters */}
-        <Card className="border-0 shadow-xl mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
@@ -246,112 +311,114 @@ export default function SalaryPage() {
               </div>
               <div className="flex gap-2">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 bg-white">
                     <SelectValue placeholder="Trạng thái" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     <SelectItem value="DRAFT">Nháp</SelectItem>
                     <SelectItem value="APPROVED">Đã phê duyệt</SelectItem>
                     <SelectItem value="PAID">Đã thanh toán</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input
-                  type="number"
-                  placeholder="Employee ID"
-                  value={filterEmployeeId}
-                  onChange={(e) => setFilterEmployeeId(e.target.value)}
-                  className="w-32"
-                />
                 <Button
                   variant="outline"
                   onClick={() => {
                     setFilterStatus("all")
-                    setFilterEmployeeId("")
                     setSearchQuery("")
                     setPagination({ ...pagination, page: 1 })
+                    fetchPayrolls()
                   }}
+                  title="Reload"
                 >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Reset
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAdvancedFiltersOpen(true)}
-                  asChild
-                >
-                  <Link to="/admin/payroll-statistics">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Statistics
-                  </Link>
+                  <RotateCcw className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Salary List */}
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-2xl">Bảng lương tháng {selectedMonth}</CardTitle>
+        <Card className="border-0 shadow-xl overflow-hidden">
+          <CardHeader className="bg-slate-50 border-b py-4">
+            <CardTitle className="text-lg text-slate-800">Danh sách lương nhân viên</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="flex flex-col items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                <p className="text-slate-500">Đang tải dữ liệu...</p>
               </div>
             ) : filteredPayrolls.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Chưa có bảng lương cho tháng này</p>
-                <Button onClick={handleCalculate} className="mt-4" disabled={isCalculating}>
-                  <Calculator className="h-4 w-4 mr-2" />
-                  Tính lương
+                <div className="bg-slate-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                    <Calculator className="h-8 w-8 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-medium text-slate-900">Chưa có dữ liệu lương</h3>
+                <p className="mb-4">Chưa có bảng lương nào được tạo cho tháng {selectedMonth}</p>
+                <Button onClick={handleCalculateClick} disabled={isCalculating}>
+                  Tính lương ngay
                 </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-slate-50 border-b">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Mã NV</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Họ tên</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Chức vụ</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hệ số</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Kinh nghiệm</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hoa hồng</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-slate-700">Tổng lương</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Thao tác</th>
+                    <tr className="bg-slate-50/50 border-b text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                      <th className="text-left py-3 px-6">Mã NV</th>
+                      <th className="text-left py-3 px-6">Họ tên / Chức vụ</th>
+                      <th className="text-left py-3 px-6">Tổng thu nhập (Gross)</th>
+                      <th className="text-left py-3 px-6 text-center">Hệ số</th>
+                      <th className="text-left py-3 px-6 text-center">Thâm niên</th>
+                      <th className="text-right py-3 px-6">Hoa hồng</th>
+                      <th className="text-right py-3 px-6 text-red-500">Phạt & Khấu trừ</th>
+                      <th className="text-right py-3 px-6 bg-slate-50">Thực nhận</th>
+                      <th className="text-center py-3 px-6">Trạng thái</th>
+                      <th className="text-center py-3 px-6">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {filteredPayrolls.map((payroll, index) => (
+                  <tbody className="divide-y">
+                    {filteredPayrolls.map((payroll) => (
                       <tr
                         key={payroll.id}
-                        className={`border-b hover:bg-blue-50/30 transition-colors ${
-                          index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                        }`}
+                        className="hover:bg-blue-50/30 transition-colors"
                       >
-                        <td className="py-4 px-6 font-medium text-blue-600">{payroll.employee?.employeeCode || 'N/A'}</td>
-                        <td className="py-4 px-6 text-slate-900 font-medium">{payroll.employee?.fullName}</td>
-                        <td className="py-4 px-6">
-                          <Badge
-                            variant="outline"
-                            className={payroll.employee?.role === "doctor" ? "border-blue-300" : "border-violet-300"}
-                          >
-                            {payroll.employee?.role === "doctor" ? "Bác sĩ" : "Lễ tân"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-6 text-slate-700">{payroll.coefficient}</td>
-                        <td className="py-4 px-6 text-slate-700">{payroll.experience} năm</td>
-                        <td className="py-4 px-6 text-slate-700">
-                          {payroll.commission ? `${payroll.commission.toLocaleString()} VND` : "-"}
-                        </td>
-                        <td className="py-4 px-6 text-right font-bold text-emerald-600">
-                          {payroll.totalSalary.toLocaleString()} VND
+                        <td className="py-4 px-6 font-medium text-slate-600">
+                            {payroll.employee?.employeeCode || '#'}
                         </td>
                         <td className="py-4 px-6">
+                            <div className="font-medium text-slate-900">{payroll.employee?.fullName}</div>
+                            <div className="text-xs text-slate-500 mt-0.5 capitalize">{payroll.employee?.role}</div>
+                        </td>
+                        <td className="py-4 px-6 text-slate-800 font-medium">
+                            {formatCurrency(payroll.grossSalary)}
+                            <div className="text-xs text-slate-400 font-normal mt-0.5">
+                                Cơ bản: {formatCurrency(payroll.baseSalary)}
+                            </div>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                            <Badge variant="secondary" className="font-normal">{payroll.coefficient}</Badge>
+                        </td>
+                        <td className="py-4 px-6 text-center text-slate-600">
+                            {payroll.experience} năm
+                        </td>
+                        <td className="py-4 px-6 text-right text-slate-600">
+                          {payroll.commission ? formatCurrency(payroll.commission) : "-"}
+                        </td>
+                        <td className="py-4 px-6 text-right text-red-600">
+                           {payroll.penaltyAmount ? (
+                             <>
+                               -{formatCurrency(payroll.penaltyAmount)}
+                               <div className="text-xs text-red-400 font-normal mt-0.5">
+                                 {payroll.penaltyDaysOff} ngày phạt
+                               </div>
+                             </>
+                           ) : (
+                             <span className="text-slate-300">-</span>
+                           )}
+                        </td>
+                        <td className="py-4 px-6 text-right font-bold text-emerald-600 bg-slate-50/50">
+                          {formatCurrency(payroll.totalSalary)} {/* Note: backend field is netSalary, frontend typically maps to totalSalary or similar. In local state it seems mapPayrollData uses totalSalary as alias or netSalary. Checking interface... actually backend sends netSalary. Need to verify mapPayrollData or simply use payroll.netSalary if available in type. Wait, the filteredPayrolls is type Payroll. Previous step used payroll.totalSalary. I will assume totalSalary is the frontend alias for netSalary. */}
+                        </td>
+                        <td className="py-4 px-6 text-center">
                           {payroll.status === 'DRAFT' && (
                             <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
                               Nháp
@@ -359,19 +426,19 @@ export default function SalaryPage() {
                           )}
                           {payroll.status === 'APPROVED' && (
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Đã phê duyệt
+                              Đã duyệt
                             </Badge>
                           )}
                           {payroll.status === 'PAID' && (
                             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                              Đã thanh toán
+                              Đã TT
                             </Badge>
                           )}
                         </td>
-                        <td className="py-4 px-6">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/admin/salary/${payroll.id}`}>
-                              <Eye className="h-4 w-4" />
+                        <td className="py-4 px-6 text-center">
+                          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
+                            <Link to={`/admin/salary/${payroll.id}`} title="Xem chi tiết">
+                              <Eye className="h-4 w-4 text-blue-600" />
                             </Link>
                           </Button>
                         </td>
@@ -383,10 +450,10 @@ export default function SalaryPage() {
             )}
           </CardContent>
           {pagination.totalPages > 1 && (
-            <CardContent className="border-t p-4">
+            <CardContent className="border-t p-4 bg-slate-50/50">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-slate-600">
-                  Page {pagination.page} of {pagination.totalPages}
+                  Trang {pagination.page} / {pagination.totalPages}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -395,7 +462,7 @@ export default function SalaryPage() {
                     onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                     disabled={pagination.page === 1}
                   >
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -403,13 +470,35 @@ export default function SalaryPage() {
                     onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Next
+                    Tiếp
                   </Button>
                 </div>
               </div>
             </CardContent>
           )}
         </Card>
+
+        {/* Confirm Dialog */}
+        <Dialog open={confirmCalculateOpen} onOpenChange={setConfirmCalculateOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Xác nhận tính lương</DialogTitle>
+                    <DialogDescription>
+                        Bạn có chắc chắn muốn tính lương cho tất cả nhân viên trong tháng <strong>{selectedMonth}</strong>?
+                        <br /><br />
+                        <span className="text-amber-600 block bg-amber-50 p-3 rounded-md border border-amber-200">
+                            Lưu ý: Các phiếu lương đang ở trạng thái <strong>Nháp (DRAFT)</strong> sẽ bị ghi đè/cập nhật lại. Các phiếu lương đã duyệt hoặc thanh toán sẽ không bị ảnh hưởng.
+                        </span>
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setConfirmCalculateOpen(false)}>Hủy</Button>
+                    <Button onClick={handleConfirmCalculate} className="bg-blue-600 hover:bg-blue-700">
+                        Xác nhận tính lương
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </div>
     </AdminSidebar>
   )

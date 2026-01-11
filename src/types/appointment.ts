@@ -1,4 +1,10 @@
-export type AppointmentStatus = "Confirmed" | "Pending" | "Completed" | "Cancelled";
+export type AppointmentStatus =
+  | "Confirmed"
+  | "Pending"
+  | "Checked-in"
+  | "In Progress"
+  | "Completed"
+  | "Cancelled";
 
 export interface IDoctor {
   id: number;
@@ -16,6 +22,8 @@ export interface IAppointment {
   location: string;
   reason: string;
   status: AppointmentStatus;
+  displayStatus?: string;
+  rawStatus?: string;
   notes?: string;
   diagnosis?: string;
   prescription?: string;

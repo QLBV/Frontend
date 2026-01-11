@@ -1,4 +1,4 @@
-import SidebarLayout from "@/components/sidebar_layout";
+import SidebarLayout from "@/components/SidebarLayout";
 import { useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard,
@@ -7,9 +7,7 @@ import {
   FileText,
   UsersRound,
   Banknote,
-  Blocks,
   Component,
-  Bell,
   Clock,
   UserCheck,
   Package,
@@ -34,32 +32,32 @@ const AdminSidebar = ({ children, userName }: AdminSidebarProps) => {
     {
       title: "Management",
       items: [
-        { label: "Employee", href: "/admin/doctors", icon: <UsersRound size={24} strokeWidth={2.5} /> },
         { label: "Schedule", href: "/admin/schedule", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
-        { label: "Quản lý kho thuốc", href: "/admin/inventory", icon: <Package size={24} strokeWidth={2.5} /> },
+        { label: "Inventory", href: "/admin/inventory", icon: <Package size={24} strokeWidth={2.5} /> },
         { label: "Specialties", href: "/admin/specialties", icon: <Component size={24} strokeWidth={2.5} /> },
         { label: "Shifts", href: "/admin/shifts", icon: <Clock size={24} strokeWidth={2.5} /> },
+        { label: "Shift Templates", href: "/admin/shift-templates", icon: <FileText size={24} strokeWidth={2.5} /> },
+        { label: "Generate Schedule", href: "/admin/schedule-generation", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
         { label: "Salary", href: "/admin/salary", icon: <Banknote size={24} strokeWidth={2.5} /> },
-        { label: "Payroll Statistics", href: "/admin/payroll-statistics", icon: <FileText size={24} strokeWidth={2.5} /> },
         { label: "Attendance", href: "/admin/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> }
       ]
     },
     {
       title: "Report",
       items: [
-        { label: "Revenue", href: "/admin/revenue", icon: <FileText size={24} strokeWidth={2.5} /> },
-        { label: "Expense", href: "/admin/expense", icon: <Blocks size={24} strokeWidth={2.5} /> },
-        { label: "Profit", href: "/admin/profit", icon: <FileText size={24} strokeWidth={2.5} /> },
+        { label: "Báo cáo tài chính", href: "/admin/reports/financial", icon: <Banknote size={24} strokeWidth={2.5} /> },
         { label: "Appointments", href: "/admin/reports/appointments", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
         { label: "Patients", href: "/admin/reports/patient-statistics", icon: <UsersRound size={24} strokeWidth={2.5} /> },
-        { label: "Medicines", href: "/admin/reports/medicines", icon: <ClipboardList size={24} strokeWidth={2.5} /> },
-        { label: "Medicine Alerts", href: "/admin/reports/medicine-alerts", icon: <Bell size={24} strokeWidth={2.5} /> }
+        { label: "Medicines", href: "/admin/reports/medicines", icon: <ClipboardList size={24} strokeWidth={2.5} /> }
       ]
     },
     {
       title: "User Management",
       items: [
-        { label: "Users", href: "/admin/users", icon: <UsersRound size={24} strokeWidth={2.5} /> }
+        { label: "Users", href: "/admin/users", icon: <UsersRound size={24} strokeWidth={2.5} /> },
+        { label: "Employee", href: "/admin/employees", icon: <UsersRound size={24} strokeWidth={2.5} /> },
+        { label: "Patients", href: "/admin/patients", icon: <UserCheck size={24} strokeWidth={2.5} /> }
+
       ]
     },
     {

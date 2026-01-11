@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import AdminSidebar from '@/components/sidebar/admin'
 import { 
   Search,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Trash2,
@@ -12,12 +11,13 @@ import {
   Edit,
   UserCheck,
   UserX,
-  Shield,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+
+
 import {
   Select,
   SelectContent,
@@ -36,35 +36,42 @@ import {
 import { toast } from "sonner"
 import { UserService, type User } from "@/services/user.service"
 
-type SortOption = "name" | "email" | "role" | "createdAt"
-type RoleFilter = "all" | "admin" | "doctor" | "receptionist" | "patient"
+type RoleFilter = "all" | "admin" | "doctor" | "receptionist" | "patient" | "employee"
 type StatusFilter = "all" | "active" | "inactive"
 
 export default function UserManagementPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const initialRole = (searchParams.get("role") as RoleFilter) || "all"
+  
   const [searchQuery, setSearchQuery] = useState("")
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>(initialRole)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
-  const [sortBy, setSortBy] = useState<SortOption>("name")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    const role = searchParams.get("role") as RoleFilter
+    if (role) {
+      setRoleFilter(role)
+      setCurrentPage(1)
+    }
+  }, [searchParams])
   const [users, setUsers] = useState<User[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false)
-  const [userToChangeRole, setUserToChangeRole] = useState<User | null>(null)
-  const [newRole, setNewRole] = useState<"admin" | "doctor" | "receptionist" | "patient">("patient")
-  const [isChangingRole, setIsChangingRole] = useState(false)
+  
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [userToToggle, setUserToToggle] = useState<User | null>(null)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
+  
   const itemsPerPage = 10
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      setError("")
       
       const params: any = {
         page: currentPage,
@@ -84,38 +91,38 @@ export default function UserManagementPage() {
       }
       
       const response = await UserService.getUsers(params)
-      // Map users to ensure role is always a string (backend may return role as object with {name: "admin"})
-      const mappedUsers = response.users.map((user: any) => {
-        let roleString = 'patient' // default
+      console.log("fetchUsers response:", response)
+      
+      const userList = response.users || []
+      const mappedUsers = userList.map((user: any) => {
+        let roleString = 'patient'
         if (typeof user.role === 'string') {
-          roleString = user.role
+          roleString = user.role.toLowerCase()
         } else if (user.role?.name) {
-          roleString = user.role.name
+          roleString = user.role.name.toLowerCase()
         } else if (user.roleId) {
-          // Map roleId to role name
           const roleIdMap: Record<number, string> = {
             1: 'admin',
-            2: 'doctor',
+            2: 'receptionist',
             3: 'patient',
-            4: 'receptionist',
+            4: 'doctor',
           }
           roleString = roleIdMap[user.roleId] || 'patient'
         }
         return {
           ...user,
-          role: roleString as 'admin' | 'doctor' | 'receptionist' | 'patient',
+          role: roleString as any,
         }
       })
       setUsers(mappedUsers)
-      setTotalPages(response.totalPages)
+      setTotalPages(response.totalPages || 1)
     } catch (err: any) {
+      console.error("fetchUsers error:", err)
       if (err.response?.status === 429) {
         const errorMessage = "Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại."
-        setError(errorMessage)
         toast.error(errorMessage)
       } else {
         const errorMessage = err.response?.data?.message || err.message || 'Không thể tải danh sách người dùng'
-        setError(errorMessage)
         toast.error(errorMessage)
       }
     } finally {
@@ -165,62 +172,43 @@ export default function UserManagementPage() {
     }
   }
 
-  const handleActivate = async (user: User) => {
-    try {
-      await UserService.activateUser(user.id)
-      toast.success("Kích hoạt người dùng thành công!")
-      fetchUsers()
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
-      } else {
-        toast.error(error.response?.data?.message || "Không thể kích hoạt người dùng")
-      }
-    }
+  const handleActivateClick = (user: User) => {
+    setUserToToggle(user)
+    setStatusDialogOpen(true)
   }
 
-  const handleDeactivate = async (user: User) => {
-    try {
-      await UserService.deactivateUser(user.id)
-      toast.success("Vô hiệu hóa người dùng thành công!")
-      fetchUsers()
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
-      } else {
-        toast.error(error.response?.data?.message || "Không thể vô hiệu hóa người dùng")
-      }
-    }
+  const handleDeactivateClick = (user: User) => {
+    setUserToToggle(user)
+    setStatusDialogOpen(true)
   }
 
-  const handleRoleChangeClick = (user: User) => {
-    setUserToChangeRole(user)
-    // user.role should already be mapped to string in fetchUsers, but add safety check
-    const userRole = (typeof user.role === 'string' ? user.role : 'patient') as "admin" | "doctor" | "receptionist" | "patient"
-    setNewRole(userRole)
-    setRoleChangeDialogOpen(true)
-  }
-
-  const handleRoleChangeConfirm = async () => {
-    if (!userToChangeRole) return
+  const handleStatusToggleConfirm = async () => {
+    if (!userToToggle) return
     
     try {
-      setIsChangingRole(true)
-      await UserService.changeUserRole(userToChangeRole.id, newRole)
-      toast.success("Thay đổi vai trò thành công!")
-      setRoleChangeDialogOpen(false)
-      setUserToChangeRole(null)
+      setIsTogglingStatus(true)
+      if (userToToggle.isActive) {
+        await UserService.deactivateUser(userToToggle.id)
+        toast.success("Vô hiệu hóa người dùng thành công!")
+      } else {
+        await UserService.activateUser(userToToggle.id)
+        toast.success("Kích hoạt người dùng thành công!")
+      }
+      setStatusDialogOpen(false)
+      setUserToToggle(null)
       fetchUsers()
     } catch (error: any) {
       if (error.response?.status === 429) {
         toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
       } else {
-        toast.error(error.response?.data?.message || "Không thể thay đổi vai trò")
+        toast.error(error.response?.data?.message || "Không thể thay đổi trạng thái")
       }
     } finally {
-      setIsChangingRole(false)
+      setIsTogglingStatus(false)
     }
   }
+
+
 
   const getRoleBadge = (role: string) => {
     const config: Record<string, { label: string; className: string }> = {
@@ -230,7 +218,7 @@ export default function UserManagementPage() {
       patient: { label: "Bệnh nhân", className: "bg-gray-100 text-gray-800 border-gray-200" },
     }
     // role should already be a string after mapping, but add safety check
-    const roleName = typeof role === 'string' ? role : 'patient'
+    const roleName = typeof role === 'string' ? role.toLowerCase() : 'patient'
     const roleConfig = config[roleName] || config.patient
     
     return (
@@ -312,6 +300,7 @@ export default function UserManagementPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả vai trò</SelectItem>
+                  <SelectItem value="employee">Nhân viên</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="doctor">Bác sĩ</SelectItem>
                   <SelectItem value="receptionist">Lễ tân</SelectItem>
@@ -412,20 +401,12 @@ export default function UserManagementPage() {
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-purple-600 hover:text-purple-800"
-                            onClick={() => handleRoleChangeClick(user)}
-                          >
-                            <Shield className="h-4 w-4" />
-                          </Button>
                           {user.isActive ? (
                             <Button
                               variant="ghost"
                               size="sm"
                               className="text-orange-600 hover:text-orange-800"
-                              onClick={() => handleDeactivate(user)}
+                              onClick={() => handleDeactivateClick(user)}
                             >
                               <UserX className="h-4 w-4" />
                             </Button>
@@ -434,7 +415,7 @@ export default function UserManagementPage() {
                               variant="ghost"
                               size="sm"
                               className="text-green-600 hover:text-green-800"
-                              onClick={() => handleActivate(user)}
+                              onClick={() => handleActivateClick(user)}
                             >
                               <UserCheck className="h-4 w-4" />
                             </Button>
@@ -537,48 +518,36 @@ export default function UserManagementPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Role Change Dialog */}
-        <Dialog open={roleChangeDialogOpen} onOpenChange={setRoleChangeDialogOpen}>
+        
+        {/* Status Toggle Dialog */}
+        <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Thay đổi vai trò</DialogTitle>
+              <DialogTitle>Xác nhận thay đổi trạng thái</DialogTitle>
               <DialogDescription>
-                Thay đổi vai trò cho người dùng <strong>{userToChangeRole?.fullName}</strong>
+                Bạn có chắc chắn muốn {userToToggle?.isActive ? "vô hiệu hóa" : "kích hoạt"} người dùng <strong>{userToToggle?.fullName}</strong>?
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-              <Select value={newRole} onValueChange={(value) => setNewRole(value as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="doctor">Bác sĩ</SelectItem>
-                  <SelectItem value="receptionist">Lễ tân</SelectItem>
-                  <SelectItem value="patient">Bệnh nhân</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => {
-                  setRoleChangeDialogOpen(false)
-                  setUserToChangeRole(null)
+                  setStatusDialogOpen(false)
+                  setUserToToggle(null)
                 }}
-                disabled={isChangingRole}
+                disabled={isTogglingStatus}
               >
                 Hủy
               </Button>
               <Button
-                onClick={handleRoleChangeConfirm}
-                disabled={isChangingRole}
+                variant={userToToggle?.isActive ? "destructive" : "default"}
+                onClick={handleStatusToggleConfirm}
+                disabled={isTogglingStatus}
               >
-                {isChangingRole ? (
+                {isTogglingStatus ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Đang thay đổi...
+                    Đang xử lý...
                   </>
                 ) : (
                   "Xác nhận"
@@ -587,6 +556,7 @@ export default function UserManagementPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
       </div>
     </AdminSidebar>
   )

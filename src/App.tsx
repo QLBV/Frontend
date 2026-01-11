@@ -20,30 +20,32 @@ const AdminProfilePage = lazy(() => import("./pages/admin/ProfilePage"))
 const DoctorProfilePage = lazy(() => import("./pages/doctor/ProfilePage"))
 const PatientProfilePage = lazy(() => import("./pages/patient/ProfilePage"))
 const PatientUpdateHealthInfoPage = lazy(() => import("./pages/patient/UpdateHealthInfoPage"))
-const ReceptionistProfilePage = lazy(() => import("./pages/receptionist/ProfilePage"))
+const ReceptionistProfilePage = lazy(() => import("./pages/recep/ProfilePage"))
 
 // Lazy load admin pages
 const AdminDashboardPage = lazy(() => import("./pages/admin/DashboardPage"))
-const DoctorListPage = lazy(() => import("./pages/admin/doctorList"))
-const DoctorDetailPage = lazy(() => import("./pages/admin/doctorDetail"))
-const DoctorAddPage = lazy(() => import("./pages/admin/doctorAdd"))
-const DoctorSchedulePage = lazy(() => import("./pages/admin/doctorSchedule"))
-const DoctorsShiftPage = lazy(() => import("./pages/admin/doctorShift"))
+const DoctorListPage = lazy(() => import("./pages/admin/DoctorListPage"))
+const DoctorDetailPage = lazy(() => import("./pages/admin/DoctorDetailPage"))
+const DoctorAddPage = lazy(() => import("./pages/admin/DoctorAddPage"))
+const DoctorSchedulePage = lazy(() => import("./pages/admin/DoctorSchedulePage"))
+const DoctorsShiftPage = lazy(() => import("./pages/admin/DoctorShiftPage"))
 const PharmacyImportPage = lazy(() => import("./pages/admin/PharmacyImportPage"))
 const CreateMedicinePage = lazy(() => import("./pages/admin/CreateMedicinePage"))
 const MedicineImportsPage = lazy(() => import("./pages/admin/MedicineImportsPage"))
+const MedicineImportDetailPage = lazy(() => import("./pages/admin/MedicineImportDetailPage"))
 const MedicineExportsPage = lazy(() => import("./pages/admin/MedicineExportsPage"))
+const MedicineExportDetailPage = lazy(() => import("./pages/admin/MedicineExportDetailPage"))
+const RefundsPage = lazy(() => import("./pages/admin/RefundsPage"))
 const SalaryPage = lazy(() => import("./pages/admin/SalaryPage"))
-const RevenueReportPage = lazy(() => import("./pages/admin/revenueReport"))
-const ExpenseReportPage = lazy(() => import("./pages/admin/expenseReport"))
-const ProfitReportPage = lazy(() => import("./pages/admin/profitReport"))
-const AppointmentReportPage = lazy(() => import("./pages/admin/appointmentReport"))
-const PatientStatisticsReportPage = lazy(() => import("./pages/admin/patientStatisticsReport"))
-const MedicineAlertsReportPage = lazy(() => import("./pages/admin/medicineAlertsReport"))
-const MedicineReportPage = lazy(() => import("./pages/admin/medicineReport"))
-const GenderReportPage = lazy(() => import("./pages/admin/genderReport"))
+const FinancialReportPage = lazy(() => import("./pages/admin/FinancialReportPage"))
+const AppointmentReportPage = lazy(() => import("./pages/admin/AppointmentReportPage"))
+const PatientStatisticsReportPage = lazy(() => import("./pages/admin/PatientStatisticsReportPage"))
+
+const MedicineReportPage = lazy(() => import("./pages/admin/MedicineReportPage"))
+const GenderReportPage = lazy(() => import("./pages/admin/GenderReportPage"))
 const UserManagementPage = lazy(() => import("./pages/admin/UserManagementPage"))
 const UserDetailPage = lazy(() => import("./pages/admin/UserDetailPage"))
+const UserAddPage = lazy(() => import("./pages/admin/UserAddPage"))
 const SettingsPage = lazy(() => import("./pages/SettingsPage"))
 const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage"))
 const PermissionPage = lazy(() => import("./pages/admin/PermissionPage"))
@@ -52,26 +54,32 @@ const PayrollDetailPage = lazy(() => import("./pages/admin/PayrollDetailPage"))
 const InventoryPage = lazy(() => import("./pages/admin/InventoryPage"))
 const SpecialtiesPage = lazy(() => import("./pages/admin/SpecialtiesPage"))
 const ShiftsPage = lazy(() => import("./pages/admin/ShiftsPage"))
+const ShiftTemplatesPage = lazy(() => import("./pages/admin/ShiftTemplatesPage"))
+const ScheduleGenerationPage = lazy(() => import("./pages/admin/ScheduleGenerationPage"))
 const SystemSettingsPage = lazy(() => import("./pages/admin/SystemSettingsPage"))
 const AttendanceManagementPage = lazy(() => import("./pages/admin/AttendanceManagementPage"))
+const EmployeeListPage = lazy(() => import("./pages/admin/EmployeeListPage"))
+const EmployeeDetailPage = lazy(() => import("./pages/admin/EmployeeDetailPage"))
+const PatientListPage = lazy(() => import("./pages/admin/PatientListPage"))
+const AdminPatientDetailPage = lazy(() => import("./pages/admin/AdminPatientDetailPage"))
 const PayrollStatisticsPage = lazy(() => import("./pages/admin/PayrollStatisticsPage"))
 const MyPayrollsPage = lazy(() => import("./pages/MyPayrollsPage"))
 const MyPayrollDetailPage = lazy(() => import("./pages/MyPayrollDetailPage"))
 
 // Lazy load doctor pages
 const DoctorDashboardPage = lazy(() => import("./pages/doctor/DashboardPage"))
-const MedicalListPage = lazy(() => import("./pages/doctor/medicalList"))
-const FormMedicalPage = lazy(() => import("./pages/doctor/formMedical"))
-const PrescribeMedPage = lazy(() => import("./pages/doctor/prescribeMed"))
-const DoctorShiftPage = lazy(() => import("./pages/doctor/doctorShift"))
-const UiQuanLyDT = lazy(() => import("./pages/doctor/QuanlyDonThuoc"))
-const PrescriptionDetailPage = lazy(() => import("./pages/doctor/prescriptionDetail"))
+const MedicalListPage = lazy(() => import("./pages/doctor/MedicalListPage"))
+const FormMedicalPage = lazy(() => import("./pages/doctor/FormMedicalPage"))
+const PrescribeMedPage = lazy(() => import("./pages/doctor/PrescribeMedPage"))
+const DoctorShiftPage = lazy(() => import("./pages/doctor/DoctorShiftPage"))
+const UiQuanLyDT = lazy(() => import("./pages/doctor/PrescriptionManagementPage"))
+
 const EditPrescriptionPage = lazy(() => import("./pages/doctor/EditPrescriptionPage"))
 
 // Lazy load receptionist pages
 const ReceptionistDashboardPage = lazy(() => import("./pages/recep/DashboardPage"))
-const RecepPatientsPage = lazy(() => import("./pages/recep/patient_list"))
-const PatientDetailPage = lazy(() => import("./pages/recep/patient_detail"))
+const RecepPatientsPage = lazy(() => import("./pages/recep/PatientListPage"))
+const PatientDetailPage = lazy(() => import("./pages/recep/PatientDetailPage"))
 const InvoicesPage = lazy(() => import("./pages/recep/InvoicesPage"))
 const InvoiceDetailPage = lazy(() => import("./pages/recep/InvoiceDetailPage"))
 const CreateInvoicePage = lazy(() => import("./pages/recep/CreateInvoicePage"))
@@ -84,6 +92,7 @@ const PatientAppointmentsPage = lazy(() => import("./pages/patient/Appointments"
 const PatientDashboardPage = lazy(() => import("./pages/patient/DashboardPage"))
 const PatientMedicalHistoryPage = lazy(() => import("./pages/patient/MedicalHistoryPage"))
 const PatientPrescriptionsPage = lazy(() => import("./pages/patient/PrescriptionsPage"))
+const PatientPrescriptionDetailPage = lazy(() => import("./pages/patient/PrescriptionDetailPage"))
 const PatientInvoicesPage = lazy(() => import("./pages/patient/InvoicesPage"))
 const PatientSettingsPage = lazy(() => import("./pages/patient/PatientSettingsPage"))
 const SetupPatientProfilePage = lazy(() => import("./pages/patient/SetupPatientProfilePage"))
@@ -167,6 +176,22 @@ function App() {
             element={
               <ProtectedRoute requiredRole="patient">
                 <PatientPrescriptionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/prescriptions/:id"
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <PatientPrescriptionDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/prescriptions/:id"
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <PatientPrescriptionDetailPage />
               </ProtectedRoute>
             }
           />
@@ -333,6 +358,30 @@ function App() {
             }
           />
           <Route
+            path="/admin/medicines/imports/:id"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <MedicineImportDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/medicines/exports/:id"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <MedicineExportDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/refunds"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <RefundsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/inventory"
             element={
               <ProtectedRoute requiredRole="admin">
@@ -373,26 +422,10 @@ function App() {
             }
           />
           <Route
-            path="/admin/revenue"
+            path="/admin/reports/financial"
             element={
               <ProtectedRoute requiredRole="admin">
-                <RevenueReportPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/expense"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ExpenseReportPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/profit"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ProfitReportPage />
+                <FinancialReportPage />
               </ProtectedRoute>
             }
           />
@@ -412,14 +445,24 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
-            path="/admin/reports/medicine-alerts"
+            path="/admin/payroll-statistics"
             element={
               <ProtectedRoute requiredRole="admin">
-                <MedicineAlertsReportPage />
+                <PayrollStatisticsPage />
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/attendance"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AttendanceManagementPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/admin/reports/medicines"
             element={
@@ -437,6 +480,22 @@ function App() {
             }
           />
           <Route
+            path="/admin/employees"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <EmployeeListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/employees/:id"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <EmployeeDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/users"
             element={
               <ProtectedRoute requiredRole="admin">
@@ -449,6 +508,30 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <UserDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/add"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <UserAddPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patients"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <PatientListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patients/:id"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminPatientDetailPage />
               </ProtectedRoute>
             }
           />
@@ -497,6 +580,22 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <ShiftsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/shift-templates"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ShiftTemplatesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/schedule-generation"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <ScheduleGenerationPage />
               </ProtectedRoute>
             }
           />

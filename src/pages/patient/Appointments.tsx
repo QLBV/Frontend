@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AppointmentCard } from "@/components/appointment/Appointment_card"; 
-import { AppointmentDetailModal } from "@/components/appointment/Appointment_detail_modal"; 
+import { AppointmentCard } from "@/components/appointment/AppointmentCard"; 
+import { AppointmentDetailModal } from "@/components/appointment/AppointmentDetailModal"; 
 import { AppointmentStats } from "@/components/appointment/AppointmentStats"; 
 import {
   Dialog,
@@ -22,7 +22,7 @@ import { Calendar, FileText } from "lucide-react";
 
 import { usePatientAppointments } from "@/hooks/usePatientAppointments";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
+
 import PatientSidebar from "@/components/sidebar/patient";
 import { useAuth } from "@/auth/authContext";
 

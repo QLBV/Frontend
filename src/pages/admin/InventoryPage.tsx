@@ -4,13 +4,10 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   Search,
-  Filter,
   AlertTriangle,
   Clock,
   Package,
   Plus,
-  TrendingDown,
-  Calendar,
   Loader2,
   Download,
   Upload,
@@ -121,7 +118,7 @@ export default function InventoryPage() {
       setIsLoading(true)
       const response = await MedicineService.getMedicines({
         page: 1,
-        limit: 1000,
+        limit: 50,
       })
       if (response.medicines) {
         setMedicines(response.medicines)
@@ -202,7 +199,6 @@ export default function InventoryPage() {
   const expiringCount = expiringMedicines.length
   const totalMedicines = medicines.length
   const inStockCount = medicines.filter(m => getMedicineStatus(m) === "in-stock").length
-  const expiredCount = medicines.filter(m => getMedicineStatus(m) === "expired").length
 
   return (
     <AdminSidebar>

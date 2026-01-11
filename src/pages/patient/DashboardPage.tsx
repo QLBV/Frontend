@@ -24,18 +24,23 @@ export default function PatientDashboardPage() {
   const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null)
   const [latestVisit, setLatestVisit] = useState<Visit | null>(null)
 
+  const statusLabel = (status?: string, displayStatus?: string) => {
+    if (displayStatus) return displayStatus
+    const map: Record<string, string> = {
+      WAITING: "Chờ xác nhận",
+      CHECKED_IN: "Chờ khám",
+      IN_PROGRESS: "Đang khám",
+      COMPLETED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
+      NO_SHOW: "Vắng mặt",
+    }
+    return status ? (map[status] || status) : "Không xác định"
+  }
+
   useEffect(() => {
     const fetchData = async () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardPage.tsx:28',message:'FETCH_DATA_START',data:{hasUser:!!user,patientId:user?.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
-      
       if (!user?.patientId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardPage.tsx:32',message:'NO_PATIENT_ID',data:{hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-        // #endregion
         setIsLoading(false)
-        // Redirect to setup page if patientId is missing
         if (window.location.pathname !== "/patient/setup") {
           navigate("/patient/setup")
         }
@@ -44,32 +49,27 @@ export default function PatientDashboardPage() {
 
       try {
         setIsLoading(true)
-        
+
         // Fetch patient profile for patient code
         try {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardPage.tsx:41',message:'FETCH_PATIENT_PROFILE',data:{patientId:user.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-          // #endregion
           const patient = await getPatientById(user.patientId)
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardPage.tsx:44',message:'PATIENT_PROFILE_RECEIVED',data:{patientId:patient?.id,patientCode:patient?.patientCode,hasProfiles:!!patient?.profiles},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-          // #endregion
           setPatientCode(patient.patientCode || "")
         } catch (error: any) {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardPage.tsx:48',message:'PATIENT_PROFILE_ERROR',data:{error:error.message,status:error.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-          // #endregion
           console.error("Error fetching patient profile:", error)
         }
 
         // Fetch appointments
         const appointments = await getMyAppointments()
-        
+
         const now = new Date()
         const upcoming = appointments
-          .filter((apt) => new Date(apt.date) >= now && apt.status === "WAITING")
+          .filter((apt) => {
+            const dateOk = new Date(apt.date) >= now
+            const isWaitingFlow = ["WAITING", "CHECKED_IN", "IN_PROGRESS"].includes(apt.status)
+            return dateOk && isWaitingFlow
+          })
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        
+
         const past = appointments
           .filter((apt) => new Date(apt.date) < now || apt.status === "COMPLETED")
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -96,7 +96,6 @@ export default function PatientDashboardPage() {
       }
     }
 
-    // Only fetch if auth is loaded, user exists and has patientId
     if (!authLoading && user && user.patientId) {
       fetchData()
     }
@@ -107,7 +106,7 @@ export default function PatientDashboardPage() {
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    
+
     if (d.toDateString() === today.toDateString()) {
       return "Hôm nay"
     } else if (d.toDateString() === tomorrow.toDateString()) {
@@ -131,7 +130,7 @@ export default function PatientDashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Xin chào, {user?.fullName || "Bệnh nhân"} 👋
+              Xin chào, {user?.fullName || "Bệnh nhân"}
             </h1>
             <p className="text-gray-600 text-lg">
               Hôm nay bạn cảm thấy thế nào? Đừng quên kiểm tra lịch khám nhé.
@@ -160,7 +159,7 @@ export default function PatientDashboardPage() {
                   ) : nextAppointment ? (
                     <>
                       <h3 className="text-2xl font-bold mb-2">
-                        {nextAppointment.doctor?.user?.fullName || "Khám Tổng Quát"}
+                        {nextAppointment.doctor?.user?.fullName || "Khám tổng quát"}
                       </h3>
                       <p className="text-primary-foreground/90 mb-1">
                         {nextAppointment.doctor?.user?.fullName || "BS. Unknown"} - Khoa Nội
@@ -174,6 +173,11 @@ export default function PatientDashboardPage() {
                           <Calendar className="h-4 w-4" />
                           <span>{nextAppointment.date ? formatDate(nextAppointment.date) : ""}</span>
                         </div>
+                      </div>
+                      <div className="mt-3">
+                        <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                          {statusLabel(nextAppointment.status, (nextAppointment as any).displayStatus)}
+                        </Badge>
                       </div>
                     </>
                   ) : (
@@ -236,7 +240,7 @@ export default function PatientDashboardPage() {
                     <Pill className="h-5 w-5 text-primary" />
                     <div>
                       <div className="font-semibold">Đơn thuốc của bạn</div>
-                      <div className="text-sm text-gray-500">Xem lại các đơn thuốc cũ</div>
+                      <div className="text-sm text-gray-500">Xem lại các đơn thuốc đã kê</div>
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -296,16 +300,16 @@ export default function PatientDashboardPage() {
                               {format(new Date(apt.date), "dd")}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {format(new Date(apt.date), "Thg M", { locale: vi })}
+                              {format(new Date(apt.date), "'Thg' M", { locale: vi })}
                             </div>
                           </div>
-                            <div className="flex-1">
-                              <div className="font-semibold mb-1">
-                                {apt.doctor?.user?.fullName || "Khám bệnh"}
-                              </div>
-                              <div className="text-sm text-gray-600 mb-2">
-                                {apt.doctor?.user?.fullName || "BS. Unknown"} - {apt.shift?.name || ""}
-                              </div>
+                          <div className="flex-1">
+                            <div className="font-semibold mb-1">
+                              {apt.doctor?.user?.fullName || "Khám bệnh"}
+                            </div>
+                            <div className="text-sm text-gray-600 mb-2">
+                              {apt.doctor?.user?.fullName || "BS. Unknown"} - {apt.shift?.name || ""}
+                            </div>
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <span>{apt.shift ? formatTime(apt.shift.startTime, apt.shift.endTime) : ""}</span>
                               {apt.status === "COMPLETED" && (
@@ -315,8 +319,8 @@ export default function PatientDashboardPage() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                          <Badge className={apt.status === "COMPLETED" ? "bg-green-100 text-green-700" : ""}>
-                            {apt.status === "COMPLETED" ? "Đã hoàn thành" : apt.status}
+                          <Badge className={(apt.status === "COMPLETED" ? "bg-green-100 text-green-700" : apt.status === "CHECKED_IN" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700")}>
+                            {statusLabel(apt.status, (apt as any).displayStatus)}
                           </Badge>
                           <Button 
                             variant="outline" 

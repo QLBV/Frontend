@@ -60,19 +60,10 @@ export default function Login() {
 
   // Navigate after successful login
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:65',message:'NAVIGATION_CHECK',data:{isAuthenticated,hasUser:!!user,pathname:location.pathname,from,hasNavigated},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-    
     // Only navigate if user is authenticated, we're on login page, and haven't navigated yet
     if (isAuthenticated && user && location.pathname === "/login" && !hasNavigated) {
       const rawRole = user.roleId || user.role || "patient"
       const userRole = String(rawRole).toLowerCase()
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:69',message:'DETERMINING_ROLE',data:{rawRole,userRole,roleId:user.roleId,role:user.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
       // Navigate based on role
       // roleId: 1=Admin, 2=Doctor, 3=Patient, 4=Receptionist
       let targetPath = "/"
@@ -102,32 +93,12 @@ export default function Login() {
           targetPath = from && from !== "/" && from !== "/login" ? from : "/patient/dashboard"
           break
       }
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:99',message:'NAVIGATING',data:{targetPath,userRole,from,isAuthenticated,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:101',message:'CALLING_NAVIGATE',data:{targetPath,replace:true,currentPath:location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
+
       try {
         // Mark as navigated before calling navigate to prevent multiple navigations
         setHasNavigated(true)
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:112',message:'BEFORE_NAVIGATE',data:{targetPath,hasNavigated:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
-        
         navigate(targetPath, { replace: true })
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:118',message:'NAVIGATE_CALLED',data:{targetPath,newPathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
       } catch (navError: any) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:122',message:'NAVIGATE_ERROR',data:{error:navError.message,targetPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         console.error("Navigation error:", navError)
         setHasNavigated(false) // Reset on error
       }
@@ -135,10 +106,6 @@ export default function Login() {
   }, [isAuthenticated, user, navigate, from, location.pathname, hasNavigated])
 
   const onSubmit = async (data: LoginFormValues) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:104',message:'ONSUBMIT_CALLED',data:{email:data.email,isSubmittingForm},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     // Prevent double submission
     if (isSubmittingForm) {
       return;
@@ -151,20 +118,10 @@ export default function Login() {
       // Clear any stale tokens before login attempt
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('accessToken');
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:116',message:'BEFORE_LOGIN_CALL',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
       // Small delay to ensure cleanup
       await new Promise(resolve => setTimeout(resolve, 200));
       
       const loggedInUser = await login(data.email, data.password)
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:133',message:'AFTER_LOGIN_SUCCESS',data:{hasLoggedInUser:!!loggedInUser,email:data.email,roleId:loggedInUser?.roleId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
       // Navigate immediately after login if we have user data
       if (loggedInUser) {
         const rawRole = loggedInUser.roleId || loggedInUser.role || "patient"
@@ -192,25 +149,13 @@ export default function Login() {
             targetPath = from && from !== "/" && from !== "/login" ? from : "/receptionist/dashboard"
             break
         }
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:156',message:'IMMEDIATE_NAVIGATION',data:{targetPath,userRole,from},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        
         setHasNavigated(true)
         navigate(targetPath, { replace: true })
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:196',message:'IMMEDIATE_NAVIGATE_CALLED',data:{targetPath,currentPath:window.location.pathname,hasNavigated},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       } else {
         // If user not immediately available, useEffect will handle navigation
         setHasNavigated(false)
       }
     } catch (err: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LoginPage.tsx:128',message:'ONSUBMIT_ERROR',data:{error:err.message,status:err.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       logError("Login Error", err)
       // Handle 429 rate limit error specifically
       if (err.response?.status === 429 || err.message?.includes("Quá nhiều yêu cầu")) {

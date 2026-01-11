@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Clock, MapPin, User, FileText, Activity, Pill } from "lucide-react";
+import { Calendar, Clock, MapPin, Activity, Pill } from "lucide-react";
 import type { IAppointment } from "@/types/appointment";
-import { getStatusColor } from "@/lib/utils/appointment_utils";
+import { getStatusColor } from "@/lib/utils/appointmentUtils";
 
 interface AppointmentDetailModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export function AppointmentDetailModal({ isOpen, onOpenChange, appointment }: Ap
           <div className="flex justify-between items-center mr-6">
             <DialogTitle className="text-2xl">Appointment Details</DialogTitle>
             <Badge className={getStatusColor(appointment.status)} variant="outline">
-              {appointment.status}
+              {appointment.displayStatus || appointment.status}
             </Badge>
           </div>
           <DialogDescription>ID: {appointment.id}</DialogDescription>

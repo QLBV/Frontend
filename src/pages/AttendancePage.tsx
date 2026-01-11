@@ -59,29 +59,32 @@ export default function AttendancePage() {
     fetchMyAttendance()
   }, [])
 
-  const fetchMyAttendance = async () => {
+  const fetchMyAttendance = async (silent = false) => {
     try {
-      setIsLoading(true)
-      const today = format(new Date(), "yyyy-MM-dd")
-      const response = await AttendanceService.getMyAttendance({
-        startDate: today,
-        endDate: today,
-        limit: 1,
-      })
+      if (!silent) setIsLoading(true)
+      
+      // Fetch both today's and history
+      const [todayResp, historyResp] = await Promise.all([
+        AttendanceService.getMyAttendance({
+          startDate: format(new Date(), "yyyy-MM-dd"),
+          endDate: format(new Date(), "yyyy-MM-dd"),
+          limit: 1,
+        }),
+        AttendanceService.getMyAttendance({
+          page: 1,
+          limit: 20, // Fetch more to be sure
+        })
+      ])
 
-      if (response.attendances && response.attendances.length > 0) {
-        setTodayAttendance(response.attendances[0])
+      if (todayResp.attendances && todayResp.attendances.length > 0) {
+        setTodayAttendance(todayResp.attendances[0])
       } else {
         setTodayAttendance(null)
       }
 
-      // Fetch recent attendance history
-      const historyResponse = await AttendanceService.getMyAttendance({
-        page: 1,
-        limit: 10,
-      })
-      setMyAttendance(historyResponse.attendances || [])
+      setMyAttendance(historyResp.attendances || [])
     } catch (error: any) {
+      console.error("Attendance fetch error:", error)
       toast.error(error.response?.data?.message || "Không thể tải thông tin chấm công")
     } finally {
       setIsLoading(false)
@@ -93,8 +96,10 @@ export default function AttendancePage() {
     try {
       const response = await AttendanceService.checkIn()
       toast.success("Check-in thành công!")
+      // Update local state immediately to show time
       setTodayAttendance(response.data)
-      await fetchMyAttendance()
+      // Re-fetch in the background to update history
+      await fetchMyAttendance(true)
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Không thể check-in"
       if (errorMessage === "ALREADY_CHECKED_IN_TODAY") {
@@ -112,8 +117,10 @@ export default function AttendancePage() {
     try {
       const response = await AttendanceService.checkOut()
       toast.success("Check-out thành công!")
+      // Update local state immediately
       setTodayAttendance(response.data)
-      await fetchMyAttendance()
+      // Re-fetch history in the background
+      await fetchMyAttendance(true)
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Không thể check-out"
       if (errorMessage === "NO_CHECK_IN_RECORD_TODAY") {
@@ -162,7 +169,9 @@ export default function AttendancePage() {
       ABSENT: { label: "Vắng mặt", className: "bg-red-500/10 text-red-700 border-red-200" },
       LATE: { label: "Đi muộn", className: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
       LEAVE: { label: "Nghỉ phép", className: "bg-blue-500/10 text-blue-700 border-blue-200" },
-      HALF_DAY: { label: "Nửa ngày", className: "bg-orange-500/10 text-orange-700 border-orange-200" },
+      SICK_LEAVE: { label: "Nghỉ ốm", className: "bg-purple-500/10 text-purple-700 border-purple-200" },
+      EARLY_LEAVE: { label: "Về sớm", className: "bg-orange-500/10 text-orange-700 border-orange-200" },
+      HALF_DAY: { label: "Nửa ngày", className: "bg-slate-500/10 text-slate-700 border-slate-200" },
     }
     const statusInfo = config[status] || { label: status, className: "bg-gray-500/10 text-gray-700 border-gray-200" }
     return (
@@ -321,6 +330,7 @@ export default function AttendancePage() {
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Check-in</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Check-out</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Ghi chú</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -329,7 +339,7 @@ export default function AttendancePage() {
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-slate-400" />
-                            <span>{format(new Date(attendance.date), "dd/MM/yyyy")}</span>
+                            <span>{attendance.date.split("-").reverse().join("/")}</span>
                           </div>
                         </td>
                         <td className="py-4 px-6">
@@ -353,6 +363,9 @@ export default function AttendancePage() {
                           )}
                         </td>
                         <td className="py-4 px-6">{getStatusBadge(attendance.status)}</td>
+                        <td className="py-4 px-6">
+                          <span className="text-sm text-slate-500">{attendance.note || "-"}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

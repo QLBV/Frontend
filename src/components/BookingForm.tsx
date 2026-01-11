@@ -52,22 +52,10 @@ export function BookingForm() {
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:52',message:'Fetching specialties',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-
         setIsLoadingSpecialties(true)
         const data = await SpecialtyService.getSpecialties()
         setSpecialties(data)
-
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:59',message:'Specialties fetched',data:{count:data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
       } catch (error: any) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:64',message:'Error fetching specialties',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-
         console.error("Error fetching specialties:", error)
         toast.error("Không thể tải danh sách chuyên khoa")
       } finally {
@@ -132,17 +120,9 @@ export function BookingForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:176',message:'SUBMIT_CHECK_PATIENT_ID',data:{isAuthenticated,hasUser:!!user,patientId:user?.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
-
     // Check if user is authenticated and has patientId
     if (isAuthenticated && user) {
       if (!user.patientId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:183',message:'SUBMIT_REDIRECT_TO_SETUP',data:{reason:'no_patient_id'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
         toast.error("Vui lòng thiết lập hồ sơ bệnh nhân trước khi đặt lịch")
         navigate("/patient/setup")
         return
@@ -155,10 +135,6 @@ export function BookingForm() {
     }
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:152',message:'Creating appointment',data:{doctorId:selectedDoctor,shiftId:selectedShift,date:format(date,'yyyy-MM-dd')},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-
       setIsSubmitting(true)
       await createAppointment({
         doctorId: selectedDoctor,
@@ -166,18 +142,9 @@ export function BookingForm() {
         date: format(date, "yyyy-MM-dd"),
         symptomInitial: symptoms || undefined,
       })
-
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:163',message:'Appointment created successfully',data:{doctorId:selectedDoctor},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-
       toast.success("Đặt lịch hẹn thành công!")
       setIsSubmitted(true)
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking_form.tsx:170',message:'Error creating appointment',data:{error:error.message,response:error.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-
       console.error("Error creating appointment:", error)
       toast.error(error.response?.data?.message || "Không thể đặt lịch hẹn. Vui lòng thử lại.")
     } finally {

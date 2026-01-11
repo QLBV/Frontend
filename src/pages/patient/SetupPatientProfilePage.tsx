@@ -39,23 +39,13 @@ export default function SetupPatientProfilePage() {
 
   // Check if user is authenticated and doesn't have patientId
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:41',message:'SETUP_PAGE_CHECK',data:{isAuthenticated,hasUser:!!user,patientId:user?.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
-    
     if (!isAuthenticated) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:45',message:'REDIRECT_TO_LOGIN',data:{reason:'not_authenticated'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
       toast.error("Vui lòng đăng nhập để tiếp tục")
       navigate("/login")
       return
     }
 
     if (user?.patientId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:52',message:'REDIRECT_TO_DASHBOARD',data:{reason:'has_patient_id',patientId:user.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
       // User already has a patient profile, redirect to dashboard
       toast.info("Bạn đã có hồ sơ bệnh nhân")
       navigate("/patient/dashboard")
@@ -161,11 +151,6 @@ export default function SetupPatientProfilePage() {
         setIsSubmitting(false)
         return
       }
-
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:137',message:'SETUP_PATIENT_START',data:{userId:user?.id,currentPatientId:user?.patientId,profilesCount:profiles.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-      
       // Validate dateOfBirth one more time before sending
       if (dateOfBirth) {
         const today = new Date()
@@ -187,22 +172,9 @@ export default function SetupPatientProfilePage() {
         cccd: cccd.trim(),
         profiles,
       })
-
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:147',message:'SETUP_PATIENT_SUCCESS',data:{patientId:patient?.id,patientCode:patient?.patientCode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-
       // Refresh user profile to get updated patientId
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:163',message:'REFRESH_USER_CALL',data:{beforePatientId:user?.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
-      
       try {
         const updatedUser = await refreshUser()
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:169',message:'REFRESH_USER_SUCCESS',data:{updatedPatientId:updatedUser?.patientId,beforePatientId:user?.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
-        // #endregion
-        
         // Wait for state to update (increased delay to ensure state propagation)
         await new Promise(resolve => setTimeout(resolve, 1000))
         
@@ -221,9 +193,6 @@ export default function SetupPatientProfilePage() {
           }, 500)
         }
       } catch (refreshError: any) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SetupPatientProfilePage.tsx:179',message:'REFRESH_USER_ERROR',data:{error:refreshError.message,status:refreshError.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
-        // #endregion
         console.error("Error refreshing user:", refreshError)
         
         // Still show success and redirect - user can refresh page manually if needed

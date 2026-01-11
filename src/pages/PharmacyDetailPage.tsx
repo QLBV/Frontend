@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
-import SidebarLayout from "@/components/sidebar_layout"
 import AdminSidebar from "@/components/sidebar/admin"
 import ReceptionistSidebar from "@/components/sidebar/recep"
 import DoctorSidebar from "@/components/sidebar/doctor"
@@ -122,25 +121,25 @@ export default function PharmacyDetailPage() {
     }
   }, [id, activeTab])
 
-  const getSidebar = () => {
+  const getSidebarComponent = () => {
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    
     if (role === "admin" || role === "1") {
-      return <AdminSidebar />
+      return AdminSidebar
     }
     if (role === "doctor" || role === "4") {
-      return <DoctorSidebar />
+      return DoctorSidebar
     }
     if (role === "receptionist" || role === "2") {
-      return <ReceptionistSidebar />
+      return ReceptionistSidebar
     }
     return null
   }
 
-  const sidebar = getSidebar()
+  const SidebarComponent = getSidebarComponent()
 
-  if (!sidebar) {
+  if (!SidebarComponent) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -150,26 +149,24 @@ export default function PharmacyDetailPage() {
 
   if (isLoading) {
     return (
-      <SidebarLayout userName={user?.fullName || user?.email}>
-        {sidebar}
+      <SidebarComponent userName={user?.fullName || user?.email}>
         <div className="flex items-center justify-center h-96">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </SidebarLayout>
+      </SidebarComponent>
     )
   }
 
   if (!medicine) {
     return (
-      <SidebarLayout userName={user?.fullName || user?.email}>
-        {sidebar}
+      <SidebarComponent userName={user?.fullName || user?.email}>
         <div className="text-center py-12">
           <p className="text-gray-500">Không tìm thấy thông tin thuốc</p>
           <Button onClick={() => window.history.back()} className="mt-4">
             Quay lại
           </Button>
         </div>
-      </SidebarLayout>
+      </SidebarComponent>
     )
   }
 
@@ -178,8 +175,7 @@ export default function PharmacyDetailPage() {
     : 0
 
   return (
-    <SidebarLayout userName={user?.fullName || user?.email}>
-      {sidebar}
+    <SidebarComponent userName={user?.fullName || user?.email}>
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex items-start justify-between">
@@ -498,6 +494,6 @@ export default function PharmacyDetailPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </SidebarLayout>
+    </SidebarComponent>
   )
 }

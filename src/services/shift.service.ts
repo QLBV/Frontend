@@ -148,7 +148,28 @@ export class ShiftService {
     try {
       const response = await api.get('/shifts/schedule', { params })
       if (response.data.success) {
-        return response.data.data || []
+        // Transform backend flat structure to grouped structure
+        const rawSchedule = response.data.data.schedule || []
+        const groupedMap = new Map<string, ShiftSchedule>()
+
+        rawSchedule.forEach((item: any) => {
+          if (!groupedMap.has(item.date)) {
+            groupedMap.set(item.date, { date: item.date, shifts: [] })
+          }
+
+          groupedMap.get(item.date)!.shifts.push({
+            shift: item.shift,
+            doctors: item.doctors.map((d: any) => ({
+              id: d.doctorId,
+              fullName: d.doctorName,
+              doctorCode: d.doctorCode || 'N/A',
+            })),
+          })
+        })
+
+        return Array.from(groupedMap.values()).sort((a, b) =>
+          a.date.localeCompare(b.date)
+        )
       }
       return []
     } catch (error: any) {

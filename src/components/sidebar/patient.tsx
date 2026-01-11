@@ -10,7 +10,7 @@ import {
   Settings,          // Icon: Settings
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import SidebarLayout from "@/components/sidebar_layout";
+import SidebarLayout from "@/components/SidebarLayout";
 import type { ReactNode } from 'react';
 
 interface PatientSidebarProps {

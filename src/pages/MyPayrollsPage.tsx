@@ -73,31 +73,15 @@ export default function MyPayrollsPage() {
   const role = String(user.roleId || user.role || "").toLowerCase()
 
   // Calculate totals
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:85','message':'CALCULATING_TOTALS','data':{payrollsCount:payrolls.length,payrolls:payrolls.map(p=>({id:p.id,totalSalary:p.totalSalary,baseSalary:p.baseSalary,commission:p.commission,status:p.status}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   const totalSalary = payrolls.reduce((sum, p) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:88','message':'REDUCE_TOTAL_SALARY','data':{sum,payrollId:p.id,totalSalary:p.totalSalary,totalSalaryType:typeof p.totalSalary,totalSalaryIsUndefined:p.totalSalary===undefined,totalSalaryIsNull:p.totalSalary===null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     return sum + (p.totalSalary || 0)
   }, 0)
   const totalPaid = payrolls.filter((p) => p.status === "PAID").reduce((sum, p) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:93','message':'REDUCE_TOTAL_PAID','data':{sum,payrollId:p.id,totalSalary:p.totalSalary,totalSalaryType:typeof p.totalSalary},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     return sum + (p.totalSalary || 0)
   }, 0)
   const pendingSalary = payrolls.filter((p) => p.status !== "PAID").reduce((sum, p) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:98','message':'REDUCE_PENDING_SALARY','data':{sum,payrollId:p.id,totalSalary:p.totalSalary,totalSalaryType:typeof p.totalSalary},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     return sum + (p.totalSalary || 0)
   }, 0)
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:102','message':'TOTALS_CALCULATED','data':{totalSalary,totalSalaryType:typeof totalSalary,totalPaid,totalPaidType:typeof totalPaid,pendingSalary,pendingSalaryType:typeof pendingSalary},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
-
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
       {/* Page Title */}
@@ -116,7 +100,7 @@ export default function MyPayrollsPage() {
             </CardHeader>
             <CardContent>
               {/* #region agent log */}
-              {(()=>{fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:107','message':'RENDERING_TOTAL_SALARY','data':{totalSalary,totalSalaryType:typeof totalSalary,totalSalaryIsUndefined:totalSalary===undefined,totalSalaryIsNull:totalSalary===null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});return null})()}
+              
               {/* #endregion */}
               <div className="text-3xl font-bold text-slate-900">{(totalSalary || 0).toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">VND</p>
@@ -130,7 +114,7 @@ export default function MyPayrollsPage() {
             </CardHeader>
             <CardContent>
               {/* #region agent log */}
-              {(()=>{fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:118','message':'RENDERING_TOTAL_PAID','data':{totalPaid,totalPaidType:typeof totalPaid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});return null})()}
+              
               {/* #endregion */}
               <div className="text-3xl font-bold text-slate-900">{(totalPaid || 0).toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">VND</p>
@@ -144,7 +128,7 @@ export default function MyPayrollsPage() {
             </CardHeader>
             <CardContent>
               {/* #region agent log */}
-              {(()=>{fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:129','message':'RENDERING_PENDING_SALARY','data':{pendingSalary,pendingSalaryType:typeof pendingSalary},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});return null})()}
+              
               {/* #endregion */}
               <div className="text-3xl font-bold text-slate-900">{(pendingSalary || 0).toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">VND</p>
@@ -198,7 +182,7 @@ export default function MyPayrollsPage() {
                         </td>
                         <td className="py-4 px-6">
                           {/* #region agent log */}
-                          {(()=>{fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:179','message':'RENDERING_BASE_SALARY','data':{payrollId:payroll.id,baseSalary:payroll.baseSalary,baseSalaryType:typeof payroll.baseSalary},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'I'})}).catch(()=>{});return null})()}
+                          
                           {/* #endregion */}
                           {(typeof payroll.baseSalary === 'number' ? payroll.baseSalary : parseFloat(payroll.baseSalary || '0') || 0).toLocaleString()} VND
                         </td>
@@ -209,7 +193,7 @@ export default function MyPayrollsPage() {
                         </td>
                         <td className="py-4 px-6 text-right font-bold text-emerald-600">
                           {/* #region agent log */}
-                          {(()=>{fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MyPayrollsPage.tsx:186','message':'RENDERING_TOTAL_SALARY_ROW','data':{payrollId:payroll.id,totalSalary:payroll.totalSalary,totalSalaryType:typeof payroll.totalSalary},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'J'})}).catch(()=>{});return null})()}
+                          
                           {/* #endregion */}
                           {(payroll.totalSalary || 0).toLocaleString()} VND
                         </td>

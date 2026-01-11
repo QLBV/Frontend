@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import SidebarLayout from "@/components/sidebar_layout"
+import SidebarLayout from "@/components/SidebarLayout"
 import AdminSidebar from "@/components/sidebar/admin"
 import ReceptionistSidebar from "@/components/sidebar/recep"
 import DoctorSidebar from "@/components/sidebar/doctor"

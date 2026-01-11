@@ -40,9 +40,9 @@ interface DoctorShift {
 // Appointment interface
 interface Appointment {
   id: number
-  appointmentDate: string
+  date: string
   appointmentTime: string
-  status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+  status: "WAITING" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NO_SHOW"
   notes?: string
   patient: {
     id: number
@@ -50,6 +50,10 @@ interface Appointment {
       fullName: string
       phone?: string
     }
+  }
+  shift?: {
+    startTime: string
+    endTime: string
   }
 }
 
@@ -72,9 +76,12 @@ const timeSlots = [
 ]
 
 export default function DoctorShiftPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const now = new Date()
+  const offset = now.getTimezoneOffset()
+  const localNow = new Date(now.getTime() - (offset * 60 * 1000))
+  const [selectedDate, setSelectedDate] = useState(localNow.toISOString().split('T')[0])
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [doctorShifts, setDoctorShifts] = useState<DoctorShift[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -222,9 +229,9 @@ export default function DoctorShiftPage() {
 
     // Add appointments to schedule
     apts.forEach(apt => {
-      const appointmentDate = apt.date || apt.appointmentDate
+      const appointmentDate = apt.date ? apt.date.split('T')[0] : ""
       const appointmentTime = apt.shift?.startTime || apt.appointmentTime || ""
-      const patientName = apt.patient?.fullName || apt.patient?.user?.fullName || "Unknown"
+      const patientName = apt.patient?.user?.fullName || "Bệnh nhân"
       
       schedule.push({
         id: `appointment-${apt.id}`,
@@ -245,8 +252,10 @@ export default function DoctorShiftPage() {
 
 
   useEffect(() => {
-    fetchDoctorData()
-  }, [currentWeek])
+    if (!authLoading) {
+      fetchDoctorData()
+    }
+  }, [currentWeek, user, authLoading])
 
   // Debug: Log personalSchedule when it changes
   useEffect(() => {

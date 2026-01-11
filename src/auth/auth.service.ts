@@ -109,9 +109,6 @@ export const refreshApi = async (): Promise<User> => {
           patientId: res.data.user.patientId || null,
           doctorId: res.data.user.doctorId || null,
         };
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:103',message:'REFRESH_API_USER_RETURNED',data:{userId:user.id,patientId:user.patientId,doctorId:user.doctorId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         return user;
       }
       
@@ -131,9 +128,6 @@ export const refreshApi = async (): Promise<User> => {
             patientId: userData.patientId || null,
             doctorId: userData.doctorId || null,
           };
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:127',message:'REFRESH_API_PROFILE_RETURNED',data:{userId:user.id,patientId:user.patientId,doctorId:user.doctorId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-          // #endregion
           return user;
         }
         throw new Error("Failed to get user information");

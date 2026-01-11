@@ -1,16 +1,20 @@
 import api from '@/lib/api'
 
-export enum PaymentStatus {
-  UNPAID = "UNPAID",
-  PARTIALLY_PAID = "PARTIALLY_PAID",
-  PAID = "PAID",
-}
+export const PaymentStatus = {
+  UNPAID: "UNPAID",
+  PARTIALLY_PAID: "PARTIALLY_PAID",
+  PAID: "PAID",
+} as const
 
-export enum PaymentMethod {
-  CASH = "CASH",
-  BANK_TRANSFER = "BANK_TRANSFER",
-  QR_CODE = "QR_CODE",
-}
+export type PaymentStatus = typeof PaymentStatus[keyof typeof PaymentStatus]
+
+export const PaymentMethod = {
+  CASH: "CASH",
+  BANK_TRANSFER: "BANK_TRANSFER",
+  QR_CODE: "QR_CODE",
+} as const
+
+export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod]
 
 export interface InvoiceItem {
   id: number

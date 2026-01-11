@@ -32,3 +32,4 @@ test-output/
 
 # Cursor
 .cursor/
+.cursorignore

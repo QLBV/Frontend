@@ -38,6 +38,10 @@ interface Doctor {
     fullName: string
     email: string
     isActive: boolean
+    employee?: {
+      phone?: string
+      address?: string
+    }
   }
   specialty: {
     id: number
@@ -45,11 +49,7 @@ interface Doctor {
   }
 }
 
-interface ApiResponse {
-  success: boolean
-  data: Doctor
-  message?: string
-}
+
 
 export default function DoctorDetail() {
   const { id } = useParams();
@@ -759,8 +759,8 @@ export default function DoctorDetail() {
                         <Phone className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">FULL NAME</label>
-                        <p className="text-gray-900 font-medium">{doctor.user.fullName}</p>
+                        <label className="text-sm font-medium text-gray-500 uppercase tracking-wide">PHONE NUMBER</label>
+                        <p className="text-gray-900 font-medium">{doctor.user.employee?.phone || 'Chưa cập nhật'}</p>
                       </div>
                     </div>
 

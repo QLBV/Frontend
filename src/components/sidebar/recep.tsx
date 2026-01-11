@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { useLocation, Link } from 'react-router-dom'; 
-import SidebarLayout from "@/components/sidebar_layout";
+import SidebarLayout from "@/components/SidebarLayout";
 import { 
   LayoutDashboard, 
   ClipboardList,   

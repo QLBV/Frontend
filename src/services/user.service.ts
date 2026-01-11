@@ -22,6 +22,10 @@ export interface User {
     id: number
     patientCode: string
   }
+  employee?: {
+    id: number
+    employeeCode: string
+  }
 }
 
 export interface CreateUserData {
@@ -109,7 +113,19 @@ export class UserService {
    */
   static async createUser(data: CreateUserData): Promise<User> {
     try {
-      const response = await api.post('/users', data)
+      const roleMap: Record<string, number> = {
+        admin: 1,
+        receptionist: 2,
+        patient: 3,
+        doctor: 4,
+      }
+      
+      const payload = {
+        ...data,
+        roleId: roleMap[data.role] || 3 // Default to patient
+      }
+      
+      const response = await api.post('/users', payload)
       if (response.data.success) {
         return response.data.data
       }

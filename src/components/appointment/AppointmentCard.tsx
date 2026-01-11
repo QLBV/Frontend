@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { IAppointment } from "@/types/appointment"; 
-import { getStatusColor, getStatusIcon } from "@/lib/utils/appointment_utils";
+import { getStatusColor, getStatusIcon } from "@/lib/utils/appointmentUtils";
 
 interface AppointmentCardProps {
   appointment: IAppointment;
@@ -46,7 +46,7 @@ export function AppointmentCard({
               
               <Badge variant="outline" className={getStatusColor(appointment.status)}>
                 {getStatusIcon(appointment.status)}
-                <span className="ml-1">{appointment.status}</span>
+                <span className="ml-1">{appointment.displayStatus || appointment.status}</span>
               </Badge>
             </div>
 

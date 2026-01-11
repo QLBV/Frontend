@@ -12,6 +12,7 @@ export interface Appointment {
   symptomInitial?: string
   createdAt: string
   updatedAt: string
+  displayStatus?: string
   patient?: {
     id: number
     fullName: string

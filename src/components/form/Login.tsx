@@ -54,18 +54,8 @@ export default function Login() {
     try {
       // Use authContext login which handles tokens and user state
       const loggedInUser = await loginWithAuth(data.email, data.password)
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:60',message:'AFTER_LOGIN_SUCCESS',data:{hasUser:!!loggedInUser,roleId:loggedInUser?.roleId,role:loggedInUser?.role,email:data.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      
       // Navigate based on roleId (1=Admin, 2=Doctor, 3=Patient, 4=Receptionist)
       const roleId = loggedInUser?.roleId || loggedInUser?.role || 3
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:65',message:'BEFORE_NAVIGATE',data:{roleId,roleIdType:typeof roleId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      
       if (roleId === 1 || roleId === "1" || roleId === "admin") {
         // Admin
         navigate("/admin/dashboard", { replace: true })
@@ -74,18 +64,12 @@ export default function Login() {
         navigate("/doctor/dashboard", { replace: true })
       } else if (roleId === 3 || roleId === "3" || roleId === "patient") {
         // Patient
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:75',message:'NAVIGATING_TO_PATIENT_DASHBOARD',data:{roleId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         navigate("/patient/dashboard", { replace: true })
       } else if (roleId === 2 || roleId === "2" || roleId === "receptionist" || roleId === "staff") {
         // Receptionist
         navigate("/receptionist/dashboard", { replace: true })
       } else {
         // Default fallback
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:81',message:'NAVIGATING_TO_DEFAULT',data:{roleId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         navigate("/", { replace: true })
       }
 

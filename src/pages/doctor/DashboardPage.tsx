@@ -14,10 +14,23 @@ import { toast } from "sonner"
 
 // --- Interfaces ---
 interface Appointment {
-  id: string
-  patientName: string
-  time: string
-  status: "arrived" | "examining" | "waiting"
+  id: string | number
+  visitId?: string | number
+  appointmentId?: string | number
+  patientId?: string | number
+  patient?: {
+    fullName?: string
+    phone?: string
+    gender?: string
+    birthDate?: string
+  }
+  shift?: {
+    startTime: string
+    endTime: string
+  }
+  date?: string
+  status: string
+  isVisit?: boolean
 }
 
 export default function DoctorDashboardPage() {
@@ -33,7 +46,11 @@ export default function DoctorDashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      const today = new Date().toISOString().split('T')[0]
+      // Get local YYYY-MM-DD correctly (handling timezone offset)
+      const now = new Date()
+      const offset = now.getTimezoneOffset()
+      const localNow = new Date(now.getTime() - (offset * 60 * 1000))
+      const today = localNow.toISOString().split('T')[0]
       
       // Fetch both appointments and visits for today
       const [appointmentsRes, visitsRes] = await Promise.all([
@@ -54,8 +71,8 @@ export default function DoctorDashboardPage() {
         // Appointments are for patients who haven't checked in yet (status WAITING, CHECKED_IN)
         const allPatients = [
           ...visits.map((visit: any) => {
-            const visitDate = visit.checkInTime 
-              ? new Date(visit.checkInTime).toISOString().split('T')[0] 
+            const visitDate = visit.checkInTime
+              ? new Date(visit.checkInTime).toISOString().split('T')[0]
               : today
             return {
               id: visit.id,
@@ -65,7 +82,7 @@ export default function DoctorDashboardPage() {
               patient: visit.patient,
               shift: visit.appointment?.shift || { startTime: 'N/A', endTime: 'N/A' },
               date: visitDate,
-              status: visit.status === 'EXAMINING' ? 'CHECKED_IN' : visit.status,
+              status: visit.status, // Keep original visit status (EXAMINING, EXAMINED, COMPLETED)
               isVisit: true,
             }
           }),
@@ -139,14 +156,20 @@ export default function DoctorDashboardPage() {
 
   const getStatusBadge = (status: Appointment["status"]) => {
     const config: Record<string, string> = {
-      CHECKED_IN: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
       WAITING: "bg-amber-500/10 text-amber-700 border-amber-200",
+      CHECKED_IN: "bg-blue-500/10 text-blue-700 border-blue-200",
+      EXAMINING: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+      EXAMINED: "bg-purple-500/10 text-purple-700 border-purple-200",
+      COMPLETED: "bg-green-500/10 text-green-700 border-green-200",
       CANCELLED: "bg-red-500/10 text-red-700 border-red-200",
       NO_SHOW: "bg-gray-500/10 text-gray-700 border-gray-200",
     }
     const labels: Record<string, string> = {
-      CHECKED_IN: "Đã đến",
       WAITING: "Chờ khám",
+      CHECKED_IN: "Đã check-in",
+      EXAMINING: "Đang khám",
+      EXAMINED: "Đã khám",
+      COMPLETED: "Hoàn tất",
       CANCELLED: "Đã hủy",
       NO_SHOW: "Không đến",
     }
@@ -255,7 +278,7 @@ export default function DoctorDashboardPage() {
                             </td>
                           </tr>
                         ) : (
-                          appointments.map((appointment, index) => (
+                          appointments.map((appointment: Appointment, index: number) => (
                             <tr
                               key={appointment.id}
                               className={`border-b hover:bg-blue-50/30 transition-colors ${
@@ -280,24 +303,35 @@ export default function DoctorDashboardPage() {
                               </td>
                               <td className="py-4 px-6">{getStatusBadge(appointment.status)}</td>
                               <td className="py-4 px-6">
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    if (appointment.isVisit && appointment.visitId) {
-                                      // Navigate to medical form with visit ID
-                                      navigate(`/doctor/patients/${appointment.visitId}`)
+                                    // Determine navigation based on visit status
+                                    if (appointment.isVisit) {
+                                      if (appointment.status === 'EXAMINED') {
+                                        // Already examined, go to prescribe medicine
+                                        navigate(`/doctor/prescribe/${appointment.appointmentId}`)
+                                      } else if (appointment.status === 'EXAMINING') {
+                                        // Check-in done, go to examination form
+                                        navigate(`/doctor/patients/${appointment.visitId}`)
+                                      } else if (appointment.status === 'COMPLETED') {
+                                        // Completed, view details
+                                        navigate(`/doctor/visits/${appointment.visitId}`)
+                                      }
                                     } else if (appointment.appointmentId) {
-                                      // Navigate to medical form with appointment ID (for appointments that haven't been checked in yet)
+                                      // Not checked in yet, navigate to appointment
                                       navigate(`/doctor/patients/${appointment.appointmentId}`)
                                     } else {
-                                      // Navigate to appointment detail
                                       navigate(`/appointments/${appointment.id}`)
                                     }
                                   }}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
-                                  {appointment.isVisit ? 'Khám' : 'Xem'}
+                                  {appointment.status === 'EXAMINED' ? 'Kê đơn' :
+                                   appointment.status === 'EXAMINING' ? 'Khám bệnh' :
+                                   appointment.status === 'COMPLETED' ? 'Xem' :
+                                   'Xem'}
                                 </Button>
                               </td>
                             </tr>
@@ -328,7 +362,7 @@ export default function DoctorDashboardPage() {
                       Lịch hẹn ngày {date?.toLocaleDateString("vi-VN")}
                     </div>
                     <div className="text-xs text-slate-600">
-                      {appointments.filter(apt => apt.date === date?.toISOString().split('T')[0]).length} lịch hẹn
+                      {appointments.filter((apt: Appointment) => apt.date === date?.toISOString().split('T')[0]).length} lịch hẹn
                     </div>
                   </div>
                 </CardContent>

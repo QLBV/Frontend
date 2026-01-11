@@ -4,7 +4,7 @@ import { Features } from "@/components/features"
 import { Services } from "@/components/services"
 import { Stats } from "@/components/stats"
 import { CTA } from "@/components/cta"
-import ContactForm  from "@/components/contact_form"
+import ContactForm  from "@/components/ContactForm"
 import { Footer } from "@/components/footer"
 
 export default function Home() {

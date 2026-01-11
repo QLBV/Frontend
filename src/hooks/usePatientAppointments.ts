@@ -30,9 +30,17 @@ export function usePatientAppointments() {
 
   // Convert Appointment to IAppointment format
   const convertToIAppointment = (apt: Appointment): IAppointment => {
-    const today = new Date()
-    const appointmentDate = new Date(apt.date)
-    const isPast = appointmentDate < today || ["COMPLETED", "CANCELLED", "NO_SHOW"].includes(apt.status)
+    // Map raw status to display-friendly status
+    const statusMap: Record<string, { label: IAppointment["status"]; raw: string }> = {
+      WAITING: { label: "Pending", raw: "WAITING" },
+      CHECKED_IN: { label: "Checked-in", raw: "CHECKED_IN" },
+      IN_PROGRESS: { label: "In Progress", raw: "IN_PROGRESS" },
+      COMPLETED: { label: "Completed", raw: "COMPLETED" },
+      CANCELLED: { label: "Cancelled", raw: "CANCELLED" },
+      NO_SHOW: { label: "Cancelled", raw: "NO_SHOW" },
+    }
+
+    const mapped = statusMap[apt.status] || { label: "Pending", raw: apt.status }
 
     return {
       id: String(apt.id),
@@ -47,10 +55,9 @@ export function usePatientAppointments() {
       type: apt.bookingType === "ONLINE" ? "Online" : "Offline",
       location: "Clinic",
       reason: apt.symptomInitial || "General checkup",
-      status: apt.status === "WAITING" ? "Pending" : 
-              apt.status === "CONFIRMED" ? "Confirmed" :
-              apt.status === "CHECKED_IN" ? "Completed" :
-              apt.status === "CANCELLED" ? "Cancelled" : "Pending",
+      status: mapped.label,
+      displayStatus: (apt as any).displayStatus,
+      rawStatus: mapped.raw,
       notes: undefined,
       diagnosis: undefined,
       prescription: undefined,
@@ -75,7 +82,9 @@ export function usePatientAppointments() {
         const appointmentDate = new Date(apt.date)
         appointmentDate.setHours(0, 0, 0, 0)
 
-        if (appointmentDate >= today && converted.status !== "Cancelled" && converted.status !== "Completed") {
+        const isUpcomingStatus = ["Pending", "Checked-in", "In Progress"].includes(converted.status)
+
+        if (appointmentDate >= today && isUpcomingStatus) {
           upcoming.push(converted)
         } else {
           past.push(converted)
@@ -91,8 +100,8 @@ export function usePatientAppointments() {
       setAppointments({ upcoming, past })
 
       // Calculate stats
-      const cancelled = data.filter(apt => apt.status === "CANCELLED").length
-      const completed = past.filter(apt => apt.status === "Completed").length
+      const cancelled = data.filter(apt => apt.status === "CANCELLED" || apt.status === "NO_SHOW").length
+      const completed = data.filter(apt => apt.status === "COMPLETED").length
       setStats({
         total: data.length,
         upcoming: upcoming.length,

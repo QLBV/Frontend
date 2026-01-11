@@ -1,12 +1,16 @@
 import api from '@/lib/api'
 
-export enum AttendanceStatus {
-  PRESENT = "PRESENT",
-  ABSENT = "ABSENT",
-  LATE = "LATE",
-  LEAVE = "LEAVE",
-  HALF_DAY = "HALF_DAY",
-}
+export const AttendanceStatus = {
+  PRESENT: "PRESENT",
+  ABSENT: "ABSENT",
+  LATE: "LATE",
+  LEAVE: "LEAVE",
+  SICK_LEAVE: "SICK_LEAVE",
+  EARLY_LEAVE: "EARLY_LEAVE",
+  HALF_DAY: "HALF_DAY",
+} as const
+
+export type AttendanceStatus = typeof AttendanceStatus[keyof typeof AttendanceStatus]
 
 export interface Attendance {
   id: number
@@ -21,7 +25,7 @@ export interface Attendance {
   checkInTime?: string
   checkOutTime?: string
   status: AttendanceStatus
-  notes?: string
+  note?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -45,7 +49,7 @@ export interface UpdateAttendanceData {
   checkInTime?: string
   checkOutTime?: string
   status?: AttendanceStatus
-  notes?: string
+  note?: string
 }
 
 export class AttendanceService {
@@ -166,6 +170,18 @@ export class AttendanceService {
         throw new Error('Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.')
       }
       throw error
+    }
+  }
+
+  /**
+   * Run auto-absence marking for a specific date (Admin only)
+   */
+  static async runAutoAbsence(date?: string): Promise<{ success: boolean; message: string; count: number }> {
+    try {
+      const response = await api.post('/attendance/auto-absence', {}, { params: { date } })
+      return response.data
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Không thể chạy tự động điểm danh vắng mặt')
     }
   }
 }

@@ -276,7 +276,7 @@ export default function EditPrescriptionPage() {
       // Prepare prescription data for update
       const prescriptionData = {
         medicines: validMedications.map(med => ({
-          medicineId: med.medicineId,
+          medicineId: med.medicineId as number,
           quantity: med.quantity,
           dosageMorning: med.dosageMorning || 0,
           dosageNoon: med.dosageNoon || 0,

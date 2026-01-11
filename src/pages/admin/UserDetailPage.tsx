@@ -17,17 +17,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { toast } from "sonner"
 import { UserService, type User, type UpdateUserData } from "@/services/user.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { TimeAgo } from "@/components/ui/time-ago"
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -61,7 +55,6 @@ export default function UserDetailPage() {
         fullName: userData.fullName,
         email: userData.email,
         phone: userData.phone || "",
-        role: userData.role,
       })
     } catch (error: any) {
       if (error.response?.status === 429) {
@@ -101,7 +94,6 @@ export default function UserDetailPage() {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone || "",
-        role: user.role,
       })
     }
     setIsEditing(false)
@@ -177,7 +169,8 @@ export default function UserDetailPage() {
       receptionist: { label: "Lễ tân", className: "bg-green-100 text-green-800 border-green-200" },
       patient: { label: "Bệnh nhân", className: "bg-gray-100 text-gray-800 border-gray-200" },
     }
-    const roleConfig = config[role] || config.patient
+    const roleName = (typeof role === 'string' ? role : (role as any)?.name || "patient").toLowerCase()
+    const roleConfig = config[roleName] || config.patient
     
     return (
       <Badge variant="outline" className={roleConfig.className}>
@@ -352,23 +345,9 @@ export default function UserDetailPage() {
 
                   <div>
                     <Label htmlFor="role">Vai trò</Label>
-                    {isEditing ? (
-                      <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as any })}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="doctor">Bác sĩ</SelectItem>
-                          <SelectItem value="receptionist">Lễ tân</SelectItem>
-                          <SelectItem value="patient">Bệnh nhân</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="mt-1">
-                        {getRoleBadge(user.role)}
-                      </div>
-                    )}
+                    <div className="mt-1">
+                      {getRoleBadge(user.role)}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -419,30 +398,36 @@ export default function UserDetailPage() {
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-600">Ngày tạo:</span>
-                  <span className="font-medium">
-                    {format(new Date(user.createdAt), "dd/MM/yyyy", { locale: vi })}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {format(new Date(user.createdAt), "dd/MM/yyyy", { locale: vi })}
+                    </span>
+                    <TimeAgo date={user.createdAt} className="text-xs text-blue-600" />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-600">Cập nhật lần cuối:</span>
-                  <span className="font-medium">
-                    {format(new Date(user.updatedAt), "dd/MM/yyyy", { locale: vi })}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {format(new Date(user.updatedAt), "dd/MM/yyyy", { locale: vi })}
+                    </span>
+                    <TimeAgo date={user.updatedAt} className="text-xs text-gray-500" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Related Links */}
-            {user.doctor && (
+            {user.employee && (
               <Card>
                 <CardHeader>
                   <CardTitle>Liên kết</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Link to={`/admin/doctors/${user.doctor.id}`}>
+                  <Link to={`/admin/employees/${user.employee.id}`}>
                     <Button variant="outline" className="w-full">
-                      Xem thông tin bác sĩ
+                      Xem hồ sơ nhân viên
                     </Button>
                   </Link>
                 </CardContent>
@@ -457,7 +442,7 @@ export default function UserDetailPage() {
                 <CardContent>
                   <Link to={`/recep/patients/${user.patient.id}`}>
                     <Button variant="outline" className="w-full">
-                      Xem thông tin bệnh nhân
+                      Xem hồ sơ bệnh nhân
                     </Button>
                   </Link>
                 </CardContent>

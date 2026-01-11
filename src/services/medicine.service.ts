@@ -1,19 +1,23 @@
 import api from '@/lib/api'
 
-export enum MedicineUnit {
-  VIEN = "VIEN",
-  ML = "ML",
-  HOP = "HOP",
-  CHAI = "CHAI",
-  TUYP = "TUYP",
-  GOI = "GOI",
-}
+export const MedicineUnit = {
+  VIEN: "VIEN",
+  ML: "ML",
+  HOP: "HOP",
+  CHAI: "CHAI",
+  TUYP: "TUYP",
+  GOI: "GOI",
+} as const
 
-export enum MedicineStatus {
-  ACTIVE = "ACTIVE",
-  EXPIRED = "EXPIRED",
-  REMOVED = "REMOVED",
-}
+export type MedicineUnit = typeof MedicineUnit[keyof typeof MedicineUnit]
+
+export const MedicineStatus = {
+  ACTIVE: "ACTIVE",
+  EXPIRED: "EXPIRED",
+  REMOVED: "REMOVED",
+} as const
+
+export type MedicineStatus = typeof MedicineStatus[keyof typeof MedicineStatus]
 
 export interface Medicine {
   id: number
@@ -22,6 +26,7 @@ export interface Medicine {
   group: string
   activeIngredient?: string
   manufacturer?: string
+  registrationNumber?: string // Số đăng ký
   unit: MedicineUnit
   importPrice: number
   salePrice: number
@@ -86,6 +91,8 @@ export interface MedicineImport {
     fullName: string
     email: string
   }
+  expiryDate?: string // Thêm expiryDate cho lô hàng nhập
+  manufactureDate?: string // Thêm manufactureDate cho lô hàng nhập
   createdAt: string
   updatedAt?: string
 }
@@ -101,6 +108,7 @@ export interface MedicineExport {
     fullName: string
     email: string
   }
+  prescriptionId?: number // Thêm link tới đơn thuốc nếu bán theo đơn
   createdAt: string
   updatedAt?: string
 }
@@ -127,7 +135,34 @@ export class MedicineService {
     search?: string
   }): Promise<MedicineListResponse> {
     const response = await api.get('/medicines', { params })
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    
+    // Check if data is array (non-paginated)
+    if (Array.isArray(data)) {
+      return {
+        medicines: data,
+        total: data.length,
+        page: 1,
+        limit: data.length,
+        totalPages: 1
+      }
+    }
+
+    const medicines = 
+      (Array.isArray(data?.medicines) ? data.medicines : null) ||
+      (Array.isArray(data?.content) ? data.content : null) ||
+      (Array.isArray(data?.items) ? data.items : null) ||
+      (Array.isArray(data?.results) ? data.results : null) ||
+      (Array.isArray(data?.data) ? data.data : null) ||
+      [];
+
+    return {
+      medicines,
+      total: data?.total || data?.totalElements || medicines.length,
+      page: data?.page || (data?.number ? data.number + 1 : 1),
+      limit: data?.limit || data?.size || 10,
+      totalPages: data?.totalPages || 1
+    }
   }
 
   // Get medicine by ID
@@ -180,7 +215,34 @@ export class MedicineService {
     limit?: number
   }): Promise<MedicineListResponse> {
     const response = await api.get('/medicines/low-stock', { params })
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    
+    // Check if data is array (non-paginated)
+    if (Array.isArray(data)) {
+      return {
+        medicines: data,
+        total: data.length,
+        page: 1,
+        limit: data.length,
+        totalPages: 1
+      }
+    }
+    
+    const medicines = 
+      (Array.isArray(data?.medicines) ? data.medicines : null) ||
+      (Array.isArray(data?.content) ? data.content : null) ||
+      (Array.isArray(data?.items) ? data.items : null) ||
+      (Array.isArray(data?.results) ? data.results : null) ||
+      (Array.isArray(data?.data) ? data.data : null) ||
+      [];
+
+    return {
+      medicines,
+      total: data?.total || data?.totalElements || medicines.length,
+      page: data?.page || (data?.number ? data.number + 1 : 1),
+      limit: data?.limit || data?.size || 10,
+      totalPages: data?.totalPages || 1
+    }
   }
 
   // Get expiring medicines
@@ -189,7 +251,34 @@ export class MedicineService {
     limit?: number
   }): Promise<MedicineListResponse> {
     const response = await api.get('/medicines/expiring', { params })
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    
+    // Check if data is array (non-paginated)
+    if (Array.isArray(data)) {
+      return {
+        medicines: data,
+        total: data.length,
+        page: 1,
+        limit: data.length,
+        totalPages: 1
+      }
+    }
+
+    const medicines = 
+      (Array.isArray(data?.medicines) ? data.medicines : null) ||
+      (Array.isArray(data?.content) ? data.content : null) ||
+      (Array.isArray(data?.items) ? data.items : null) ||
+      (Array.isArray(data?.results) ? data.results : null) ||
+      (Array.isArray(data?.data) ? data.data : null) ||
+      [];
+
+    return {
+      medicines,
+      total: data?.total || data?.totalElements || medicines.length,
+      page: data?.page || (data?.number ? data.number + 1 : 1),
+      limit: data?.limit || data?.size || 10,
+      totalPages: data?.totalPages || 1
+    }
   }
 
   // Get medicine import history
@@ -209,8 +298,40 @@ export class MedicineService {
     page?: number
     limit?: number
   }): Promise<ImportExportListResponse> {
-    const response = await api.get('/medicines/imports', { params })
-    return response.data.data || response.data
+    const response = await api.get('/medicine-imports', { params })
+    const data = response.data.data || response.data
+    
+    // Check if data is array (non-paginated)
+    if (Array.isArray(data)) {
+      return {
+        data: data,
+        total: data.length,
+        page: 1,
+        limit: data.length,
+        totalPages: 1
+      }
+    }
+    
+    const items = 
+      (Array.isArray(data?.data) ? data.data : null) ||
+      (Array.isArray(data?.content) ? data.content : null) ||
+      (Array.isArray(data?.items) ? data.items : null) ||
+      (Array.isArray(data?.results) ? data.results : null) ||
+      [];
+
+    return {
+      data: items,
+      total: data?.total || data?.totalElements || items.length,
+      page: data?.page || (data?.number ? data.number + 1 : 1),
+      limit: data?.limit || data?.size || 10,
+      totalPages: data?.totalPages || 1
+    }
+  }
+
+  // Get medicine import by ID
+  static async getMedicineImportById(id: number): Promise<MedicineImport> {
+    const response = await api.get(`/medicine-imports/${id}`)
+    return response.data.data
   }
 
   // Get all medicine exports
@@ -218,8 +339,40 @@ export class MedicineService {
     page?: number
     limit?: number
   }): Promise<ImportExportListResponse> {
-    const response = await api.get('/medicines/exports', { params })
-    return response.data.data || response.data
+    const response = await api.get('/medicine-exports', { params })
+    const data = response.data.data || response.data
+
+    // Check if data is array (non-paginated)
+    if (Array.isArray(data)) {
+      return {
+        data: data,
+        total: data.length,
+        page: 1,
+        limit: data.length,
+        totalPages: 1
+      }
+    }
+    
+    const items = 
+      (Array.isArray(data?.data) ? data.data : null) ||
+      (Array.isArray(data?.content) ? data.content : null) ||
+      (Array.isArray(data?.items) ? data.items : null) ||
+      (Array.isArray(data?.results) ? data.results : null) ||
+      [];
+
+    return {
+      data: items,
+      total: data?.total || data?.totalElements || items.length,
+      page: data?.page || (data?.number ? data.number + 1 : 1),
+      limit: data?.limit || data?.size || 10,
+      totalPages: data?.totalPages || 1
+    }
+  }
+
+  // Get medicine export by ID
+  static async getMedicineExportById(id: number): Promise<MedicineExport> {
+    const response = await api.get(`/medicine-exports/${id}`)
+    return response.data.data
   }
 
   // Mark medicine as expired

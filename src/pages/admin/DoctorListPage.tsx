@@ -40,6 +40,7 @@ interface Doctor {
     fullName: string
     email: string
     avatar?: string
+    isActive: boolean
   }
   specialty: {
     id: number
@@ -419,7 +420,7 @@ export default function DoctorList() {
                         <span className="text-gray-600">{doctor.position || 'Chưa cập nhật'}</span>
                       </td>
                       <td className="py-4 px-6">
-                        {getStatusBadge(doctor.user ? true : false)} {/* Can use doctor.user.isActive when available */}
+                        {getStatusBadge(doctor.user.isActive)}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2">

@@ -108,7 +108,14 @@ export const getVisitById = async (visitId: number): Promise<Visit> => {
 /**
  * Complete visit
  */
-export const completeVisit = async (visitId: number): Promise<Visit> => {
-  const response = await api.put(`/visits/${visitId}/complete`)
+export const completeVisit = async (
+  visitId: number,
+  data: {
+    diagnosis: string
+    note?: string
+    examinationFee?: number
+  }
+): Promise<Visit> => {
+  const response = await api.put(`/visits/${visitId}/complete`, data)
   return response.data.data || response.data
 }

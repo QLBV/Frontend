@@ -27,13 +27,24 @@ export interface UserProfile {
       ward?: string;
     }>;
   };
-  // Doctor-specific
+  // Doctor-specific (using Employee data)
   doctor?: {
     id: number;
-    doctorCode: string;
+    doctorCode?: string;
+    employeeCode?: string;
     specialtyId: number;
     yearsOfExperience: number;
     bio?: string;
+    // New employee fields
+    position?: string;
+    degree?: string;
+    phone?: string;
+    address?: string;
+    gender?: string;
+    dateOfBirth?: string;
+    cccd?: string;
+    expertise?: string;
+    joiningDate?: string;
     specialty?: {
       id: number;
       name: string;
@@ -45,17 +56,22 @@ export interface UserProfile {
 export interface UpdateProfileData {
   fullName?: string;
   email?: string;
-  // Patient-specific fields (will be ignored for other roles)
-  dateOfBirth?: string;
+  phone?: string;
   gender?: string;
+  dateOfBirth?: string;
   cccd?: string;
+  address?: string;
+  // Patient-specific 
   profiles?: Array<{
     type: string;
     value: string;
     city?: string;
     ward?: string;
   }>;
-  // Doctor-specific fields
+  // Doctor/Employee specific
   bio?: string;
   yearsOfExperience?: number;
+  position?: string;
+  degree?: string;
+  expertise?: string;
 }

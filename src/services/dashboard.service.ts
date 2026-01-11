@@ -17,6 +17,8 @@ export interface DashboardOverview {
     today: number
     thisWeek: number
     thisMonth: number
+    targetMonth?: number
+    performance?: number
     change: number
   }
   appointments: {
@@ -31,6 +33,8 @@ export interface DashboardOverview {
     thisMonth: number
     change: number
   }
+  medicationStock?: number
+  medicationChange?: number
 }
 
 export interface AppointmentCalendar {
@@ -77,6 +81,13 @@ export interface DashboardData {
   recentActivities: RecentActivity[]
   quickStats: QuickStats
   alerts: SystemAlert[]
+  charts?: {
+    dailyRevenue: Array<{
+      name: string
+      date: string
+      revenue: number
+    }>
+  }
 }
 
 export class DashboardService {

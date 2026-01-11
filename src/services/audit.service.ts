@@ -43,7 +43,14 @@ export class AuditService {
     try {
       const response = await api.get('/audit-logs', { params })
       if (response.data.success) {
-        return response.data.data
+        const data = response.data.data
+        return {
+          logs: Array.isArray(data?.logs) ? data.logs : [],
+          total: data?.total || 0,
+          page: data?.page || 1,
+          limit: data?.limit || 10,
+          totalPages: data?.totalPages || 1,
+        }
       }
       throw new Error(response.data.message || 'Failed to fetch audit logs')
     } catch (error: any) {
@@ -64,7 +71,14 @@ export class AuditService {
     try {
       const response = await api.get(`/audit-logs/user/${userId}`, { params })
       if (response.data.success) {
-        return response.data.data
+        const data = response.data.data
+        return {
+          logs: Array.isArray(data?.logs) ? data.logs : [],
+          total: data?.total || 0,
+          page: data?.page || 1,
+          limit: data?.limit || 10,
+          totalPages: data?.totalPages || 1,
+        }
       }
       throw new Error(response.data.message || 'Failed to fetch audit logs')
     } catch (error: any) {
@@ -89,7 +103,14 @@ export class AuditService {
     try {
       const response = await api.get(`/audit-logs/entity/${entityType}/${entityId}`, { params })
       if (response.data.success) {
-        return response.data.data
+        const data = response.data.data
+        return {
+          logs: Array.isArray(data?.logs) ? data.logs : [],
+          total: data?.total || 0,
+          page: data?.page || 1,
+          limit: data?.limit || 10,
+          totalPages: data?.totalPages || 1,
+        }
       }
       throw new Error(response.data.message || 'Failed to fetch audit logs')
     } catch (error: any) {

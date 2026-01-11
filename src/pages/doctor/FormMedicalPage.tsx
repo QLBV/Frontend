@@ -8,15 +8,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/api"
 import { toast } from "sonner"
-import { 
-  ArrowLeft, 
-  User, 
+import {
+  ArrowLeft,
+  User,
   Activity,
   Heart,
   Stethoscope,
   FileText,
   Save,
-  Pill,
   History,
   FlaskConical,
   Loader2
@@ -30,6 +29,7 @@ interface PatientData {
   gender: "MALE" | "FEMALE"
   phoneNumber: string
   appointmentId?: number
+  visitId?: number
   symptomInitial?: string
 }
 
@@ -51,10 +51,6 @@ const initialVitalSigns: VitalSign[] = [
 export default function FormMedical() {
   const { id } = useParams()
   const navigate = useNavigate()
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'formMedical.tsx:51',message:'FormMedical component mounted',data:{id,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
-  
   // Data states
   const [patientData, setPatientData] = useState<PatientData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -79,6 +75,7 @@ export default function FormMedical() {
         const recordId = parseInt(id)
         
         // First, try to fetch as visit (if patient was checked in)
+        // Try visit by id only if id is not a pure appointment id
         try {
           const visitResponse = await api.get(`/visits/${recordId}`)
           if (visitResponse.data.success && visitResponse.data.data) {
@@ -94,41 +91,37 @@ export default function FormMedical() {
               gender: patient.gender || "MALE",
               phoneNumber: patient.phoneNumber || "",
               appointmentId: appointment.id || visit.appointmentId,
+              visitId: visit.id,
               symptomInitial: appointment.symptomInitial
             })
             setError(null)
             return
           }
         } catch (visitErr: any) {
-          // Visit not found, try appointment instead
-          console.log("Visit not found, trying appointment:", visitErr.response?.status)
+          // suppress noisy log for 404
         }
         
-        // If visit not found, try to fetch as appointment
-        const today = new Date().toISOString().split('T')[0]
-        const response = await api.get(`/appointments`)
-        
-        if (response.data.success && response.data.data.length > 0) {
-          // Find the specific appointment by ID
-          const appointment = response.data.data.find((apt: any) => apt.id === recordId)
-          
-          if (appointment) {
-            const patient = appointment.patient || appointment.Patient
-            const patientUser = patient?.user || patient?.User || {}
-            
-            if (patient) {
-              setPatientData({
-                id: patient.id,
-                fullName: patientUser.fullName || patient.fullName || "Unknown",
-                dateOfBirth: patient.dateOfBirth || "",
-                gender: patient.gender || "MALE",
-                phoneNumber: patient.phoneNumber || "",
-                appointmentId: appointment.id,
-                symptomInitial: appointment.symptomInitial
-              })
-              setError(null)
-              return
-            }
+        // If visit not found, fetch appointment by id directly
+        const response = await api.get(`/appointments/${recordId}`)
+        const appointment = response.data.data || response.data
+
+        if (appointment) {
+          const patient = appointment.patient || appointment.Patient
+          const patientUser = patient?.user || patient?.User || {}
+
+          if (patient) {
+            setPatientData({
+              id: patient.id,
+              fullName: patientUser.fullName || patient.fullName || "Unknown",
+              dateOfBirth: patient.dateOfBirth || "",
+              gender: patient.gender || "MALE",
+              phoneNumber: patient.phoneNumber || "",
+              appointmentId: appointment.id,
+              visitId: appointment.visit?.id || appointment.Visit?.id,
+              symptomInitial: appointment.symptomInitial
+            })
+            setError(null)
+            return
           }
         }
         
@@ -194,15 +187,42 @@ Examination completed on: ${new Date().toLocaleString()}
       }
       
       console.log('Saving visit data:', visitData)
-      
+
+      // Check if we have visitId
+      let visitId = patientData.visitId
+
+      // If no visitId but have appointmentId, try to check-in first
+      if (!visitId && patientData.appointmentId) {
+        try {
+          const { checkInAppointment } = await import("@/services/visit.service")
+          const visit = await checkInAppointment(patientData.appointmentId)
+          visitId = visit.id
+          console.log('Visit created successfully:', visitId)
+        } catch (checkInError: any) {
+          // If check-in fails, show error
+          const errorMessage = checkInError.response?.data?.message || 'Không thể tạo visit'
+          console.error('Check-in error:', errorMessage)
+          toast.error(errorMessage)
+          setError(errorMessage)
+          return
+        }
+      }
+
+      if (!visitId) {
+        toast.error('Không tìm thấy visit ID')
+        setError('Không tìm thấy visit ID')
+        return
+      }
+
       // Try to complete the visit using the visits API
       try {
-        const response = await api.put(`/visits/${patientData.appointmentId}/complete`, visitData)
-        
+        const response = await api.put(`/visits/${visitId}/complete`, visitData)
+
         if (response.data.success) {
           console.log('Visit completed successfully:', response.data)
-          toast.success('Lưu thông tin khám bệnh thành công!')
-          navigate("/doctor/medicalList")
+          toast.success('Lưu khám thành công, chuyển sang kê đơn')
+          // Chuyển thẳng sang trang kê đơn cho bệnh nhân/appointment này
+          navigate(`/doctor/patients/${id}/prescription`)
           return
         }
       } catch (apiError: any) {
@@ -219,17 +239,6 @@ Examination completed on: ${new Date().toLocaleString()}
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleAddPrescription = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'formMedical.tsx:192',message:'handleAddPrescription called',data:{id,url:`/doctor/patients/${id}/prescription`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    // Navigate to prescription form
-    navigate(`/doctor/patients/${id}/prescription`)
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'formMedical.tsx:196',message:'navigate called',data:{targetUrl:`/doctor/patients/${id}/prescription`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
   }
 
   const handleCancel = () => {
@@ -481,23 +490,14 @@ Examination completed on: ${new Date().toLocaleString()}
                   {saving ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
+                      Đang lưu...
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Save Examination
+                      Lưu & kê đơn thuốc
                     </>
                   )}
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full border-blue-200 text-blue-600 hover:bg-blue-50"
-                  onClick={handleAddPrescription}
-                >
-                  <Pill className="w-4 h-4 mr-2" />
-                  Add Prescription
                 </Button>
                 
                 <Button 
