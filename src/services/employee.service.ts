@@ -46,9 +46,14 @@ export class EmployeeService {
     search?: string
     roleId?: number
     specialtyId?: number
-  }): Promise<Employee[]> {
+    page?: number
+    limit?: number
+  }): Promise<{ employees: Employee[], pagination: any }> {
     const response = await api.get('/employees', { params })
-    return response.data.data
+    return {
+      employees: response.data.data,
+      pagination: response.data.pagination
+    }
   }
 
   static async getEmployeeById(id: number): Promise<Employee> {

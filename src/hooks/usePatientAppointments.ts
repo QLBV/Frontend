@@ -52,11 +52,22 @@ export function usePatientAppointments() {
         specialty: apt.doctor?.specialty?.name || "General",
         image: apt.doctor?.user?.avatar || "/placeholder.svg"
       },
+      patient: {
+        id: apt.patient?.id || 0,
+        name: apt.patient?.fullName || "Bệnh nhân", // Fallback if missing
+        code: apt.patient?.patientCode || "N/A",
+        // Map extended fields safely
+        gender: (apt.patient as any)?.gender === 'MALE' ? 'Nam' : (apt.patient as any)?.gender === 'FEMALE' ? 'Nữ' : 'Khác',
+        dob: (apt.patient as any)?.dateOfBirth || (apt.patient as any)?.dob || "Chưa cập nhật",
+        phone: (apt.patient as any)?.phoneNumber || (apt.patient as any)?.phone || "Chưa cập nhật",
+        email: (apt.patient as any)?.email || (apt.patient as any)?.user?.email || "Chưa cập nhật",
+        address: (apt.patient as any)?.address || "Chưa cập nhật"
+      },
       type: apt.bookingType === "ONLINE" ? "Online" : "Offline",
       location: "Clinic",
       reason: apt.symptomInitial || "General checkup",
       status: mapped.label,
-      displayStatus: (apt as any).displayStatus,
+      displayStatus: apt.status === "COMPLETED" ? "Đã khám" : (apt as any).displayStatus,
       rawStatus: mapped.raw,
       notes: undefined,
       diagnosis: undefined,

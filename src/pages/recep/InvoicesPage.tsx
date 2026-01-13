@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/auth/authContext"
-import { Search, Calendar, DollarSign, FileText, Eye, Download, Activity, Loader2, Plus, SlidersHorizontal, X } from "lucide-react"
+import { Search, Eye, Loader2, SlidersHorizontal, X, FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,6 +29,7 @@ import { InvoiceService, type Invoice, PaymentStatus } from "@/services/invoice.
 import { SearchService } from "@/services/search.service"
 import ReceptionistSidebar from "@/components/sidebar/recep"
 import AdminSidebar from "@/components/sidebar/admin"
+import { format } from "date-fns"
 
 export default function InvoicesPage() {
   const { user } = useAuth()
@@ -155,282 +156,225 @@ export default function InvoicesPage() {
     fetchInvoices()
   }
 
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.patient?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.invoiceCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.patient?.patientCode?.toLowerCase().includes(searchQuery.toLowerCase())
-
-    return matchesSearch
-  })
-
   const getStatusBadge = (status: PaymentStatus) => {
-    const config: Record<PaymentStatus, { label: string; className: string }> = {
-      PAID: { label: "Đã thanh toán", className: "bg-emerald-500/10 text-emerald-700 border-emerald-200" },
-      PARTIALLY_PAID: { label: "Thanh toán một phần", className: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
-      UNPAID: { label: "Chờ thanh toán", className: "bg-amber-500/10 text-amber-700 border-amber-200" },
+    const config: Record<PaymentStatus, { label: string; className: string; icon: any }> = {
+      PAID: { 
+        label: "Đã thanh toán", 
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200 ring-1 ring-emerald-500/20",
+        icon: CheckCircle2
+      },
+      PARTIALLY_PAID: { 
+        label: "Thanh toán một phần", 
+        className: "bg-amber-50 text-amber-700 border-amber-200 ring-1 ring-amber-500/20",
+        icon: Clock
+      },
+      UNPAID: { 
+        label: "Chờ thanh toán", 
+        className: "bg-rose-50 text-rose-700 border-rose-200 ring-1 ring-rose-500/20",
+        icon: AlertCircle
+      },
     }
-    const statusInfo = config[status] || { label: status, className: "bg-gray-500/10 text-gray-700 border-gray-200" }
+    const statusInfo = config[status] || { label: status, className: "bg-gray-50 text-gray-700 border-gray-200", icon: AlertCircle }
+    const Icon = statusInfo.icon
     return (
-      <Badge variant="outline" className={statusInfo.className}>
+      <Badge variant="outline" className={`py-1 px-2.5 flex items-center gap-1.5 font-bold rounded-lg ${statusInfo.className} whitespace-nowrap`}>
+        <Icon className="w-3.5 h-3.5" />
         {statusInfo.label}
       </Badge>
     )
   }
 
-  const totalRevenue = invoices
-    .filter((inv) => inv.paymentStatus === PaymentStatus.PAID)
-    .reduce((sum, inv) => sum + parseFloat(inv.totalAmount.toString()), 0)
-  const pendingAmount = invoices
-    .filter((inv) => inv.paymentStatus === PaymentStatus.UNPAID || inv.paymentStatus === PaymentStatus.PARTIALLY_PAID)
-    .reduce((sum, inv) => {
-      const remaining = parseFloat(inv.totalAmount.toString()) - parseFloat(inv.paidAmount.toString())
-      return sum + remaining
-    }, 0)
-
-  if (!user) {
-    return null
-  }
-
+  if (!user) return null
   const role = String(user.roleId || user.role || "").toLowerCase()
 
   const content = (
-    <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50/50 pb-12">
+      <div className="container mx-auto px-6 py-8 max-w-[1600px]">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Quản lý hóa đơn</h1>
-            <p className="text-slate-600">Danh sách và theo dõi hóa đơn thanh toán</p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Quản lý hóa đơn</h1>
+            </div>
+            <p className="text-slate-500 text-lg ml-15 font-medium opacity-80">Danh sách và theo dõi hóa đơn thanh toán bệnh nhân</p>
           </div>
-          <Button asChild>
-            <Link to="/recep/invoices/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Tạo hóa đơn
-            </Link>
-          </Button>
+          
+          <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-1">
+            <Button
+              variant={statusFilter === "all" ? "default" : "ghost"}
+              className={`rounded-xl px-5 transition-all duration-200 ${statusFilter === 'all' ? 'bg-indigo-600 shadow-md shadow-indigo-100' : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'}`}
+              onClick={() => { setStatusFilter("all"); setPagination({ ...pagination, page: 1 }) }}
+            >
+              Tất cả
+            </Button>
+            <Button
+              variant={statusFilter === PaymentStatus.PAID ? "default" : "ghost"}
+              className={`rounded-xl px-5 transition-all duration-200 ${statusFilter === PaymentStatus.PAID ? 'bg-emerald-600 shadow-md shadow-emerald-100' : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50'}`}
+              onClick={() => { setStatusFilter(PaymentStatus.PAID); setPagination({ ...pagination, page: 1 }) }}
+            >
+              Đã thanh toán
+            </Button>
+            <Button
+              variant={statusFilter === PaymentStatus.UNPAID ? "default" : "ghost"}
+              className={`rounded-xl px-5 transition-all duration-200 ${statusFilter === PaymentStatus.UNPAID ? 'bg-rose-600 shadow-md shadow-rose-100' : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'}`}
+              onClick={() => { setStatusFilter(PaymentStatus.UNPAID); setPagination({ ...pagination, page: 1 }) }}
+            >
+              Chờ thanh toán
+            </Button>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng doanh thu</CardTitle>
-              <DollarSign className="h-5 w-5 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{totalRevenue.toLocaleString()} VND</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Chờ thanh toán</CardTitle>
-              <Calendar className="h-5 w-5 text-amber-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{pendingAmount.toLocaleString()} VND</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng hóa đơn</CardTitle>
-              <FileText className="h-5 w-5 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{filteredInvoices.length}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search and Filters */}
-        <Card className="border-0 shadow-xl">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+        {/* Search Bar - Premium Style */}
+        <Card className="border-0 shadow-sm bg-white rounded-2xl ring-1 ring-slate-200 mb-8 overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1 relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <Input
-                  placeholder="Tìm kiếm theo tên, mã hóa đơn, mã bệnh nhân..."
+                  className="pl-12 h-12 bg-slate-50 border-0 ring-1 ring-slate-200 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl text-base shadow-inner transition-all"
+                  placeholder="Tìm theo tên bệnh nhân, mã hóa đơn, mã bệnh nhân..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleQuickSearch()
-                    }
-                  }}
-                  className="pl-10"
+                  onKeyDown={(e) => e.key === "Enter" && handleQuickSearch()}
                 />
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  onClick={() => {
-                    setStatusFilter("all")
-                    setPagination({ ...pagination, page: 1 })
-                  }}
-                  size="sm"
-                >
-                  Tất cả
-                </Button>
-                <Button
-                  variant={statusFilter === PaymentStatus.PAID ? "default" : "outline"}
-                  onClick={() => {
-                    setStatusFilter(PaymentStatus.PAID)
-                    setPagination({ ...pagination, page: 1 })
-                  }}
-                  size="sm"
-                >
-                  Đã thanh toán
-                </Button>
-                <Button
-                  variant={statusFilter === PaymentStatus.UNPAID ? "default" : "outline"}
-                  onClick={() => {
-                    setStatusFilter(PaymentStatus.UNPAID)
-                    setPagination({ ...pagination, page: 1 })
-                  }}
-                  size="sm"
-                >
-                  Chờ thanh toán
-                </Button>
-                <Button
-                  variant={statusFilter === PaymentStatus.PARTIALLY_PAID ? "default" : "outline"}
-                  onClick={() => {
-                    setStatusFilter(PaymentStatus.PARTIALLY_PAID)
-                    setPagination({ ...pagination, page: 1 })
-                  }}
-                  size="sm"
-                >
-                  Thanh toán một phần
-                </Button>
+              <div className="flex gap-3">
                 <Button
                   variant="outline"
+                  className="h-12 border-slate-200 rounded-xl px-6 font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-all"
                   onClick={() => setIsAdvancedSearchOpen(true)}
-                  size="sm"
                 >
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Advanced
+                  <SlidersHorizontal className="h-5 w-5 mr-2" />
+                  Nâng cao
                 </Button>
                 <Button
+                  className="h-12 bg-indigo-600 hover:bg-indigo-700 rounded-xl px-8 font-bold shadow-lg shadow-indigo-100 group transition-all"
                   onClick={handleQuickSearch}
                   disabled={isSearching}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {isSearching ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
+                  {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5 group-hover:scale-110 transition-transform" />}
+                  <span className="ml-2">Tìm kiếm</span>
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Invoice List */}
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-2xl">Danh sách hóa đơn</CardTitle>
+        {/* Table Content */}
+        <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-slate-50/50 to-white px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-extrabold text-slate-800">Danh sách hóa đơn</CardTitle>
+              <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-bold">Tổng cộng: {pagination.total} bản ghi</p>
+            </div>
+            {isLoading && <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />}
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            {isLoading && invoices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center">
+                   <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                </div>
+                <p className="text-slate-500 font-medium">Đang tải dữ liệu hóa đơn...</p>
               </div>
-            ) : filteredInvoices.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Không có hóa đơn nào</p>
+            ) : invoices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+                   <FileText className="h-10 w-10 text-slate-300" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">Không tìm thấy hóa đơn</h3>
+                  <p className="text-slate-400 max-w-xs mx-auto">Vui lòng thử lại với các tiêu chí tìm kiếm khác hoặc kiểm tra lại bộ lọc.</p>
+                </div>
+                <Button variant="outline" onClick={() => { setSearchQuery(""); setStatusFilter("all"); }} className="mt-2 rounded-xl">Làm mới bộ lọc</Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="bg-slate-50 border-b">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Mã hóa đơn</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Bệnh nhân</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Bác sĩ</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Ngày</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Thuốc</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-slate-700">Tổng tiền</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-slate-700">Đã thanh toán</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Thao tác</th>
+                    <tr className="bg-slate-50/80 border-b border-slate-100">
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Mã hóa đơn</th>
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Bệnh nhân</th>
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Bác sĩ</th>
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Ngày tạo</th>
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Tổng tiền</th>
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái</th>
+                      <th className="py-3 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Hành động</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {filteredInvoices.map((invoice, index) => {
-                      const hasMedicine = (invoice.medicineTotalAmount || 0) > 0
-                      return (
-                        <tr
-                          key={invoice.id}
-                          className={`border-b hover:bg-blue-50/30 transition-colors ${
-                            index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                          }`}
-                        >
-                          <td className="py-4 px-6 font-medium text-blue-600">{invoice.invoiceCode}</td>
-                          <td className="py-4 px-6">
+                  <tbody className="divide-y divide-slate-50">
+                    {invoices.map((invoice) => (
+                      <tr key={invoice.id} className="group hover:bg-slate-50/50 transition-all duration-200">
+                        <td className="py-3 px-4">
+                          <span className="font-extrabold text-indigo-600 bg-indigo-50/50 px-3 py-1.5 rounded-lg text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all whitespace-nowrap">
+                            {invoice.invoiceCode}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase">
+                              {invoice.patient?.fullName?.charAt(0)}
+                            </div>
                             <div>
-                              <div className="font-medium text-slate-900">{invoice.patient?.fullName || "N/A"}</div>
-                              {invoice.patient?.patientCode && (
-                                <div className="text-sm text-slate-500">Mã: {invoice.patient.patientCode}</div>
-                              )}
+                              <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase text-sm tracking-tight whitespace-nowrap">{invoice.patient?.fullName || "N/A"}</div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {invoice.patient?.patientCode || "#---"}</div>
                             </div>
-                          </td>
-                          <td className="py-4 px-6 text-slate-700">{invoice.doctor?.fullName || "N/A"}</td>
-                          <td className="py-4 px-6 text-slate-700">
-                            {new Date(invoice.createdAt).toLocaleDateString("vi-VN")}
-                          </td>
-                          <td className="py-4 px-6">
-                            <Badge variant="outline" className={hasMedicine ? "border-blue-300" : "border-slate-300"}>
-                              {hasMedicine ? "Có thuốc" : "Không thuốc"}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-6 text-right font-semibold text-slate-900">
-                            {parseFloat(invoice.totalAmount.toString()).toLocaleString("vi-VN")} VND
-                          </td>
-                          <td className="py-4 px-6 text-right text-slate-700">
-                            {parseFloat(invoice.paidAmount.toString()).toLocaleString("vi-VN")} VND
-                          </td>
-                          <td className="py-4 px-6">{getStatusBadge(invoice.paymentStatus)}</td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" asChild>
-                                <Link to={`/invoices/${invoice.id}`}>
-                                  <Eye className="h-4 w-4" />
-                                </Link>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                           <div className="text-slate-600 font-bold text-sm whitespace-nowrap">BS. {invoice.doctor?.fullName || "N/A"}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                           <div className="text-slate-500 font-medium text-sm">{format(new Date(invoice.createdAt), "dd/MM/yyyy")}</div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="font-extrabold text-slate-900">{parseFloat(invoice.totalAmount.toString()).toLocaleString("vi-VN")} <span className="text-[10px] text-slate-400 ml-0.5 uppercase tracking-tighter">VND</span></div>
+                          {invoice.paidAmount > 0 && invoice.paymentStatus !== 'PAID' && (
+                             <div className="text-[10px] text-emerald-600 font-bold uppercase mt-0.5">Đã thu: {parseFloat(invoice.paidAmount.toString()).toLocaleString("vi-VN")}</div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                           {getStatusBadge(invoice.paymentStatus)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-md border border-transparent hover:border-slate-200 transition-all" asChild>
+                            <Link to={`/invoices/${invoice.id}`}>
+                              <Eye className="h-5 w-5 text-indigo-600" />
+                            </Link>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             )}
-            {/* Pagination */}
+
+            {/* Pagination Premium Section */}
             {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t">
-                <div className="text-sm text-slate-600">
-                  Trang {pagination.page} / {pagination.totalPages} ({pagination.total} hóa đơn)
+              <div className="flex flex-col md:flex-row items-center justify-between px-8 py-6 bg-slate-50/30 border-t border-slate-100 gap-4">
+                <div className="text-sm font-bold text-slate-500">
+                  Trang <span className="text-indigo-600">{pagination.page}</span> trên <span className="text-slate-900">{pagination.totalPages}</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
-                    size="sm"
+                    className="rounded-xl border-slate-200 px-6 font-bold text-slate-600 hover:bg-white hover:text-indigo-600 transition-all disabled:opacity-40"
                     onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                     disabled={pagination.page === 1}
                   >
-                    Trước
+                    Trang trước
                   </Button>
                   <Button
                     variant="outline"
-                    size="sm"
+                    className="rounded-xl border-slate-200 px-6 font-bold text-slate-600 hover:bg-white hover:text-indigo-600 transition-all disabled:opacity-40"
                     onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                     disabled={pagination.page >= pagination.totalPages}
                   >
-                    Sau
+                    Trang sau
                   </Button>
                 </div>
               </div>
@@ -438,111 +382,82 @@ export default function InvoicesPage() {
           </CardContent>
         </Card>
 
-        {/* Advanced Search Dialog */}
+        {/* Advanced Search Modal */}
         <Dialog open={isAdvancedSearchOpen} onOpenChange={setIsAdvancedSearchOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Advanced Search</DialogTitle>
-              <DialogDescription>
-                Tìm kiếm hóa đơn với các bộ lọc chi tiết
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="keyword">Keyword</Label>
+          <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+            <div className="bg-indigo-600 px-8 py-6 text-white text-center sm:text-left">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-extrabold tracking-tight">Bộ lọc nâng cao</DialogTitle>
+                <DialogDescription className="text-indigo-100 opacity-90 font-medium">
+                  Tinh chỉnh tìm kiếm hóa đơn theo các tiêu chí chi tiết
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Từ khóa</Label>
                   <Input
-                    id="keyword"
-                    placeholder="Patient name, invoice code..."
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11"
+                    placeholder="Tên bệnh nhân, mã khám..."
                     value={advancedFilters.keyword}
                     onChange={(e) => setAdvancedFilters({ ...advancedFilters, keyword: e.target.value })}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="invoiceCode">Invoice Code</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Mã hóa đơn</Label>
                   <Input
-                    id="invoiceCode"
-                    placeholder="Invoice code"
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11"
+                    placeholder="VD: INV-123"
                     value={advancedFilters.invoiceCode}
                     onChange={(e) => setAdvancedFilters({ ...advancedFilters, invoiceCode: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="paymentStatus">Payment Status</Label>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Trạng thái thanh toán</Label>
                   <Select
                     value={advancedFilters.paymentStatus}
                     onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, paymentStatus: value as any })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All" />
+                    <SelectTrigger className="rounded-xl border-slate-200 bg-slate-50 h-11">
+                      <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="PAID">Paid</SelectItem>
-                      <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
-                      <SelectItem value="UNPAID">Unpaid</SelectItem>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="PAID">Đã thanh toán</SelectItem>
+                      <SelectItem value="PARTIALLY_PAID">Thanh toán một phần</SelectItem>
+                      <SelectItem value="UNPAID">Chờ thanh toán</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="patientId">Patient ID</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Mã bệnh nhân</Label>
                   <Input
-                    id="patientId"
-                    type="number"
-                    placeholder="Patient ID"
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11"
+                    placeholder="Nhập ID bệnh nhân"
                     value={advancedFilters.patientId}
                     onChange={(e) => setAdvancedFilters({ ...advancedFilters, patientId: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="doctorId">Doctor ID</Label>
+
+              <div className="grid grid-cols-2 gap-6 border-t border-slate-100 pt-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Từ ngày</Label>
                   <Input
-                    id="doctorId"
-                    type="number"
-                    placeholder="Doctor ID"
-                    value={advancedFilters.doctorId}
-                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, doctorId: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="totalMin">Min Total</Label>
-                  <Input
-                    id="totalMin"
-                    type="number"
-                    placeholder="Min amount"
-                    value={advancedFilters.totalMin}
-                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, totalMin: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="totalMax">Max Total</Label>
-                  <Input
-                    id="totalMax"
-                    type="number"
-                    placeholder="Max amount"
-                    value={advancedFilters.totalMax}
-                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, totalMax: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="createdFrom">Created From</Label>
-                  <Input
-                    id="createdFrom"
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11"
                     type="date"
                     value={advancedFilters.createdFrom}
                     onChange={(e) => setAdvancedFilters({ ...advancedFilters, createdFrom: e.target.value })}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="createdTo">Created To</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Đến ngày</Label>
                   <Input
-                    id="createdTo"
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11"
                     type="date"
                     value={advancedFilters.createdTo}
                     onChange={(e) => setAdvancedFilters({ ...advancedFilters, createdTo: e.target.value })}
@@ -550,23 +465,22 @@ export default function InvoicesPage() {
                 </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={clearAdvancedSearch}>
+            <DialogFooter className="bg-slate-50/80 px-8 py-5 flex items-center justify-between border-t border-slate-100">
+              <Button 
+                variant="ghost" 
+                onClick={clearAdvancedSearch}
+                className="rounded-xl font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+              >
                 <X className="h-4 w-4 mr-2" />
-                Clear
+                Xóa bộ lọc
               </Button>
-              <Button onClick={handleAdvancedSearch} disabled={isSearching}>
-                {isSearching ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    Search
-                  </>
-                )}
+              <Button 
+                onClick={handleAdvancedSearch} 
+                disabled={isSearching}
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-8 font-bold shadow-lg shadow-indigo-100"
+              >
+                {isSearching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+                Áp dụng bộ lọc
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -575,7 +489,6 @@ export default function InvoicesPage() {
     </div>
   )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
   if (role === "admin" || role === "1") {
     return <AdminSidebar>{content}</AdminSidebar>
   } else if (role === "receptionist" || role === "2") {

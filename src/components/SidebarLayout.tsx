@@ -19,7 +19,7 @@ interface SidebarLayoutProps {
 const SidebarLayout = ({ 
   children, 
   pageContent, 
-  logoText = "Logo Placeholder", 
+  logoText = "HealthCare", 
   userName,
   patientCode,
   userRole
@@ -112,13 +112,15 @@ const SidebarLayout = ({
         <div className={`p-6 flex-1 overflow-y-auto overflow-x-hidden ${isCollapsed ? 'px-2' : ''}`}>
           
           {/* Logo Desktop */}
-          <div className='flex items-center gap-3 mb-3'>
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <svg className="h-6 w-6 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          <div className='flex items-center gap-3 mb-6 px-1'>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-200">
+              <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <span className="text-xl font-semibold">HealthCare</span>
+            <span className="text-xl font-bold text-slate-800 tracking-tight">
+              {logoText}
+            </span>
           </div>
           {/* Logo Mobile (inside menu) */}
           <div className="mb-8 md:hidden mt-8">

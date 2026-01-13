@@ -11,6 +11,8 @@ import SignUpPage from "@/pages/patient/SignupPage"
 import BookAppointmentPage from "@/pages/patient/BookAppointmentPage"
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage"
 import ResetPasswordPage from "@/pages/ResetPasswordPage"
+import TermsOfServicePage from "@/pages/TermsOfServicePage"
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import OAuthCallbackPage from "@/pages/OAuthCallbackPage"
 import OAuthErrorPage from "@/pages/OAuthErrorPage"
 const ProfilePage = lazy(() => import("./pages/ProfilePage"))
@@ -62,6 +64,7 @@ const EmployeeListPage = lazy(() => import("./pages/admin/EmployeeListPage"))
 const EmployeeDetailPage = lazy(() => import("./pages/admin/EmployeeDetailPage"))
 const PatientListPage = lazy(() => import("./pages/admin/PatientListPage"))
 const AdminPatientDetailPage = lazy(() => import("./pages/admin/AdminPatientDetailPage"))
+const AdminPrescriptionDetailPage = lazy(() => import("./pages/admin/AdminPrescriptionDetailPage"))
 const PayrollStatisticsPage = lazy(() => import("./pages/admin/PayrollStatisticsPage"))
 const MyPayrollsPage = lazy(() => import("./pages/MyPayrollsPage"))
 const MyPayrollDetailPage = lazy(() => import("./pages/MyPayrollDetailPage"))
@@ -127,6 +130,8 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/oauth/callback" element={<OAuthCallbackPage />} />
           <Route path="/auth/oauth/error" element={<OAuthErrorPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
           {/* Redirect old booking route to new patient route */}
           <Route path="/book-appointment" element={<Navigate to="/patient/book-appointment" replace />} />
 
@@ -532,6 +537,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminPatientDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/prescriptions/:id"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminPrescriptionDetailPage />
               </ProtectedRoute>
             }
           />

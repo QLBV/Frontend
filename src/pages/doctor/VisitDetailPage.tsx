@@ -17,6 +17,12 @@ import {
   Loader2,
   Pill,
   Receipt,
+  Activity,
+  Droplet,
+  Thermometer,
+  Wind,
+  Weight,
+  Ruler,
 } from "lucide-react"
 import { toast } from "sonner"
 import { getVisitById, type Visit } from "@/services/visit.service"
@@ -75,21 +81,28 @@ export default function VisitDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
-      IN_PROGRESS: { label: "Đang khám", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+      IN_PROGRESS: { label: "Đang khám", className: "bg-blue-50 text-blue-700 border-blue-200" },
+      EXAMINING: { label: "Đang khám", className: "bg-blue-50 text-blue-700 border-blue-200" },
       COMPLETED: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
       CANCELLED: { label: "Đã hủy", className: "bg-red-50 text-red-700 border-red-200" },
     }
 
     const statusInfo = statusMap[status] || {
       label: status,
-      className: "bg-gray-50 text-gray-700 border-gray-200",
+      className: "bg-slate-50 text-slate-700 border-slate-200",
     }
 
     return (
-      <Badge variant="outline" className={statusInfo.className}>
+      <Badge variant="outline" className={`${statusInfo.className} font-semibold px-3 py-1`}>
         {statusInfo.label}
       </Badge>
     )
+  }
+
+  const formatDoctorName = (doctor: any) => {
+    if (!doctor) return "N/A"
+    const name = doctor.user?.fullName || doctor.fullName || "N/A"
+    return name.startsWith("BS.") ? name : `BS. ${name}`
   }
 
   const SidebarComponent = getSidebarComponent()
@@ -97,8 +110,8 @@ export default function VisitDetailPage() {
 
   if (!SidebarComponent) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -106,8 +119,8 @@ export default function VisitDetailPage() {
   if (isLoading) {
     return (
       <SidebarComponent userName={userName}>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </SidebarComponent>
     )
@@ -116,9 +129,14 @@ export default function VisitDetailPage() {
   if (!visit) {
     return (
       <SidebarComponent userName={userName}>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Không tìm thấy thông tin lần khám</p>
-          <Button onClick={() => navigate(-1)} className="mt-4">
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)] text-center">
+          <div className="bg-slate-100 p-4 rounded-full mb-4">
+            <FileText className="h-8 w-8 text-slate-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Không tìm thấy thông tin</h2>
+          <p className="text-slate-500 mb-6">Lần khám này không tồn tại hoặc đã bị xóa.</p>
+          <Button onClick={() => navigate(-1)} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Quay lại
           </Button>
         </div>
@@ -128,195 +146,260 @@ export default function VisitDetailPage() {
 
   return (
     <SidebarComponent userName={userName}>
-      <div className="space-y-6">
-        <Button variant="ghost" className="mb-2 pl-0" onClick={() => navigate(-1)}>
+      <div className="p-6 max-w-5xl mx-auto space-y-6">
+        {/* Navigation */}
+        <Button 
+          variant="ghost" 
+          className="pl-0 text-slate-600 hover:text-blue-600 hover:bg-transparent transition-colors" 
+          onClick={() => navigate(-1)}
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Quay lại
+          Quay lại danh sách
         </Button>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl mb-2">Chi tiết lần khám</CardTitle>
-                {getStatusBadge(visit.status)}
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-slate-900">Chi tiết lần khám</h1>
+              {getStatusBadge(visit.status)}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <CalendarIcon className="h-4 w-4" />
+                <span>{new Date(visit.checkInTime || visit.visitDate || "").toLocaleDateString("vi-VN")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                <span>{new Date(visit.checkInTime || visit.visitDate || "").toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Patient & Doctor Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <User className="h-4 w-4" />
-                  <span>Bệnh nhân</span>
+          </div>
+
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            {visit.patientId && (
+              <Button variant="outline" size="sm" asChild className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300">
+                <Link to={
+                  (String(user?.roleId || user?.role || "").toLowerCase() === "admin" || String(user?.roleId || user?.role || "") === "1")
+                    ? `/admin/patients/${visit.patientId}`
+                    : (String(user?.roleId || user?.role || "").toLowerCase() === "receptionist" || String(user?.roleId || user?.role || "") === "4")
+                    ? `/recep/patients/${visit.patientId}`
+                    : `/doctor/patients/${visit.patientId}` // Fallback for doctor
+                }>
+                  <User className="h-4 w-4 mr-2" />
+                  Hồ sơ
+                </Link>
+              </Button>
+            )}
+            {visit.prescription?.id && (
+               <Button variant="outline" size="sm" asChild className="bg-white hover:bg-blue-50 text-blue-700 border-blue-200">
+                <Link to={
+                  (String(user?.roleId || user?.role || "").toLowerCase() === "admin" || String(user?.roleId || user?.role || "") === "1")
+                    ? `/admin/prescriptions/${visit.prescription.id}`
+                    : (String(user?.roleId || user?.role || "").toLowerCase() === "doctor" || String(user?.roleId || user?.role || "") === "2")
+                    ? `/doctor/prescriptions/${visit.prescription.id}/edit`
+                    : `/patient/prescriptions/${visit.prescription.id}`
+                }>
+                  <Pill className="h-4 w-4 mr-2" />
+                  Đơn thuốc
+                </Link>
+              </Button>
+            )}
+            {visit.invoice?.id ? (
+              <Button variant="outline" size="sm" asChild className="bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200">
+                <Link to={`/invoices/${visit.invoice.id}`}>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Hóa đơn
+                </Link>
+              </Button>
+            ) : visit.id && (user?.role === "receptionist" || user?.roleId === 4) ? (
+               <Button variant="outline" size="sm" asChild className="bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200">
+                <Link to={`/recep/invoices/create?visitId=${visit.id}`}>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Tạo hóa đơn
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Left Column: Patient & Doctor Info */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Patient Info Card */}
+            <Card className="border shadow-sm overflow-hidden">
+              <CardHeader className="bg-slate-50/50 border-b py-3 px-4">
+                <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <User className="h-4 w-4 text-blue-600" />
+                  Thông tin bệnh nhân
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <div className="text-xs text-slate-500 uppercase font-medium mb-1">Họ và tên</div>
+                  <div className="font-bold text-slate-900 text-lg">{visit.patient?.fullName || "N/A"}</div>
                 </div>
-                <p className="font-semibold">
-                  {visit.patient?.fullName || "N/A"}
-                </p>
                 {visit.patient?.patientCode && (
-                  <p className="text-sm text-gray-600">
-                    Mã: {visit.patient.patientCode}
-                  </p>
+                  <div>
+                     <div className="text-xs text-slate-500 uppercase font-medium mb-1">Mã bệnh nhân</div>
+                     <Badge variant="secondary" className="font-mono bg-slate-100 text-slate-700">{visit.patient.patientCode}</Badge>
+                  </div>
                 )}
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Stethoscope className="h-4 w-4" />
-                  <span>Bác sĩ</span>
+            {/* Doctor Info Card */}
+             <Card className="border shadow-sm overflow-hidden">
+              <CardHeader className="bg-slate-50/50 border-b py-3 px-4">
+                <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-purple-600" />
+                  Bác sĩ phụ trách
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <div className="text-xs text-slate-500 uppercase font-medium mb-1">Bác sĩ</div>
+                  <div className="font-bold text-slate-900 text-lg">{formatDoctorName(visit.doctor)}</div>
                 </div>
-                <p className="font-semibold">
-                  {visit.doctor?.fullName || "N/A"}
-                </p>
-              </div>
-            </div>
+                 {visit.doctor?.specialty && (
+                   <div>
+                     <div className="text-xs text-slate-500 uppercase font-medium mb-1">Chuyên khoa</div>
+                     <Badge variant="outline" className="text-purple-700 border-purple-200 bg-purple-50">{visit.doctor.specialty.name}</Badge>
+                   </div>
+                 )}
+              </CardContent>
+            </Card>
 
-            {/* Visit Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <CalendarIcon className="h-4 w-4" />
-                  <span>Ngày khám</span>
+            {/* Visit Meta Info */}
+             <Card className="border shadow-sm overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Ngày tạo</div>
+                      <div className="text-sm font-medium">{new Date(visit.createdAt).toLocaleDateString("vi-VN")}</div>
+                    </div>
+                     <div>
+                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Cập nhật</div>
+                      <div className="text-sm font-medium">{new Date(visit.updatedAt || visit.createdAt).toLocaleDateString("vi-VN")}</div>
+                    </div>
+                 </div>
+                 {visit.appointment?.shift && (
+                    <div className="pt-2 border-t mt-2">
+                      <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Ca khám</div>
+                      <div className="text-sm font-medium">{visit.appointment.shift.name} ({visit.appointment.shift.startTime} - {visit.appointment.shift.endTime})</div>
+                    </div>
+                 )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column: Clinical Details */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Diagnosis & Symptoms */}
+            <Card className="border shadow-sm">
+              <CardHeader className="bg-slate-50/50 border-b py-3 px-5">
+                <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-600" />
+                  Thông tin lâm sàng
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-5 space-y-6">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    <span className="w-1 h-4 bg-emerald-500 rounded-full"></span>
+                    Chẩn đoán
+                  </h3>
+                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 text-slate-800 font-medium">
+                    {visit.diagnosis || "Chưa có chẩn đoán"}
+                  </div>
                 </div>
-                <p className="font-semibold">
-                  {new Date(visit.visitDate).toLocaleDateString("vi-VN", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-                {visit.appointment?.shift && (
-                  <p className="text-sm text-gray-600">
-                    Ca: {visit.appointment.shift.name} ({visit.appointment.shift.startTime} - {visit.appointment.shift.endTime})
+
+                <div>
+                   <h3 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    <span className="w-1 h-4 bg-amber-500 rounded-full"></span>
+                    Triệu chứng
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed pl-3 border-l-2 border-slate-200">
+                    {visit.symptoms || "Không có ghi nhận triệu chứng"}
                   </p>
+                </div>
+
+                {visit.note && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                       <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+                      Ghi chú
+                    </h3>
+                    <div className="bg-slate-50 p-4 rounded-xl text-slate-600 text-sm">
+                      {visit.note}
+                    </div>
+                  </div>
                 )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Clock className="h-4 w-4" />
-                  <span>Thời gian tạo</span>
-                </div>
-                <p className="font-semibold">
-                  {new Date(visit.createdAt).toLocaleString("vi-VN")}
-                </p>
-              </div>
-            </div>
-
-            {/* Symptoms */}
-            {visit.symptoms && (
-              <div className="space-y-2 pt-4 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <FileText className="h-4 w-4" />
-                  <span>Triệu chứng</span>
-                </div>
-                <p className="text-sm">{visit.symptoms}</p>
-              </div>
-            )}
-
-            {/* Diagnosis */}
-            {visit.diagnosis && (
-              <div className="space-y-2 pt-4 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Stethoscope className="h-4 w-4" />
-                  <span>Chẩn đoán</span>
-                </div>
-                <p className="text-sm font-semibold">{visit.diagnosis}</p>
-              </div>
-            )}
-
-            {/* Notes */}
-            {visit.notes && (
-              <div className="space-y-2 pt-4 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <FileText className="h-4 w-4" />
-                  <span>Ghi chú</span>
-                </div>
-                <p className="text-sm">{visit.notes}</p>
-              </div>
-            )}
+              </CardContent>
+            </Card>
 
             {/* Vital Signs */}
-            {visit.vitalSigns && (
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <Heart className="h-4 w-4" />
-                  <span>Dấu hiệu sinh tồn</span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {visit.vitalSigns.bloodPressure && (
-                    <div>
-                      <p className="text-xs text-gray-500">Huyết áp</p>
-                      <p className="font-semibold">{visit.vitalSigns.bloodPressure}</p>
-                    </div>
-                  )}
-                  {visit.vitalSigns.heartRate && (
-                    <div>
-                      <p className="text-xs text-gray-500">Nhịp tim</p>
-                      <p className="font-semibold">{visit.vitalSigns.heartRate} bpm</p>
-                    </div>
-                  )}
-                  {visit.vitalSigns.temperature && (
-                    <div>
-                      <p className="text-xs text-gray-500">Nhiệt độ</p>
-                      <p className="font-semibold">{visit.vitalSigns.temperature}°C</p>
-                    </div>
-                  )}
-                  {visit.vitalSigns.respiratoryRate && (
-                    <div>
-                      <p className="text-xs text-gray-500">Nhịp thở</p>
-                      <p className="font-semibold">{visit.vitalSigns.respiratoryRate} /phút</p>
-                    </div>
-                  )}
-                  {visit.vitalSigns.weight && (
-                    <div>
-                      <p className="text-xs text-gray-500">Cân nặng</p>
-                      <p className="font-semibold">{visit.vitalSigns.weight} kg</p>
-                    </div>
-                  )}
-                  {visit.vitalSigns.height && (
-                    <div>
-                      <p className="text-xs text-gray-500">Chiều cao</p>
-                      <p className="font-semibold">{visit.vitalSigns.height} cm</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {visit.vitalSigns && Object.keys(visit.vitalSigns).length > 0 && (
+               <Card className="border shadow-sm">
+                <CardHeader className="bg-slate-50/50 border-b py-3 px-5">
+                  <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-rose-600" />
+                    Chỉ số sinh tồn
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Huyết áp</div>
+                         <div className="text-lg font-black text-slate-800">{visit.vitalSigns.bloodPressure || "--/--"}</div>
+                         <div className="text-[10px] text-slate-400">mmHg</div>
+                      </div>
+                      
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Nhịp tim</div>
+                         <div className="text-lg font-black text-rose-600">{visit.vitalSigns.heartRate || "--"}</div>
+                         <div className="text-[10px] text-slate-400">bpm</div>
+                      </div>
+
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Nhiệt độ</div>
+                         <div className="text-lg font-black text-orange-600">{visit.vitalSigns.temperature || "--"}</div>
+                         <div className="text-[10px] text-slate-400">°C</div>
+                      </div>
+
+                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Cân nặng</div>
+                         <div className="text-lg font-black text-blue-600">{visit.vitalSigns.weight || "--"}</div>
+                         <div className="text-[10px] text-slate-400">kg</div>
+                      </div>
+                  </div>
+                  
+                  {/* Advanced Vitals */}
+                   <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
+                      <div className="text-center">
+                         <div className="text-[10px] text-slate-500 font-medium">Nhịp thở</div>
+                         <div className="font-bold text-slate-700">{visit.vitalSigns.respiratoryRate || "--"} <span className="text-[10px] font-normal text-slate-400">l/p</span></div>
+                      </div>
+                      <div className="text-center border-l border-slate-100">
+                         <div className="text-[10px] text-slate-500 font-medium">Chiều cao</div>
+                         <div className="font-bold text-slate-700">{visit.vitalSigns.height || "--"} <span className="text-[10px] font-normal text-slate-400">cm</span></div>
+                      </div>
+                       <div className="text-center border-l border-slate-100">
+                         <div className="text-[10px] text-slate-500 font-medium">SpO2</div>
+                         <div className="font-bold text-cyan-600">{visit.vitalSigns.spo2 || "--"} <span className="text-[10px] font-normal text-slate-400">%</span></div>
+                      </div>
+                   </div>
+                </CardContent>
+              </Card>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-2 pt-4 border-t">
-              {visit.patientId && (
-                <Button variant="outline" asChild>
-                  <Link to={`/recep/patients/${visit.patientId}`}>
-                    <User className="h-4 w-4 mr-2" />
-                    Xem bệnh nhân
-                  </Link>
-                </Button>
-              )}
-              {/* Link to prescription if exists */}
-              {visit.id && (
-                <Button variant="outline" asChild>
-                  <Link to={`/doctor/prescriptions?visitId=${visit.id}`}>
-                    <Pill className="h-4 w-4 mr-2" />
-                    Xem đơn thuốc
-                  </Link>
-                </Button>
-              )}
-              {/* Link to invoice if exists */}
-              {visit.id && (
-                <Button variant="outline" asChild>
-                  <Link to={`/invoices?visitId=${visit.id}`}>
-                    <Receipt className="h-4 w-4 mr-2" />
-                    Xem hóa đơn
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </SidebarComponent>
   )

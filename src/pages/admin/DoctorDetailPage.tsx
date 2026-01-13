@@ -38,6 +38,7 @@ interface Doctor {
     fullName: string
     email: string
     isActive: boolean
+    avatar?: string
     employee?: {
       phone?: string
       address?: string
@@ -493,9 +494,9 @@ export default function DoctorDetail() {
                       <div className="flex items-start gap-6">
                         {/* Avatar */}
                         <div className="relative">
-                          {avatarUrl ? (
+                          {avatarUrl || (doctor?.user?.avatar) ? (
                             <img 
-                              src={avatarUrl} 
+                              src={avatarUrl || `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${doctor?.user?.avatar}`} 
                               alt={doctor?.user?.fullName || 'Doctor'}
                               className="w-24 h-24 rounded-full object-cover"
                             />

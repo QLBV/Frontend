@@ -14,10 +14,12 @@ import {
   ToggleLeft,
   ToggleRight,
   CalendarDays,
-  MoreHorizontal,
   CheckCircle2,
   RefreshCw,
-  Stethoscope
+  Stethoscope,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,7 +52,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -93,6 +94,8 @@ export default function ShiftTemplatesPage() {
   const [filterShift, setFilterShift] = useState<string>("all")
   const [filterActive, setFilterActive] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 8
 
   // Dialog states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -287,7 +290,19 @@ export default function ShiftTemplatesPage() {
     return matchesSearch && matchesDay && matchesDoctor && matchesShift && matchesActive
   })
 
+  // Pagination for List View
+  const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage)
+  const paginatedTemplates = filteredTemplates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filterDayOfWeek, filterDoctor, filterShift, filterActive, viewMode])
+
   // Group templates by day of week for grid view
+  // We use filteredTemplates for grid view as it groups by day naturally
   const templatesByDay = ShiftTemplateService.groupTemplatesByDay(filteredTemplates)
 
   const formatTime = (time: string) => {
@@ -308,163 +323,170 @@ export default function ShiftTemplatesPage() {
     <AdminSidebar>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-200/50">
-                  <CalendarDays className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">
+          {/* Simplified Header Section */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <CalendarDays className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                   Mẫu Ca Trực
                 </h1>
+                <p className="text-slate-500 text-sm font-medium">
+                  Thiết lập lịch trực mẫu cho bác sĩ theo ngày trong tuần.
+                </p>
               </div>
-              <p className="text-slate-500 mt-1">
-                Thiết lập lịch trực mẫu cho bác sĩ theo ngày trong tuần
-              </p>
             </div>
+
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                className="bg-white hover:bg-slate-50 border-slate-200"
+                size="sm"
+                className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50"
                 onClick={fetchData}
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-3.5 w-3.5 mr-2" />
                 Làm mới
               </Button>
               <Button
                 onClick={handleCreate}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-200/50"
+                size="sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 rounded-lg font-bold text-xs px-4 shadow-md shadow-indigo-100"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3.5 w-3.5 mr-2" />
                 Thêm mẫu ca
               </Button>
             </div>
           </div>
 
-          {/* Stats Cards */}
+          {/* Simplified Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white overflow-hidden relative group hover:shadow-xl transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-50 rounded-xl">
-                    <LayoutGrid className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Tổng mẫu ca</p>
+            <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-indigo-200 transition-colors">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <LayoutGrid className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tổng mẫu ca</p>
+                  <div className="flex items-baseline gap-2">
                     <h3 className="text-2xl font-bold text-slate-900">{totalTemplates}</h3>
+                    <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded uppercase">Templates</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white overflow-hidden relative group hover:shadow-xl transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-xl">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Đang hoạt động</p>
+            <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-emerald-200 transition-colors">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đang hoạt động</p>
+                  <div className="flex items-baseline gap-2">
                     <h3 className="text-2xl font-bold text-slate-900">{activeTemplates}</h3>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">Active</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white overflow-hidden relative group hover:shadow-xl transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl">
-                    <Stethoscope className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Bác sĩ có mẫu</p>
+            <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-blue-200 transition-colors">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Stethoscope className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bác sĩ có mẫu</p>
+                  <div className="flex items-baseline gap-2">
                     <h3 className="text-2xl font-bold text-slate-900">{uniqueDoctors}</h3>
+                    <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">Doctors</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Filters and View Toggle */}
-          <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white">
-            <CardContent className="p-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                <div className="flex flex-wrap gap-3 items-center flex-1">
-                  <div className="relative w-full max-w-xs">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder="Tìm kiếm..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 h-10 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                    />
-                  </div>
-
-                  <Select value={filterDayOfWeek} onValueChange={setFilterDayOfWeek}>
-                    <SelectTrigger className="w-[140px] bg-slate-50 border-slate-200">
-                      <SelectValue placeholder="Ngày" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả ngày</SelectItem>
-                      {Object.entries(DAY_OF_WEEK_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterDoctor} onValueChange={setFilterDoctor}>
-                    <SelectTrigger className="w-[180px] bg-slate-50 border-slate-200">
-                      <SelectValue placeholder="Bác sĩ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả bác sĩ</SelectItem>
-                      {doctors.map((doctor) => (
-                        <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                          {doctor.user?.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterShift} onValueChange={setFilterShift}>
-                    <SelectTrigger className="w-[160px] bg-slate-50 border-slate-200">
-                      <SelectValue placeholder="Ca trực" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả ca</SelectItem>
-                      {shifts.map((shift) => (
-                        <SelectItem key={shift.id} value={shift.id.toString()}>
-                          {shift.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filterActive} onValueChange={setFilterActive}>
-                    <SelectTrigger className="w-[150px] bg-slate-50 border-slate-200">
-                      <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="active">Đang hoạt động</SelectItem>
-                      <SelectItem value="inactive">Đã tắt</SelectItem>
-                    </SelectContent>
-                  </Select>
+          {/* Simplified Filters and View Toggle */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
+            <div className="flex flex-col xl:flex-row gap-3">
+              {/* Search input with focus effects */}
+              <div className="relative flex-grow group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 </div>
+                <Input
+                  placeholder="Tìm kiếm bác sĩ, ca trực, ghi chú..."
+                  className="w-full h-11 pl-11 pr-4 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl transition-all text-sm font-medium"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
 
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-1 bg-slate-50">
+              {/* Filters grid */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={filterDayOfWeek} onValueChange={setFilterDayOfWeek}>
+                  <SelectTrigger className="w-[140px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
+                    <SelectValue placeholder="Thứ" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="all">Tất cả ngày</SelectItem>
+                    {Object.entries(DAY_OF_WEEK_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterDoctor} onValueChange={setFilterDoctor}>
+                  <SelectTrigger className="w-[180px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
+                    <SelectValue placeholder="Bác sĩ" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="all">Tất cả bác sĩ</SelectItem>
+                    {doctors.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                        {doctor.user?.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterShift} onValueChange={setFilterShift}>
+                  <SelectTrigger className="w-[140px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
+                    <SelectValue placeholder="Ca trực" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="all">Tất cả ca</SelectItem>
+                    {shifts.map((shift) => (
+                      <SelectItem key={shift.id} value={shift.id.toString()}>
+                        {shift.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterActive} onValueChange={setFilterActive}>
+                  <SelectTrigger className="w-[150px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="active">Đang hoạt động</SelectItem>
+                    <SelectItem value="inactive">Đã tắt</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
                   <Button
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
-                    className={viewMode === "grid" ? "bg-white shadow-sm" : ""}
+                    className={`h-9 w-9 p-0 rounded-lg transition-all ${
+                      viewMode === "grid" 
+                        ? "bg-white text-indigo-600 shadow-sm" 
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
@@ -472,14 +494,18 @@ export default function ShiftTemplatesPage() {
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("list")}
-                    className={viewMode === "list" ? "bg-white shadow-sm" : ""}
+                    className={`h-9 w-9 p-0 rounded-lg transition-all ${
+                      viewMode === "list" 
+                        ? "bg-white text-indigo-600 shadow-sm" 
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
                   >
                     <List className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Main Content */}
           {isLoading ? (
@@ -548,73 +574,93 @@ export default function ShiftTemplatesPage() {
                         {dayTemplates.map((template) => (
                           <div
                             key={template.id}
-                            className={`p-3 rounded-xl border transition-all duration-200 hover:shadow-md ${
-                              template.isActive
-                                ? "bg-white border-slate-200 hover:border-indigo-200"
-                                : "bg-slate-50 border-slate-100 opacity-60"
+                            className={`group relative p-4 rounded-2xl border transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 ${
+                              template.isActive 
+                                ? "bg-white border-slate-100 hover:border-indigo-200" 
+                                : "bg-slate-50/50 border-slate-100 opacity-75 grayscale-[0.5]"
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-slate-900 truncate">
-                                  {template.doctor?.user?.fullName || "N/A"}
-                                </p>
-                                <p className="text-xs text-slate-500 truncate">
-                                  {template.doctor?.specialty?.name || "Không có chuyên khoa"}
-                                </p>
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-transform group-hover:scale-110 duration-300 ${
+                                  template.isActive 
+                                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
+                                    : "bg-slate-200 text-slate-500"
+                                }`}>
+                                  {template.doctor?.user?.fullName?.charAt(0) || "?"}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-bold text-slate-900 truncate text-sm leading-tight">
+                                    {template.doctor?.user?.fullName || "N/A"}
+                                  </h4>
+                                  <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                                    {template.doctor?.specialty?.name || "BS. Đa khoa"}
+                                  </p>
+                                </div>
                               </div>
+                              
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-slate-100 text-slate-400">
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleEdit(template)}>
-                                    <Edit className="mr-2 h-4 w-4" />
+                                <DropdownMenuContent align="end" className="rounded-xl border-slate-100 shadow-xl">
+                                  <DropdownMenuItem onClick={() => handleEdit(template)} className="rounded-lg text-xs font-semibold py-2">
+                                    <Edit className="mr-2 h-3.5 w-3.5 text-indigo-500" />
                                     Chỉnh sửa
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleToggleActive(template)}>
+                                  <DropdownMenuItem onClick={() => handleToggleActive(template)} className="rounded-lg text-xs font-semibold py-2">
                                     {template.isActive ? (
                                       <>
-                                        <ToggleLeft className="mr-2 h-4 w-4" />
-                                        Tắt mẫu
+                                        <ToggleLeft className="mr-2 h-3.5 w-3.5 text-amber-500" />
+                                        Tạm dừng mẫu
                                       </>
                                     ) : (
                                       <>
-                                        <ToggleRight className="mr-2 h-4 w-4" />
-                                        Bật mẫu
+                                        <ToggleRight className="mr-2 h-3.5 w-3.5 text-emerald-500" />
+                                        Kích hoạt mẫu
                                       </>
                                     )}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={() => handleDelete(template)}
-                                    className="text-red-600"
+                                    className="rounded-lg text-xs font-semibold py-2 text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                                   >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Xóa
+                                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                    Xóa mẫu ca
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
-                            <div className="flex items-center justify-between">
+
+                            <div className="flex flex-col gap-2">
                               <Badge
                                 variant="secondary"
-                                className="bg-indigo-50 text-indigo-700 text-xs font-mono"
+                                className={`w-fit justify-center py-1.5 px-3 border-0 font-bold font-mono text-[10px] rounded-lg transition-colors ${
+                                  template.isActive 
+                                    ? "bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100" 
+                                    : "bg-slate-100 text-slate-500"
+                                }`}
                               >
-                                {template.shift?.name} ({formatTime(template.shift?.startTime || "")} -{" "}
-                                {formatTime(template.shift?.endTime || "")})
+                                {template.shift?.name} ({formatTime(template.shift?.startTime || "")} - {formatTime(template.shift?.endTime || "")})
                               </Badge>
-                              {template.isActive ? (
-                                <Badge className="bg-emerald-100 text-emerald-700 text-xs">
-                                  Hoạt động
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="text-xs">
-                                  Đã tắt
-                                </Badge>
-                              )}
+                              
+                              <div className="flex items-center justify-between mt-1">
+                                {template.isActive ? (
+                                  <Badge className="bg-emerald-100/50 text-emerald-700 border-emerald-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide ring-1 ring-emerald-100/50">
+                                    <span className="h-1 w-1 rounded-full bg-emerald-500 mr-2 animate-pulse" />
+                                    ĐANG HOẠT ĐỘNG
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-slate-100 text-slate-500 border-slate-200 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                                    <span className="h-1 w-1 rounded-full bg-slate-400 mr-2" />
+                                    ĐÃ TẮT
+                                  </Badge>
+                                )}
+                                <span className="text-[10px] font-bold text-slate-300">#{template.id}</span>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -626,112 +672,170 @@ export default function ShiftTemplatesPage() {
             </div>
           ) : (
             /* List View */
-            <Card className="border-0 shadow-lg bg-white overflow-hidden">
-              <Table>
-                <TableHeader className="bg-slate-50/80">
-                  <TableRow>
-                    <TableHead className="pl-6">Bác sĩ</TableHead>
-                    <TableHead>Chuyên khoa</TableHead>
-                    <TableHead>Ca trực</TableHead>
-                    <TableHead>Ngày</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Ghi chú</TableHead>
-                    <TableHead className="text-right pr-6">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTemplates.map((template) => (
-                    <TableRow key={template.id} className="group hover:bg-slate-50/50">
-                      <TableCell className="pl-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
-                            {template.doctor?.user?.fullName?.charAt(0) || "?"}
-                          </div>
-                          <span className="font-medium">
-                            {template.doctor?.user?.fullName || "N/A"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-slate-600">
-                          {template.doctor?.specialty?.name || "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono">
-                          {template.shift?.name} ({formatTime(template.shift?.startTime || "")} -{" "}
-                          {formatTime(template.shift?.endTime || "")})
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={
-                            template.dayOfWeek === 7
-                              ? "bg-red-50 text-red-700"
-                              : "bg-indigo-50 text-indigo-700"
-                          }
-                        >
-                          {DAY_OF_WEEK_LABELS[template.dayOfWeek]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {template.isActive ? (
-                          <Badge className="bg-emerald-100 text-emerald-700">Hoạt động</Badge>
-                        ) : (
-                          <Badge variant="secondary">Đã tắt</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-slate-500 text-sm line-clamp-1">
-                          {template.notes || "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleEdit(template)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Chỉnh sửa
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleActive(template)}>
-                              {template.isActive ? (
-                                <>
-                                  <ToggleLeft className="mr-2 h-4 w-4" />
-                                  Tắt mẫu
-                                </>
-                              ) : (
-                                <>
-                                  <ToggleRight className="mr-2 h-4 w-4" />
-                                  Bật mẫu
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(template)}
-                              className="text-red-600 focus:text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Xóa mẫu
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+            <div className="space-y-4">
+              <Card className="border-0 shadow-sm bg-white overflow-hidden border border-slate-100 rounded-2xl">
+                <Table>
+                  <TableHeader className="bg-slate-50/50 border-y border-slate-100">
+                    <TableRow>
+                      <TableHead className="pl-6 font-bold uppercase text-[11px] tracking-widest text-slate-500">Bác sĩ</TableHead>
+                      <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Chuyên khoa</TableHead>
+                      <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Ca trực</TableHead>
+                      <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Ngày trực</TableHead>
+                      <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Trạng thái</TableHead>
+                      <TableHead className="text-right pr-6 font-bold uppercase text-[11px] tracking-widest text-slate-500">Thao tác</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedTemplates.map((template) => (
+                      <TableRow key={template.id} className="group hover:bg-slate-50/50 transition-colors">
+                        <TableCell className="pl-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold ring-1 ring-indigo-100">
+                              {template.doctor?.user?.fullName?.charAt(0) || "?"}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm leading-tight">
+                                {template.doctor?.user?.fullName || "N/A"}
+                              </p>
+                              <p className="text-[10px] text-slate-400 font-medium">#{template.id}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-slate-600 text-sm font-medium">
+                            {template.doctor?.specialty?.name || "—"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 font-bold font-mono text-[10px]">
+                            {template.shift?.name} ({formatTime(template.shift?.startTime || "")} - {formatTime(template.shift?.endTime || "")})
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={`font-bold text-[10px] border-0 ${
+                              template.dayOfWeek === 7
+                                ? "bg-red-50 text-red-700"
+                                : "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {DAY_OF_WEEK_LABELS[template.dayOfWeek]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {template.isActive ? (
+                            <Badge className="bg-emerald-100/50 text-emerald-700 border-emerald-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                              <span className="h-1 w-1 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
+                              HOẠT ĐỘNG
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-slate-100 text-slate-500 border-slate-200 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                              <span className="h-1 w-1 rounded-full bg-slate-400 mr-1.5" />
+                              ĐÃ TẮT
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right pr-6">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                              onClick={() => handleEdit(template)}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={`h-8 w-8 p-0 transition-colors ${
+                                template.isActive ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50" : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+                              }`}
+                              onClick={() => handleToggleActive(template)}
+                            >
+                              {template.isActive ? <ToggleLeft className="h-3.5 w-3.5" /> : <ToggleRight className="h-3.5 w-3.5" />}
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              onClick={() => handleDelete(template)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Pagination Controls */}
+                {filteredTemplates.length > 0 && (
+                  <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                        Trang <span className="text-slate-900 font-bold">{currentPage}</span> / {totalPages}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 || 
+                          page === totalPages || 
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "ghost"}
+                              size="sm"
+                              className={`h-8 w-8 p-0 rounded-lg font-bold text-xs transition-colors ${
+                                currentPage === page 
+                                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 hover:bg-indigo-700" 
+                                  : "text-slate-600 hover:bg-white hover:text-indigo-600 border border-transparent hover:border-slate-200"
+                              }`}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        }
+                        if (
+                          (page === 2 && currentPage > 3) || 
+                          (page === totalPages - 1 && currentPage < totalPages - 2)
+                        ) {
+                          return <span key={page} className="px-1 text-slate-400 font-bold text-[10px]">...</span>;
+                        }
+                        return null;
+                      })}
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </div>
           )}
 
           {/* Create Dialog */}

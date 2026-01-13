@@ -10,16 +10,75 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon, Clock, Search, User, CheckCircle2, Stethoscope, FileText, Mail, Loader2 } from "lucide-react"
+import { vi } from "date-fns/locale"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { 
+  CalendarIcon, 
+  Clock, 
+  User, 
+  CheckCircle2, 
+  Stethoscope, 
+  FileText, 
+  Mail, 
+  Loader2,
+  Heart,
+  Brain,
+  Baby,
+  Eye,
+  Bone,
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  Minimize2,
+  Maximize2,
+  Phone,
+  UserCheck,
+  CalendarCheck,
+  Activity
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { SpecialtyService, type Specialty, type Doctor } from "@/services/specialty.service"
-import { ShiftService, type Shift, type DoctorWithShifts } from "@/services/shift.service"
+import { SpecialtyService, type Specialty } from "@/services/specialty.service"
+import { ShiftService, type DoctorWithShifts } from "@/services/shift.service"
 import { createAppointment } from "@/services/appointment.service"
 import { useAuth } from "@/auth/authContext"
+
+// Map specialty names to icons for visual appeal
+const getSpecialtyIcon = (name: string) => {
+  const lowerName = name.toLowerCase()
+  if (lowerName.includes("tim") || lowerName.includes("mạch")) return Heart
+  if (lowerName.includes("nội")) return Activity
+  if (lowerName.includes("nhi") || lowerName.includes("trẻ")) return Baby
+  if (lowerName.includes("mắt") || lowerName.includes("mũi") || lowerName.includes("tai")) return Eye
+  if (lowerName.includes("xương") || lowerName.includes("ngoại")) return Bone
+  if (lowerName.includes("thần")) return Brain
+  if (lowerName.includes("sản") || lowerName.includes("phụ")) return Heart
+  return Stethoscope
+}
+
+// Specialty gradient colors
+const getSpecialtyGradient = (index: number) => {
+  const gradients = [
+    "from-blue-500 to-cyan-400",
+    "from-purple-500 to-pink-400",
+    "from-emerald-500 to-teal-400",
+    "from-orange-500 to-amber-400",
+    "from-rose-500 to-red-400",
+    "from-indigo-500 to-violet-400",
+  ]
+  return gradients[index % gradients.length]
+}
 
 export function BookingForm() {
   const navigate = useNavigate()
@@ -47,14 +106,17 @@ export function BookingForm() {
   const [symptoms, setSymptoms] = useState("")
   
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [createdAppointment, setCreatedAppointment] = useState<any>(null)
+  const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
 
   // Fetch specialties on mount
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
         setIsLoadingSpecialties(true)
-        const data = await SpecialtyService.getSpecialties()
-        setSpecialties(data)
+        const response = await SpecialtyService.getSpecialties({ active: true })
+        setSpecialties(response.specialties)
       } catch (error: any) {
         console.error("Error fetching specialties:", error)
         toast.error("Không thể tải danh sách chuyên khoa")
@@ -64,6 +126,30 @@ export function BookingForm() {
     }
     fetchSpecialties()
   }, [])
+
+  // Pre-fill patient info if user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setPatientName(user.fullName || "")
+      setPatientEmail(user.email || "")
+      
+      // Fetch more detailed patient profile for phone number if needed
+      const fetchPatientProfile = async () => {
+        try {
+          if (user.patientId) {
+            const { getPatientById } = await import("@/services/patient.service")
+            const patientData = await getPatientById(user.patientId)
+            if (patientData && patientData.phone) {
+              setPatientPhone(patientData.phone)
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching patient profile for pre-fill:", error)
+        }
+      }
+      fetchPatientProfile()
+    }
+  }, [isAuthenticated, user])
 
   // Fetch doctors by date when date and specialty are selected (NEW FLOW)
   useEffect(() => {
@@ -118,9 +204,11 @@ export function BookingForm() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle form submission (Validation & Open Dialog)
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Check if user is authenticated and has patientId
+    
+    // Check authentication
     if (isAuthenticated && user) {
       if (!user.patientId) {
         toast.error("Vui lòng thiết lập hồ sơ bệnh nhân trước khi đặt lịch")
@@ -129,19 +217,30 @@ export function BookingForm() {
       }
     }
 
-    if (!selectedDoctor || !selectedShift || !date || !patientName || !patientPhone) {
+    // Validation
+    if (!selectedDoctor || !selectedShift || !date || !patientName || !patientPhone || !patientEmail) {
       toast.error("Vui lòng điền đầy đủ thông tin")
       return
     }
 
+    // Open confirmation dialog
+    setShowConfirmDialog(true)
+  }
+
+  // Actual API Call
+  const handleConfirmBooking = async () => {
     try {
       setIsSubmitting(true)
-      await createAppointment({
-        doctorId: selectedDoctor,
-        shiftId: selectedShift,
-        date: format(date, "yyyy-MM-dd"),
+      setShowConfirmDialog(false) // Close dialog
+      
+      const result = await createAppointment({
+        doctorId: selectedDoctor!,
+        shiftId: selectedShift!,
+        date: format(date!, "yyyy-MM-dd"),
         symptomInitial: symptoms || undefined,
       })
+      
+      setCreatedAppointment(result)
       toast.success("Đặt lịch hẹn thành công!")
       setIsSubmitted(true)
     } catch (error: any) {
@@ -152,173 +251,349 @@ export function BookingForm() {
     }
   }
 
+
+  // Step definitions for progress bar
+  const steps = [
+    { number: 1, title: "Chuyên khoa", icon: Stethoscope },
+    { number: 2, title: "Ngày khám", icon: CalendarIcon },
+    { number: 3, title: "Bác sĩ", icon: User },
+    { number: 4, title: "Ca khám", icon: Clock },
+    { number: 5, title: "Xác nhận", icon: CheckCircle2 },
+  ]
+
   if (isSubmitted) {
     return (
-      <Card className="max-w-2xl mx-auto">
-        <CardContent className="pt-12 pb-12 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-primary" />
-            </div>
-          </div>
-          <h2 className="text-3xl font-bold text-foreground mb-4">Đặt lịch hẹn thành công!</h2>
-          <p className="text-muted-foreground mb-8 text-lg">Lịch hẹn của bạn đã được đặt thành công.</p>
-          <div className="bg-muted/50 rounded-lg p-6 mb-8 text-left max-w-md mx-auto">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Bác sĩ</p>
-                    <p className="font-semibold">
-                      {doctorsWithShifts.find((d) => d.doctor.id === selectedDoctor)?.doctor.user?.fullName || "N/A"}
-                    </p>
+      <div className="max-w-2xl mx-auto">
+        {/* Success Animation Container */}
+        <div className="relative">
+          {/* Background Decoration */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-emerald-500/5 to-cyan-500/5 rounded-3xl blur-3xl" />
+          
+          <Card className="relative border-0 shadow-2xl bg-white/80 backdrop-blur-xl overflow-hidden">
+            {/* Success Header Gradient */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-500 via-cyan-500 to-primary" />
+            
+            <CardContent className="pt-16 pb-12 text-center">
+              {/* Animated Success Icon */}
+              <div className="flex justify-center mb-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-full blur-xl opacity-50 animate-pulse" />
+                  <div className="relative h-24 w-24 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-xl">
+                    <CheckCircle2 className="h-12 w-12 text-white animate-[bounce_1s_ease-in-out]" />
                   </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CalendarIcon className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Ngày</p>
-                  <p className="font-semibold">{date && format(date, "PPP")}</p>
+                  {/* Sparkle effects */}
+                  <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-amber-400 animate-pulse" />
+                  <Sparkles className="absolute -bottom-1 -left-3 h-5 w-5 text-emerald-400 animate-pulse delay-150" />
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Clock className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Ca khám</p>
-                    <p className="font-semibold">
-                      {selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.name || "N/A"}
-                      {selectedShift && selectedDoctorShifts.find(s => s.shift.id === selectedShift) && (
-                        <span className="text-xs font-normal ml-2 opacity-75">
-                          ({selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.startTime} - {selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.endTime})
-                        </span>
+              
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-3">
+                Đặt lịch hẹn thành công!
+              </h2>
+              <p className="text-muted-foreground mb-8 text-lg">
+                Lịch hẹn của bạn đã được xác nhận
+              </p>
+              
+              {/* Appointment Summary Card */}
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl p-6 mb-8 text-left max-w-md mx-auto border border-slate-200/50">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-3 bg-white rounded-xl shadow-sm">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
+                      <User className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Bác sĩ</p>
+                      <p className="font-semibold text-foreground">
+                        {doctorsWithShifts.find((d) => d.doctor.id === selectedDoctor)?.doctor.user?.fullName || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4 p-3 bg-white rounded-xl shadow-sm">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
+                      <CalendarIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Ngày khám</p>
+                      <p className="font-semibold text-foreground">{date && format(date, "EEEE, dd/MM/yyyy", { locale: vi })}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4 p-3 bg-white rounded-xl shadow-sm">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
+                      <Clock className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Ca khám</p>
+                      <p className="font-semibold text-foreground">
+                        {selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.name || "N/A"}
+                        {selectedShift && selectedDoctorShifts.find(s => s.shift.id === selectedShift) && (
+                          <span className="text-sm font-normal ml-2 text-muted-foreground">
+                            ({selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.startTime} - {selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.endTime})
+                          </span>
+                        )}
+                      </p>
+                      {createdAppointment?.slotNumber && (
+                        <div className="mt-2 px-3 py-1.5 bg-gradient-to-r from-primary/10 to-cyan-500/10 rounded-lg inline-flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium text-primary">
+                            Giờ khám dự kiến: {
+                              (() => {
+                                const startTime = selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.startTime;
+                                if (startTime) {
+                                  const [h, m] = startTime.split(':').map(Number);
+                                  const d = new Date();
+                                  d.setHours(h);
+                                  d.setMinutes(m + (createdAppointment.slotNumber - 1) * 10);
+                                  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                                }
+                                return "N/A";
+                              })()
+                            }
+                          </span>
+                        </div>
                       )}
-                    </p>
+                    </div>
+                  </div>
+                  
+                  {/* Email nếu có */}
+                  {patientEmail && (
+                    <div className="flex items-start gap-4 p-3 bg-white rounded-xl shadow-sm">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                        <Mail className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Email</p>
+                        <p className="font-semibold text-foreground">{patientEmail}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {symptoms && (
+                    <div className="flex items-start gap-4 p-3 bg-white rounded-xl shadow-sm border-t-2 border-dashed border-slate-200 mt-4 pt-4">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-md">
+                        <FileText className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Triệu chứng</p>
+                        <p className="text-sm text-foreground">{symptoms}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
-              {/* Chỉ hiện Email nếu người dùng có nhập */}
-              {patientEmail && (
-                <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-semibold">{patientEmail}</p>
-                    </div>
-                </div>
-              )}
+              <p className="text-sm text-muted-foreground mb-6 flex items-center justify-center gap-2">
+                <Mail className="h-4 w-4" />
+                Xác nhận đã được gửi đến: <span className="font-medium">{patientEmail}</span>
+              </p>
               
-              {symptoms && (
-                <div className="flex items-start gap-3 border-t border-border/50 pt-3 mt-3">
-                    <FileText className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                    <p className="text-sm text-muted-foreground">Triệu chứng</p>
-                    <p className="font-semibold text-sm">{symptoms}</p>
-                    </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground mb-6">
-            Xác nhận đã được gửi đến số điện thoại: {patientPhone}
-            {patientEmail && ` và email: ${patientEmail}`}.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link to="/patient/dashboard">
-              <Button variant="outline" size="lg">
-                Về trang chủ
-              </Button>
-            </Link>
-            <Link to="/patient/appointments">
-              <Button size="lg">
-                Xem lịch hẹn của tôi
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex gap-4 justify-center">
+                <Link to="/patient/dashboard">
+                  <Button variant="outline" size="lg" className="gap-2 shadow-md hover:shadow-lg transition-all">
+                    <ArrowLeft className="h-4 w-4" />
+                    Về trang chủ
+                  </Button>
+                </Link>
+                <Link to="/patient/appointments">
+                  <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90 shadow-lg hover:shadow-xl transition-all">
+                    Xem lịch hẹn
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid md:grid-cols-3 gap-6">
+    <>
+      <form onSubmit={handleFormSubmit} className="space-y-8">
+      {/* Progress Bar */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-cyan-500/5 to-emerald-500/5 rounded-2xl blur-2xl" />
+        <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/50">
+          <div className="flex items-center justify-between">
+            {steps.map((stepItem, index) => {
+              const isCompleted = index < step - 1 || (index === step - 1 && (
+                (index === 0 && selectedSpecialty !== null) ||
+                (index === 1 && date !== undefined) ||
+                (index === 2 && selectedDoctor !== null) ||
+                (index === 3 && selectedShift !== null) ||
+                (index === 4 && patientName !== "" && patientPhone !== "")
+              ))
+              const isCurrent = index + 1 === step
+              const StepIcon = stepItem.icon
+              
+              return (
+                <div key={stepItem.number} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center">
+                    <div 
+                      className={cn(
+                        "h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg",
+                        isCompleted 
+                          ? "bg-gradient-to-br from-emerald-500 to-cyan-500 text-white" 
+                          : isCurrent 
+                            ? "bg-gradient-to-br from-primary to-cyan-500 text-white ring-4 ring-primary/20"
+                            : "bg-slate-100 text-slate-400"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-6 w-6" />
+                      ) : (
+                        <StepIcon className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-xs mt-2 font-medium transition-colors",
+                      isCompleted || isCurrent ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {stepItem.title}
+                    </span>
+                  </div>
+                  
+                  {/* Connector line */}
+                  {index < steps.length - 1 && (
+                    <div className="flex-1 mx-3">
+                      <div className={cn(
+                        "h-1 rounded-full transition-all duration-500",
+                        isCompleted ? "bg-gradient-to-r from-emerald-500 to-cyan-500" : "bg-slate-200"
+                      )} />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Step 1: Select Specialty */}
-        <Card className={cn("md:col-span-1", step < 1 && "opacity-60")}>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                1
+        <Card className={cn(
+          "lg:col-span-1 border-0 shadow-xl transition-all duration-300 overflow-hidden",
+          selectedSpecialty ? "bg-gradient-to-br from-white to-primary/5" : "bg-white",
+          step < 1 && "opacity-60"
+        )}>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center shadow-md transition-all",
+                selectedSpecialty 
+                  ? "bg-gradient-to-br from-primary to-cyan-500 text-white" 
+                  : "bg-slate-100 text-slate-500"
+              )}>
+                <Stethoscope className="h-5 w-5" />
               </div>
-              <CardTitle>Chọn Chuyên Khoa</CardTitle>
+              <div>
+                <CardTitle className="text-lg">Chọn Chuyên Khoa</CardTitle>
+                <CardDescription>Chọn chuyên khoa bạn muốn khám</CardDescription>
+              </div>
             </div>
-            <CardDescription>Chọn chuyên khoa bạn muốn khám</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingSpecialties ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                <p className="text-sm text-muted-foreground mt-2">Đang tải chuyên khoa...</p>
+              <div className="text-center py-12">
+                <div className="relative inline-block">
+                  <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">Đang tải chuyên khoa...</p>
               </div>
             ) : specialties.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground">
+                <Stethoscope className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>Không có chuyên khoa nào.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {specialties.map((specialty) => (
-                  <button
-                    key={specialty.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSpecialty(selectedSpecialty === specialty.id ? null : specialty.id)
-                      setSelectedDoctor(null)
-                      setDate(undefined)
-                      setSelectedShift(null)
-                      setDoctorsWithShifts([])
-                      setStep(1)
-                    }}
-                    className={cn(
-                      "flex items-center gap-3 p-4 rounded-lg border-2 transition-all hover:border-primary/50 text-left",
-                      selectedSpecialty === specialty.id ? "border-primary bg-primary/5" : "border-border bg-card",
-                    )}
-                  >
-                    <Stethoscope className="h-6 w-6 text-primary" />
-                    <span className="text-sm font-medium">{specialty.name}</span>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-3">
+                {specialties.map((specialty, index) => {
+                  const SpecialtyIcon = getSpecialtyIcon(specialty.name)
+                  const isSelected = selectedSpecialty === specialty.id
+                  
+                  return (
+                    <button
+                      key={specialty.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSpecialty(selectedSpecialty === specialty.id ? null : specialty.id)
+                        setSelectedDoctor(null)
+                        setDate(undefined)
+                        setSelectedShift(null)
+                        setDoctorsWithShifts([])
+                        if (selectedSpecialty !== specialty.id) setStep(2)
+                      }}
+                      className={cn(
+                        "group relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-300",
+                        isSelected 
+                          ? "border-primary bg-gradient-to-br from-primary/10 to-cyan-500/10 shadow-lg scale-[1.02]" 
+                          : "border-slate-200 hover:border-primary/50 hover:shadow-md hover:scale-[1.01] bg-white"
+                      )}
+                    >
+                      <div className={cn(
+                        "h-12 w-12 rounded-xl flex items-center justify-center transition-all duration-300",
+                        isSelected 
+                          ? `bg-gradient-to-br ${getSpecialtyGradient(index)} text-white shadow-lg` 
+                          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                      )}>
+                        <SpecialtyIcon className="h-6 w-6" />
+                      </div>
+                      <span className={cn(
+                        "text-xs font-medium text-center transition-colors line-clamp-2",
+                        isSelected ? "text-primary" : "text-foreground"
+                      )}>
+                        {specialty.name}
+                      </span>
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1">
+                          <div className="h-5 w-5 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center shadow-md">
+                            <CheckCircle2 className="h-3 w-3 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Step 2: Select Date */}
-        <Card className={cn("md:col-span-1", step < 2 && "opacity-60")}>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                2
+        {/* Step 2: Select Date - Inline Calendar */}
+        <Card className={cn(
+          "lg:col-span-1 border-0 shadow-xl transition-all duration-300 overflow-hidden",
+          date ? "bg-gradient-to-br from-white to-purple-500/5" : "bg-white",
+          step < 2 && "opacity-60 pointer-events-none"
+        )}>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center shadow-md transition-all",
+                date 
+                  ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white" 
+                  : "bg-slate-100 text-slate-500"
+              )}>
+                <CalendarIcon className="h-5 w-5" />
               </div>
-              <CardTitle>Chọn Ngày Khám</CardTitle>
+              <div>
+                <CardTitle className="text-lg">Chọn Ngày Khám</CardTitle>
+                <CardDescription>
+                  {date ? format(date, "EEEE, dd/MM/yyyy", { locale: vi }) : "Chọn ngày bạn muốn đặt lịch"}
+                </CardDescription>
+              </div>
             </div>
-            <CardDescription>Chọn ngày bạn muốn đặt lịch</CardDescription>
           </CardHeader>
           <CardContent>
-            <Label className="mb-3 block">Chọn Ngày</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                  disabled={!selectedSpecialty}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : "Chọn ngày"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+            {!selectedSpecialty ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <CalendarIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Vui lòng chọn chuyên khoa trước</p>
+              </div>
+            ) : (
+              <div className="flex justify-center">
                 <Calendar
                   mode="single"
                   selected={date}
@@ -329,252 +604,437 @@ export function BookingForm() {
                     if (newDate) setStep(3)
                   }}
                   disabled={(calendarDate) =>
-                    calendarDate < new Date() ||
+                    calendarDate < new Date(new Date().setHours(0, 0, 0, 0)) ||
                     calendarDate < new Date("1900-01-01")
                   }
-                  initialFocus
+                  className="rounded-xl border-0 shadow-inner bg-slate-50/50 p-3"
+                  classNames={{
+                    day_selected: "bg-gradient-to-br from-primary to-cyan-500 text-white hover:from-primary hover:to-cyan-500",
+                    day_today: "bg-amber-100 text-amber-900 font-bold",
+                  }}
                 />
-              </PopoverContent>
-            </Popover>
-
-            {!selectedSpecialty && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Vui lòng chọn chuyên khoa trước
-              </p>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Step 3: Select Doctor */}
-        <Card className={cn("md:col-span-2", step < 3 && "opacity-60")}>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                3
+        {/* Step 3 & 4: Select Doctor and Shift */}
+        <Card className={cn(
+          "lg:col-span-1 border-0 shadow-xl transition-all duration-300 overflow-hidden",
+          selectedDoctor ? "bg-gradient-to-br from-white to-emerald-500/5" : "bg-white",
+          step < 3 && "opacity-60 pointer-events-none"
+        )}>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center shadow-md transition-all",
+                selectedDoctor 
+                  ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white" 
+                  : "bg-slate-100 text-slate-500"
+              )}>
+                <User className="h-5 w-5" />
               </div>
-              <CardTitle>Chọn Bác Sĩ</CardTitle>
+              <div>
+                <CardTitle className="text-lg">Chọn Bác Sĩ</CardTitle>
+                <CardDescription>
+                  {date ? `Bác sĩ làm việc ngày ${format(date, "dd/MM")}` : "Chọn ngày để xem bác sĩ"}
+                </CardDescription>
+              </div>
             </div>
-            <CardDescription>
-              Bác sĩ có lịch làm việc ngày {date && format(date, "PPP")}
-            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
             {!date ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Stethoscope className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Vui lòng chọn ngày khám trước</p>
+                <User className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Vui lòng chọn ngày khám trước</p>
               </div>
             ) : isLoadingDoctorsByDate ? (
               <div className="text-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                <p className="text-sm text-muted-foreground mt-2">
-                  Đang tải danh sách bác sĩ...
-                </p>
+                <div className="relative inline-block">
+                  <div className="h-10 w-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">Đang tìm bác sĩ...</p>
               </div>
             ) : doctorsWithShifts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Stethoscope className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Không có bác sĩ nào làm việc trong ngày này.</p>
-                <p className="text-sm mt-1">Vui lòng chọn ngày khác.</p>
+                <User className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Không có bác sĩ nào làm việc</p>
+                <p className="text-xs mt-1">Vui lòng chọn ngày khác</p>
               </div>
             ) : (
-              <div className="grid gap-4">
-                {doctorsWithShifts.map(({ doctor, shifts, shiftCount }) => (
-                  <button
-                    key={doctor.id}
-                    type="button"
-                    onClick={() => handleDoctorClick(doctor.id)}
-                    className={cn(
-                      "flex items-center gap-4 p-4 rounded-lg border-2 transition-all hover:border-primary/50 text-left",
-                      selectedDoctor === doctor.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-card"
-                    )}
-                  >
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                      <User className="h-8 w-8 text-blue-600" />
+              <div className="space-y-3">
+                {doctorsWithShifts.map(({ doctor, shiftCount }) => {
+                  const isSelected = selectedDoctor === doctor.id
+                  
+                  return (
+                    <div key={doctor.id} className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDoctorClick(doctor.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-300 text-left",
+                          isSelected 
+                            ? "border-emerald-500 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 shadow-lg" 
+                            : "border-slate-200 hover:border-emerald-500/50 hover:shadow-md bg-white"
+                        )}
+                      >
+                        <div className={cn(
+                          "h-14 w-14 rounded-full flex items-center justify-center shadow-md transition-all",
+                          isSelected 
+                            ? "bg-gradient-to-br from-emerald-500 to-teal-500" 
+                            : "bg-gradient-to-br from-blue-100 to-cyan-100"
+                        )}>
+                          <User className={cn(
+                            "h-7 w-7",
+                            isSelected ? "text-white" : "text-blue-600"
+                          )} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {doctor.user?.fullName}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {doctor.specialty?.name}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="h-3 w-3 text-emerald-500" />
+                            <span className="text-xs text-emerald-600 font-medium">
+                              {shiftCount} ca làm việc
+                            </span>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <CheckCircle2 className="h-6 w-6 text-emerald-500 shrink-0" />
+                        )}
+                      </button>
+                      
+                      {/* Shift Selection - Shows when doctor is selected */}
+                      {isSelected && selectedDoctorShifts.length > 0 && (
+                        <div className="pl-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">
+                            Chọn ca khám
+                          </p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {selectedDoctorShifts.map((shiftData) => {
+                              const isShiftSelected = selectedShift === shiftData.shift.id
+                              
+                              return (
+                                <button
+                                  key={shiftData.doctorShiftId}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedShift(shiftData.shift.id)
+                                    setStep(5)
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all duration-200",
+                                    isShiftSelected
+                                      ? "border-primary bg-gradient-to-r from-primary to-cyan-500 text-white shadow-lg"
+                                      : "border-slate-200 bg-white hover:border-primary/50 hover:shadow-sm"
+                                  )}
+                                >
+                                  <Clock className={cn(
+                                    "h-5 w-5",
+                                    isShiftSelected ? "text-white" : "text-primary"
+                                  )} />
+                                  <div className="flex-1">
+                                    <div className="font-semibold text-sm">{shiftData.shift.name}</div>
+                                    <div className={cn(
+                                      "text-xs",
+                                      isShiftSelected ? "text-white/80" : "text-muted-foreground"
+                                    )}>
+                                      {shiftData.shift.startTime} - {shiftData.shift.endTime}
+                                    </div>
+                                  </div>
+                                  {isShiftSelected && (
+                                    <CheckCircle2 className="h-5 w-5 text-white" />
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {doctor.user?.fullName}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {doctor.specialty?.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {shiftCount} ca làm việc trong ngày
-                      </p>
-                    </div>
-                    {selectedDoctor === doctor.id && (
-                      <CheckCircle2 className="h-6 w-6 text-primary" />
-                    )}
-                  </button>
-                ))}
+                  )
+                })}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Step 4: Select Shift */}
-        <Card className={cn("md:col-span-1", step < 4 && "opacity-60")}>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                4
-              </div>
-              <CardTitle>Chọn Ca Khám</CardTitle>
-            </div>
-            <CardDescription>Ca làm việc của bác sĩ</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!selectedDoctor ? (
-              <p className="text-sm text-muted-foreground">
-                Vui lòng chọn bác sĩ trước
-              </p>
-            ) : selectedDoctorShifts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Bác sĩ không có ca trực
-              </p>
-            ) : (
-              <div className="grid gap-2">
-                {selectedDoctorShifts.map((shiftData) => (
-                  <button
-                    key={shiftData.doctorShiftId}
-                    type="button"
-                    onClick={() => {
-                      setSelectedShift(shiftData.shift.id)
-                      setStep(5)
-                    }}
-                    className={cn(
-                      "p-3 rounded-lg border-2 text-sm font-medium transition-all text-left",
-                      selectedShift === shiftData.shift.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card hover:border-primary/50"
-                    )}
-                  >
-                    <div className="font-semibold">{shiftData.shift.name}</div>
-                    <div className="text-xs opacity-90">
-                      {shiftData.shift.startTime} - {shiftData.shift.endTime}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 5: Patient Information */}
-        <Card className={cn("md:col-span-3", step < 5 && "opacity-60")}>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                5
-              </div>
-              <CardTitle>Patient Information</CardTitle>
-            </div>
-            <CardDescription>Provide your contact details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl">
-              <div>
-                <Label htmlFor="name" className="mb-2 block">
-                  Full Name
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your full name"
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                  disabled={!selectedShift}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone" className="mb-2 block">
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={patientPhone}
-                  onChange={(e) => setPatientPhone(e.target.value)}
-                  disabled={!selectedShift}
-                  required
-                />
-              </div>
-
-              {/* Email - Optional */}
-              <div className="md:col-span-2">
-                <Label htmlFor="email" className="mb-2 block">
-                  Email Address (Optional)
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address (optional)"
-                  value={patientEmail}
-                  onChange={(e) => setPatientEmail(e.target.value)}
-                  disabled={!selectedShift}
-                />
-              </div>
-              
-              {/* Symptoms - Optional */}
-              <div className="md:col-span-2">
-                <Label htmlFor="symptoms" className="mb-2 block">
-                  Describe Symptoms (Optional)
-                </Label>
-                <Textarea
-                  id="symptoms"
-                  placeholder="Briefly describe your symptoms or reason for visit..."
-                  value={symptoms}
-                  onChange={(e) => setSymptoms(e.target.value)}
-                  disabled={!selectedShift}
-                  className="min-h-[100px]"
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-4">
-              <Button
-                type="submit"
-                size="lg"
-                className="px-8"
-                disabled={!selectedDoctor || !date || !selectedShift || !patientName || !patientPhone || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang xử lý...
-                  </>
-                ) : (
-                  "Confirm Appointment"
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  setSelectedSpecialty(null)
-                  setSelectedDoctor(null)
-                  setDate(undefined)
-                  setSelectedShift(null)
-                  setDoctorsWithShifts([])
-                  setSelectedDoctorShifts([])
-                  setPatientName("")
-                  setPatientPhone("")
-                  setPatientEmail("")
-                  setSymptoms("")
-                  setStep(1)
-                }}
-              >
-                Reset
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
-    </form>
+
+      {/* Step 5: Patient Information - Full Width */}
+      <Card className={cn(
+        "border-0 shadow-xl transition-all duration-300 overflow-hidden",
+        step >= 5 ? "bg-gradient-to-br from-white to-amber-500/5" : "bg-white",
+        step < 5 && "opacity-60 pointer-events-none"
+      )}>
+        {/* Decorative top border */}
+        {step >= 5 && (
+          <div className="h-1 bg-gradient-to-r from-primary via-cyan-500 to-emerald-500" />
+        )}
+        
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "h-10 w-10 rounded-xl flex items-center justify-center shadow-md transition-all",
+              step >= 5 && (patientName && patientPhone)
+                ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white" 
+                : "bg-slate-100 text-slate-500"
+            )}>
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Thông Tin Bệnh Nhân</CardTitle>
+              <CardDescription>Điền thông tin liên hệ của bạn</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                Họ và Tên <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="name"
+                placeholder="Nhập họ và tên đầy đủ"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                disabled={!selectedShift}
+                required
+                className="h-12 bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                Số Điện Thoại <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Nhập số điện thoại"
+                value={patientPhone}
+                onChange={(e) => setPatientPhone(e.target.value)}
+                disabled={!selectedShift}
+                required
+                className="h-12 bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20"
+              />
+            </div>
+
+            {/* Email - Required */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                Địa Chỉ Email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Nhập địa chỉ email"
+                value={patientEmail}
+                onChange={(e) => setPatientEmail(e.target.value)}
+                disabled={!selectedShift}
+                required
+                className="h-12 bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20"
+              />
+            </div>
+            
+            {/* Symptoms - Optional */}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="symptoms" className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Mô Tả Triệu Chứng <span className="text-xs text-muted-foreground">(Không bắt buộc)</span>
+              </Label>
+              <Textarea
+                id="symptoms"
+                placeholder="Mô tả ngắn gọn triệu chứng hoặc lý do khám bệnh..."
+                value={symptoms}
+                onChange={(e) => setSymptoms(e.target.value)}
+                disabled={!selectedShift}
+                className="min-h-[100px] bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20 resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-8 flex flex-wrap gap-4 items-center justify-between border-t border-slate-100 pt-6">
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={() => {
+                setSelectedSpecialty(null)
+                setSelectedDoctor(null)
+                setDate(undefined)
+                setSelectedShift(null)
+                setDoctorsWithShifts([])
+                setSelectedDoctorShifts([])
+                setPatientName("")
+                setPatientPhone("")
+                setPatientEmail("")
+                setSymptoms("")
+                setStep(1)
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Đặt lại
+            </Button>
+            
+            <Button
+              type="submit"
+              size="lg"
+              className="px-8 bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90 shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
+              disabled={!selectedDoctor || !date || !selectedShift || !patientName || !patientPhone || !patientEmail || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <CalendarCheck className="h-5 w-5" />
+                  Xác Nhận Đặt Lịch
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Booking Summary Sidebar - Collapsible */}
+      {(selectedSpecialty || date || selectedDoctor) && (
+        <div className="fixed top-24 right-6 z-40 hidden 2xl:block">
+          <div 
+            className={cn(
+              "bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/50 animate-in slide-in-from-right-4 duration-300 transition-all",
+              isSummaryCollapsed ? "w-12 p-2" : "w-64 p-4"
+            )}
+          >
+            {/* Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsSummaryCollapsed(!isSummaryCollapsed)}
+              className={cn(
+                "flex items-center gap-2 transition-all",
+                isSummaryCollapsed 
+                  ? "justify-center w-full" 
+                  : "w-full font-semibold text-sm text-foreground mb-3"
+              )}
+            >
+              {isSummaryCollapsed ? (
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/10 to-cyan-500/10 flex items-center justify-center hover:from-primary/20 hover:to-cyan-500/20 transition-colors">
+                  <Maximize2 className="h-4 w-4 text-primary" />
+                </div>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <span className="flex-1 text-left">Tóm tắt đặt lịch</span>
+                  <Minimize2 className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                </>
+              )}
+            </button>
+            
+            {/* Content - Hidden when collapsed */}
+            {!isSummaryCollapsed && (
+              <div className="space-y-2 text-sm animate-in fade-in duration-200">
+                {selectedSpecialty && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Stethoscope className="h-4 w-4 text-primary shrink-0" />
+                    <span className="truncate">{specialties.find(s => s.id === selectedSpecialty)?.name}</span>
+                  </div>
+                )}
+                {date && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CalendarIcon className="h-4 w-4 text-purple-500 shrink-0" />
+                    <span>{format(date, "dd/MM/yyyy")}</span>
+                  </div>
+                )}
+                {selectedDoctor && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span className="truncate">{doctorsWithShifts.find(d => d.doctor.id === selectedDoctor)?.doctor.user?.fullName}</span>
+                  </div>
+                )}
+                {selectedShift && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+                    <span>{selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.name}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      </form>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl text-primary font-bold flex items-center gap-2">
+              <CalendarCheck className="h-6 w-6" />
+              Xác Nhận Đặt Lịch
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base pt-2">
+              Vui lòng kiểm tra lại thông tin trước khi xác nhận đặt lịch hẹn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3 my-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Chuyên khoa:</span>
+              <span className="font-semibold text-foreground text-right">
+                {specialties.find(s => s.id === selectedSpecialty)?.name}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Bác sĩ:</span>
+              <span className="font-semibold text-foreground text-right">
+                {doctorsWithShifts.find(d => d.doctor.id === selectedDoctor)?.doctor.user?.fullName}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Thời gian:</span>
+              <div className="text-right">
+                <span className="font-semibold text-foreground block">
+                  {date && format(date, "dd/MM/yyyy", { locale: vi })}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.name} ({selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.startTime} - {selectedDoctorShifts.find(s => s.shift.id === selectedShift)?.shift.endTime})
+                </span>
+              </div>
+            </div>
+            <div className="border-t border-slate-200 pt-2 flex justify-between text-sm">
+               <span className="text-muted-foreground">Bệnh nhân:</span>
+               <div className="text-right">
+                <span className="font-semibold text-foreground block">{patientName}</span>
+                <span className="text-muted-foreground text-xs">{patientPhone}</span>
+               </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault() // Prevent closing immediately to allow submitting state
+                handleConfirmBooking()
+              }}
+              className="bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Xác nhận đặt lịch"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

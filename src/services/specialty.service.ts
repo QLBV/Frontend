@@ -4,6 +4,7 @@ export interface Specialty {
   id: number
   name: string
   description?: string
+  isActive?: boolean
   createdAt?: string
   updatedAt?: string
 }
@@ -15,30 +16,78 @@ export interface Doctor {
   specialtyId: number
   position?: string
   degree?: string
+  description?: string
+  isActive?: boolean
   user?: {
     id: number
     fullName: string
     email: string
+    avatar?: string
+    isActive?: boolean
   }
+}
+
+export interface SpecialtyListResponse {
+  specialties: Specialty[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 export class SpecialtyService {
   /**
-   * Get all specialties
+   * Get specialties with pagination
    */
-  static async getSpecialties(): Promise<Specialty[]> {
+  static async getSpecialties(params?: {
+    page?: number
+    limit?: number
+    search?: string
+    active?: boolean
+  }): Promise<SpecialtyListResponse> {
     try {
-      const response = await api.get('/specialties')
+      const response = await api.get('/specialties', { params })
       if (response.data.success) {
-        return response.data.data || []
+        const data = response.data.data
+        
+        // Handle paginated response
+        if (data && typeof data === 'object' && 'specialties' in data) {
+          return {
+            specialties: data.specialties,
+            total: data.total || data.specialties.length,
+            page: data.page || 1,
+            limit: data.limit || 10,
+            totalPages: data.totalPages || 1
+          }
+        }
+        
+        // Handle array response (legacy/fallback)
+        if (Array.isArray(data)) {
+          return {
+            specialties: data,
+            total: data.length,
+            page: 1,
+            limit: data.length,
+            totalPages: 1
+          }
+        }
       }
-      return []
+      return {
+        specialties: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      }
     } catch (error: any) {
-      if (error.response?.status === 429) {
-        throw new Error('Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.')
+      console.error("error getSpecialties", error)
+      return {
+        specialties: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1
       }
-      // Silent fail - return empty array
-      return []
     }
   }
 

@@ -25,6 +25,12 @@ export interface User {
   employee?: {
     id: number
     employeeCode: string
+    position?: string
+    degree?: string
+    specialty?: {
+      id: number
+      name: string
+    }
   }
 }
 

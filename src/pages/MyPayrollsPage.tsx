@@ -5,18 +5,23 @@ import { useAuth } from "@/auth/authContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, DollarSign, Calendar, Download, Eye, FileText } from "lucide-react"
+import { Loader2, DollarSign, Calendar, Download, Eye, FileText, Wallet } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { PayrollService, type Payroll } from "@/services/payroll.service"
 import AdminSidebar from "@/components/sidebar/admin"
 import DoctorSidebar from "@/components/sidebar/doctor"
 import ReceptionistSidebar from "@/components/sidebar/recep"
+import { TablePagination } from "@/components/TablePagination"
 
 export default function MyPayrollsPage() {
   const { user } = useAuth()
   const [payrolls, setPayrolls] = useState<Payroll[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Client-side pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchMyPayrolls()
@@ -82,12 +87,25 @@ export default function MyPayrollsPage() {
   const pendingSalary = payrolls.filter((p) => p.status !== "PAID").reduce((sum, p) => {
     return sum + (p.totalSalary || 0)
   }, 0)
+
+  // Calculate pagination
+  const totalPages = Math.ceil(payrolls.length / itemsPerPage)
+  const paginatedPayrolls = payrolls.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
       {/* Page Title */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">Lịch sử lương của tôi</h1>
-        <p className="text-slate-600">Xem và quản lý lịch sử lương của bạn</p>
+      <div className="flex items-center gap-4 mb-8">
+        <div className="h-14 w-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 ring-1 ring-white/50">
+             <Wallet className="h-7 w-7 text-white" />
+        </div>
+        <div>
+           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Lịch sử lương của tôi</h1>
+           <p className="text-slate-500 font-medium">Xem và quản lý lịch sử lương của bạn</p>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -137,87 +155,99 @@ export default function MyPayrollsPage() {
         </div>
 
         {/* Payroll List */}
-        <Card className="border-0 shadow-xl">
+        <Card className="border-0 shadow-xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-2xl">Danh sách lương</CardTitle>
+            <CardTitle className="text-xl font-bold text-slate-800">Danh sách lương</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
               </div>
             ) : payrolls.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Chưa có lịch sử lương</p>
+              <div className="text-center py-20 text-slate-400 bg-slate-50/30">
+                <Wallet className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p className="font-medium">Chưa có lịch sử lương</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50 border-b">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Tháng</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Lương cơ bản</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hệ số</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Kinh nghiệm</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hoa hồng</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-slate-700">Tổng lương</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payrolls.map((payroll, index) => (
-                      <tr
-                        key={payroll.id}
-                        className={`border-b hover:bg-blue-50/30 transition-colors ${
-                          index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                        }`}
-                      >
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-slate-400" />
-                          <span className="font-medium">{payroll.month}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          {/* #region agent log */}
-                          
-                          {/* #endregion */}
-                          {(typeof payroll.baseSalary === 'number' ? payroll.baseSalary : parseFloat(payroll.baseSalary || '0') || 0).toLocaleString()} VND
-                        </td>
-                        <td className="py-4 px-6">{payroll.coefficient}</td>
-                        <td className="py-4 px-6">{payroll.experience} năm</td>
-                        <td className="py-4 px-6">
-                          {payroll.commission ? `${(typeof payroll.commission === 'number' ? payroll.commission : parseFloat(payroll.commission || '0') || 0).toLocaleString()} VND` : "-"}
-                        </td>
-                        <td className="py-4 px-6 text-right font-bold text-emerald-600">
-                          {/* #region agent log */}
-                          
-                          {/* #endregion */}
-                          {(payroll.totalSalary || 0).toLocaleString()} VND
-                        </td>
-                        <td className="py-4 px-6">{getStatusBadge(payroll.status)}</td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link to={`/my-payrolls/${payroll.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleExportPDF(payroll)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
+              <div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100">
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Tháng</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Lương cơ bản</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Hệ số</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Kinh nghiệm</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Hoa hồng</th>
+                        <th className="text-right py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Tổng lương</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng thái</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Thao tác</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {paginatedPayrolls.map((payroll) => (
+                        <tr
+                          key={payroll.id}
+                          className="hover:bg-blue-50/30 transition-colors group"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
+                                <Calendar className="h-4 w-4" />
+                              </div>
+                              <span className="font-bold text-slate-700">{payroll.month}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 font-medium text-slate-600">
+                            {(typeof payroll.baseSalary === 'number' ? payroll.baseSalary : parseFloat(payroll.baseSalary || '0') || 0).toLocaleString()} <span className="text-[10px] text-slate-400">VND</span>
+                          </td>
+                          <td className="py-4 px-6">
+                             <Badge variant="secondary" className="bg-slate-100 text-slate-700">{payroll.coefficient}</Badge>
+                          </td>
+                          <td className="py-4 px-6 text-slate-600">{payroll.experience} năm</td>
+                          <td className="py-4 px-6 text-slate-600">
+                            {payroll.commission ? `${(typeof payroll.commission === 'number' ? payroll.commission : parseFloat(payroll.commission || '0') || 0).toLocaleString()}` : "-"}
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                             <span className="font-bold text-emerald-600 text-base">
+                                {(payroll.totalSalary || 0).toLocaleString()}
+                             </span>
+                          </td>
+                          <td className="py-4 px-6">{getStatusBadge(payroll.status)}</td>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" asChild>
+                                <Link to={`/my-payrolls/${payroll.id}`} title="Xem chi tiết">
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                                onClick={() => handleExportPDF(payroll)}
+                                title="Tải PDF"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  showingCount={paginatedPayrolls.length}
+                  totalCount={payrolls.length}
+                  resourceName="phiếu lương"
+                  className="bg-slate-50/30"
+                />
               </div>
             )}
           </CardContent>

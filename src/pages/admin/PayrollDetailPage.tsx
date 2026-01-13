@@ -235,8 +235,16 @@ export default function PayrollDetailPage() {
               </div>
               <p className="text-slate-500">Mã phiếu: <span className="font-mono text-slate-700 font-medium">#{payroll.id.toString().padStart(6, '0')}</span></p>
               <div className="mt-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
-                  {payroll.employee?.fullName?.charAt(0) || "NV"}
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl overflow-hidden shrink-0">
+                  {payroll.employee?.avatar ? (
+                    <img 
+                      src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${payroll.employee.avatar}`} 
+                      alt={payroll.employee.fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    payroll.employee?.fullName?.charAt(0) || "NV"
+                  )}
                 </div>
                 <div>
                   <p className="font-bold text-lg text-slate-900">{payroll.employee?.fullName}</p>

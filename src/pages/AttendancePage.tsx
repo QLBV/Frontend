@@ -32,7 +32,10 @@ import {
   CheckCircle,
   XCircle,
   CalendarDays,
+  UserCheck
 } from "lucide-react"
+import { TablePagination } from "@/components/TablePagination"
+
 import { toast } from "sonner"
 import { AttendanceService, type Attendance, AttendanceStatus } from "@/services/attendance.service"
 import { format } from "date-fns"
@@ -54,6 +57,10 @@ export default function AttendancePage() {
     reason: "",
     type: "",
   })
+  
+  // Client-side pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchMyAttendance()
@@ -71,8 +78,7 @@ export default function AttendancePage() {
           limit: 1,
         }),
         AttendanceService.getMyAttendance({
-          page: 1,
-          limit: 20, // Fetch more to be sure
+          limit: 1000, // Fetch all for client-side pagination
         })
       ])
 
@@ -184,12 +190,24 @@ export default function AttendancePage() {
   const canCheckIn = !todayAttendance?.checkInTime
   const canCheckOut = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime
 
+  // Calculate pagination
+  const totalPages = Math.ceil(myAttendance.length / itemsPerPage)
+  const paginatedAttendance = myAttendance.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">Chấm công</h1>
-        <p className="text-slate-600">Check-in, check-out và quản lý chấm công</p>
+      <div className="flex items-center gap-4 mb-8">
+        <div className="h-14 w-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 ring-1 ring-white/50">
+             <UserCheck className="h-7 w-7 text-white" />
+        </div>
+        <div>
+           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Chấm công cá nhân</h1>
+           <p className="text-slate-500 font-medium">Theo dõi thời gian làm việc và nghỉ phép của bạn</p>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -322,54 +340,69 @@ export default function AttendancePage() {
                 <p>Chưa có lịch sử chấm công</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50 border-b">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Ngày</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Check-in</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Check-out</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Ghi chú</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {myAttendance.map((attendance) => (
-                      <tr key={attendance.id} className="border-b hover:bg-blue-50/30 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-slate-400" />
-                            <span>{attendance.date.split("-").reverse().join("/")}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          {attendance.checkInTime ? (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-emerald-600" />
-                              <span>{format(new Date(attendance.checkInTime), "HH:mm:ss")}</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-6">
-                          {attendance.checkOutTime ? (
-                            <div className="flex items-center gap-2">
-                              <XCircle className="h-4 w-4 text-blue-600" />
-                              <span>{format(new Date(attendance.checkOutTime), "HH:mm:ss")}</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-6">{getStatusBadge(attendance.status)}</td>
-                        <td className="py-4 px-6">
-                          <span className="text-sm text-slate-500">{attendance.note || "-"}</span>
-                        </td>
+              <div className="overflow-hidden rounded-xl border border-slate-100">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100">
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Check-in</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Check-out</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng thái</th>
+                        <th className="text-left py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Ghi chú</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {paginatedAttendance.map((attendance) => (
+                        <tr key={attendance.id} className="hover:bg-blue-50/30 transition-colors group">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                <Calendar className="h-4 w-4" />
+                              </div>
+                              <span className="font-semibold text-slate-700">{format(new Date(attendance.date), "dd/MM/yyyy")}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            {attendance.checkInTime ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-emerald-500 bg-emerald-50 p-1 rounded"><CheckCircle className="h-3 w-3" /></span>
+                                <span className="font-mono font-medium text-slate-700">{format(new Date(attendance.checkInTime), "HH:mm:ss")}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 text-sm italic">--:--:--</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-6">
+                            {attendance.checkOutTime ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-blue-500 bg-blue-50 p-1 rounded"><LogOut className="h-3 w-3" /></span>
+                                <span className="font-mono font-medium text-slate-700">{format(new Date(attendance.checkOutTime), "HH:mm:ss")}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 text-sm italic">--:--:--</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-6">{getStatusBadge(attendance.status)}</td>
+                          <td className="py-4 px-6">
+                            <span className="text-sm text-slate-500 max-w-[200px] truncate block" title={attendance.note || ""}>{attendance.note || "-"}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Footer */}
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  showingCount={paginatedAttendance.length}
+                  totalCount={myAttendance.length}
+                  resourceName="kết quả"
+                  className="bg-slate-50/30"
+                />
               </div>
             )}
           </CardContent>

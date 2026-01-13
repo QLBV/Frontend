@@ -139,6 +139,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     roleId: userData.roleId || 3,
                     patientId: userData.patientId || null,
                     doctorId: userData.doctorId || null,
+                    avatarUrl: userData.avatar,
                   };
                   if (isMounted) {
                     setUser(restoredUser);
@@ -237,7 +238,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [isLoggingIn]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, remember?: boolean) => {
     // Prevent multiple simultaneous login attempts
     if (isLoggingIn) {
       throw new Error("Đang xử lý đăng nhập. Vui lòng đợi...");
@@ -252,7 +253,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Small delay to ensure tokens are cleared
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      const user = await loginApi(email, password);
+      const user = await loginApi(email, password, remember);
       setUser(user);
       // Return user so caller can use it immediately for navigation
       return user;
@@ -312,6 +313,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           roleId: userData.roleId || 3,
           patientId: extractedPatientId,
           doctorId: extractedDoctorId,
+          avatarUrl: userData.avatar,
         };
         setUser(user);
       } else {
@@ -347,6 +349,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           roleId: userData.roleId || 3,
           patientId: extractedPatientId,
           doctorId: extractedDoctorId,
+          avatarUrl: userData.avatar,
         };
         
         console.log("🔄 Refreshed user:", {

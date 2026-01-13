@@ -8,7 +8,8 @@ const MIN_LOGIN_INTERVAL = 2000; // 2 seconds minimum between login attempts
 
 export const loginApi = async (
   email: string,
-  password: string
+  password: string,
+  remember?: boolean
 ): Promise<User> => {
   // Rate limit login attempts
   const now = Date.now();
@@ -26,7 +27,7 @@ export const loginApi = async (
     // Small delay to ensure tokens are cleared
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    const res = await api.post("/auth/login", { email, password });
+    const res = await api.post("/auth/login", { email, password, remember });
 
     if (res.data.success) {
       setAccessToken(res.data.tokens.accessToken);

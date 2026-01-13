@@ -63,7 +63,7 @@ export default function DoctorList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [doctorToDelete, setDoctorToDelete] = useState<Doctor | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const itemsPerPage = 5
+  const itemsPerPage = 10
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Fetch doctors from API
@@ -362,8 +362,8 @@ export default function DoctorList() {
 
         {/* Results Count */}
         <div className="mb-4">
-          <span className="text-sm text-gray-600">
-            Hiển thị {startIndex + 1}-{Math.min(endIndex, sortedAndFilteredDoctors.length)} trong tổng số {sortedAndFilteredDoctors.length} bác sĩ
+          <span className="text-sm text-slate-500 font-medium whitespace-nowrap">
+            Hiển thị <span className="text-slate-900 font-bold">{currentDoctors.length}</span> trong tổng số <span className="text-slate-900 font-bold">{sortedAndFilteredDoctors.length}</span> bác sĩ
           </span>
         </div>
 
@@ -399,7 +399,7 @@ export default function DoctorList() {
                           <div className={`w-10 h-10 rounded-full ${getAvatarColor(doctor.user.fullName)} flex items-center justify-center text-white font-semibold text-sm`}>
                             {doctor.user.avatar ? (
                               <img 
-                                src={doctor.user.avatar} 
+                                src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${doctor.user.avatar}`} 
                                 alt={doctor.user.fullName}
                                 className="w-10 h-10 rounded-full object-cover"
                               />
@@ -448,41 +448,70 @@ export default function DoctorList() {
         </Card>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6">
-            <Button 
-              variant="ghost" 
-              className="flex items-center gap-2"
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            
+        {sortedAndFilteredDoctors.length > 0 && (
+          <div className="flex items-center justify-between mt-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "ghost"}
-                  size="sm"
-                  className={currentPage === page ? "bg-blue-600 text-white" : ""}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Button>
-              ))}
+              <p className="text-sm text-slate-500 font-medium whitespace-nowrap">
+                Hiển thị trang <span className="text-slate-900 font-bold">{currentPage}</span> / <span className="text-slate-900 font-bold">{totalPages}</span>
+              </p>
             </div>
             
-            <Button 
-              variant="ghost" 
-              className="flex items-center gap-2"
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                disabled={currentPage === 1}
+                onClick={handlePrevious}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Show first, last, current, and pages around current
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-9 w-9 p-0 rounded-lg font-bold text-sm transition-all ${
+                        currentPage === page 
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700 hover:scale-105" 
+                          : "text-slate-600 hover:bg-slate-100 hover:text-blue-600"
+                      }`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                }
+                
+                // Show ellipses
+                if (
+                  (page === 2 && currentPage > 3) || 
+                  (page === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return <span key={page} className="px-1 text-slate-400 font-bold">...</span>;
+                }
+                
+                return null;
+              })}
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                disabled={currentPage === totalPages}
+                onClick={handleNext}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         )}
 

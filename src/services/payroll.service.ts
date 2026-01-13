@@ -8,6 +8,7 @@ export interface Payroll {
     fullName: string
     employeeCode?: string
     role: string
+    avatar?: string
   }
   month: string
   year?: number
@@ -93,6 +94,7 @@ export class PayrollService {
       employee: p.user ? {
         id: p.user.id,
         fullName: p.user.fullName,
+        avatar: p.user.avatar,
         employeeCode: p.user.employee?.employeeCode || `NV${p.user.id}`, // Get from nested employee or fallback
         role: (p.user.role?.roleName || (
           p.user.roleId === 1 ? "admin" :

@@ -3,10 +3,13 @@ import { useLocation, Link } from 'react-router-dom';
 import SidebarLayout from "@/components/SidebarLayout";
 import { 
   LayoutDashboard, 
-  ClipboardList,   
-  CalendarDays,    
-  FileText,
-  UserCheck
+  Users,   
+  CalendarClock,    
+  Receipt,
+  UserCheck,
+  Wallet,
+  UserCircle,
+  PlusCircle
 } from 'lucide-react';
 
 interface ReceptionistLayoutProps {
@@ -19,40 +22,26 @@ const ReceptionistSidebar = ({ children, userName }: ReceptionistLayoutProps) =>
 
   const receptionistMenu = [
     {
-      title: "Dashboard",
+      title: "Hệ thống",
       items: [
-        { label: "Dashboard", href: "/receptionist/dashboard", icon: <LayoutDashboard size={24} strokeWidth={2.5} /> }
+        { label: "Bảng điều khiển", href: "/receptionist/dashboard", icon: <LayoutDashboard size={24} strokeWidth={2.5} /> }
       ]
     },
     {
-      title: "Patient",
+      title: "Nghiệp vụ",
       items: [
-        
-        { label: "Patient List", href: "/recep/patients", icon: <ClipboardList size={24} strokeWidth={2.5} /> }
+        { label: "Bệnh nhân", href: "/recep/patients", icon: <Users size={24} strokeWidth={2.5} /> },
+        { label: "Lịch hẹn", href: "/appointments", icon: <CalendarClock size={24} strokeWidth={2.5} /> },
+        { label: "Hóa đơn", href: "/invoices", icon: <Receipt size={24} strokeWidth={2.5} /> },
+        { label: "Đặt lịch Offline", href: "/recep/appointments/offline", icon: <PlusCircle size={24} strokeWidth={2.5} /> }
       ]
     },
     {
-      title: "Appointment",
+      title: "Cá nhân",
       items: [
-        { label: "Appointment", href: "/appointments", icon: <CalendarDays size={24} strokeWidth={2.5} /> }
-      ]
-    },
-    {
-      title: "Payment",
-      items: [
-        { label: "Invoice", href: "/invoices", icon: <FileText size={24} strokeWidth={2.5} /> }
-      ]
-    },
-    {
-      title: "Attendance",
-      items: [
-        { label: "Chấm công", href: "/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> }
-      ]
-    },
-    {
-      title: "Payroll",
-      items: [
-        { label: "Lương của tôi", href: "/my-payrolls", icon: <FileText size={24} strokeWidth={2.5} /> }
+        { label: "Chấm công", href: "/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> },
+        { label: "Phiếu lương", href: "/my-payrolls", icon: <Wallet size={24} strokeWidth={2.5} /> },
+        { label: "Hồ sơ cá nhân", href: "/receptionist/profile", icon: <UserCircle size={24} strokeWidth={2.5} /> }
       ]
     }
   ];
@@ -61,11 +50,7 @@ const ReceptionistSidebar = ({ children, userName }: ReceptionistLayoutProps) =>
     <SidebarLayout 
       logoText="HealthCare"
       userName={userName || "Receptionist"}
-      pageContent={
-        <div className="h-full space-y-6">
-          {children} 
-        </div>
-      }
+      pageContent={children || undefined}
     >
       {receptionistMenu.map((group, index) => (
         <div key={index}>
@@ -74,7 +59,7 @@ const ReceptionistSidebar = ({ children, userName }: ReceptionistLayoutProps) =>
           </h2>
           <div className="space-y-3">
             {group.items.map((item, itemIndex) => {
-              const isActive = location.pathname === item.href;
+              const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + "/");
 
               return (
                 <Link 
@@ -83,8 +68,8 @@ const ReceptionistSidebar = ({ children, userName }: ReceptionistLayoutProps) =>
                   className={`
                     flex items-center gap-3 w-full text-left group p-2 rounded-lg transition-colors -ml-2
                     ${isActive 
-                      ? "bg-blue-50 text-blue-600"  
-                      : "hover:bg-gray-50 text-gray-500" 
+                      ? "bg-blue-50 text-blue-600"
+                      : "hover:bg-gray-50 text-gray-500"
                     }
                   `}
                 >

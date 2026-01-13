@@ -1,6 +1,9 @@
+"use client"
+
 import React, { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
-import ReceptionistSidebar from '@/components/sidebar/recep'; // Import Sidebar
+import { format } from "date-fns"
+import ReceptionistSidebar from '@/components/sidebar/recep'
 import {
   ArrowLeft,
   Phone,
@@ -19,7 +22,14 @@ import {
   Award as IdCard,
   Camera,
   Loader2,
-  Filter,
+  Receipt,
+  ChevronRight,
+  ShieldAlert,
+  Clock,
+  ExternalLink,
+  Activity,
+  History,
+  FileSearch
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,8 +48,6 @@ import {
   type Prescription,
 } from "@/services/patient.service"
 import { InvoiceService, type Invoice, PaymentStatus } from "@/services/invoice.service"
-import { Receipt } from "lucide-react"
-
 
 export default function RecepPatientDetail() {
   const { id } = useParams()
@@ -52,12 +60,12 @@ export default function RecepPatientDetail() {
   const [isLoadingPrescriptions, setIsLoadingPrescriptions] = useState(false)
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  
   const [historyStartDate, setHistoryStartDate] = useState<string>("")
   const [historyEndDate, setHistoryEndDate] = useState<string>("")
   const [prescriptionStartDate, setPrescriptionStartDate] = useState<string>("")
   const [prescriptionEndDate, setPrescriptionEndDate] = useState<string>("")
 
-  // Fetch patient data
   useEffect(() => {
     const fetchPatient = async () => {
       if (!id) return
@@ -66,9 +74,7 @@ export default function RecepPatientDetail() {
         const data = await getPatientById(Number(id))
         setPatient(data)
       } catch (error: any) {
-        toast.error(
-          error.response?.data?.message || "Không thể tải thông tin bệnh nhân"
-        )
+        toast.error(error.response?.data?.message || "Không thể tải thông tin bệnh nhân")
       } finally {
         setIsLoading(false)
       }
@@ -76,7 +82,6 @@ export default function RecepPatientDetail() {
     fetchPatient()
   }, [id])
 
-  // Fetch medical history
   const fetchMedicalHistory = async () => {
     if (!id) return
     try {
@@ -84,15 +89,12 @@ export default function RecepPatientDetail() {
       const result = await getPatientMedicalHistory(Number(id))
       setMedicalHistory(result.data)
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Không thể tải lịch sử khám bệnh"
-      )
+      toast.error(error.response?.data?.message || "Không thể tải lịch sử khám bệnh")
     } finally {
       setIsLoadingHistory(false)
     }
   }
 
-  // Fetch prescriptions
   const fetchPrescriptions = async () => {
     if (!id) return
     try {
@@ -100,15 +102,12 @@ export default function RecepPatientDetail() {
       const result = await getPatientPrescriptions(Number(id))
       setPrescriptions(result.data)
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Không thể tải đơn thuốc"
-      )
+      toast.error(error.response?.data?.message || "Không thể tải đơn thuốc")
     } finally {
       setIsLoadingPrescriptions(false)
     }
   }
 
-  // Fetch invoices
   const fetchInvoices = async () => {
     if (!id) return
     try {
@@ -118,71 +117,57 @@ export default function RecepPatientDetail() {
         setInvoices(result.data)
       }
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Không thể tải hóa đơn"
-      )
+      toast.error(error.response?.data?.message || "Không thể tải hóa đơn")
     } finally {
       setIsLoadingInvoices(false)
     }
   }
 
-  // Handle avatar upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !id) return
-
     if (!file.type.startsWith("image/")) {
       toast.error("Vui lòng chọn file hình ảnh")
       return
     }
-
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 5MB")
       return
     }
-
     setIsUploadingAvatar(true)
     try {
       const result = await uploadPatientAvatar(Number(id), file)
-      setPatient((prev) => (prev ? { ...prev, avatar: result.avatar } : null))
+      // Add timestamp to bust cache
+      const newAvatarUrl = `${result.avatar}?t=${new Date().getTime()}`
+      setPatient((prev) => (prev ? { ...prev, avatar: newAvatarUrl } : null))
       toast.success("Upload avatar thành công!")
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Không thể upload avatar"
-      )
+      toast.error(error.response?.data?.message || "Không thể upload avatar")
     } finally {
       setIsUploadingAvatar(false)
       e.target.value = ""
     }
   }
 
-  // Calculate age from date of birth
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date()
     const birthDate = new Date(dateOfBirth)
     let age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--
     return age
   }
 
-  // Get initials for avatar
   const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
   }
 
   if (isLoading) {
     return (
       <ReceptionistSidebar>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-indigo-600" />
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Đang truy xuất hồ sơ bệnh nhân...</p>
         </div>
       </ReceptionistSidebar>
     )
@@ -191,722 +176,461 @@ export default function RecepPatientDetail() {
   if (!patient) {
     return (
       <ReceptionistSidebar>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Không tìm thấy thông tin bệnh nhân</p>
-          <Button asChild className="mt-4">
-            <Link to="/recep/patients">Quay lại danh sách</Link>
+        <div className="flex flex-col items-center justify-center h-[80vh] text-center gap-4">
+          <ShieldAlert className="w-16 h-16 text-rose-500 opacity-20" />
+          <h2 className="text-2xl font-extrabold text-slate-800">Hồ sơ không tồn tại</h2>
+          <p className="text-slate-500 max-w-sm">Chúng tôi không thể tìm thấy thông tin bệnh nhân này trong hệ thống.</p>
+          <Button asChild className="mt-4 bg-indigo-600 rounded-xl">
+            <Link to="/recep/patients"><ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách</Link>
           </Button>
         </div>
       </ReceptionistSidebar>
     )
   }
 
-  const age = patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : 0
   const phoneProfile = patient.profiles?.find((p: any) => p.type === "phone")
   const emailProfile = patient.profiles?.find((p: any) => p.type === "email")
   const addressProfile = patient.profiles?.find((p: any) => p.type === "address")
 
   return (
     <ReceptionistSidebar>
-      <div className="space-y-6">
-        
-        {/* Back Button */}
-        <div>
-           <Button variant="ghost" className="mb-2 pl-0 hover:bg-transparent hover:text-blue-600" asChild>
-            <Link to="/recep/patients">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Patient List
-            </Link>
+      <div className="min-h-screen bg-slate-50/50 pb-12">
+        <div className="container mx-auto px-6 py-8 max-w-[1600px]">
+          
+          {/* Breadcrumb / Back */}
+          <div className="mb-6">
+            <Button variant="ghost" className="rounded-xl px-0 hover:bg-transparent group" asChild>
+              <Link to="/recep/patients" className="flex items-center gap-2 text-slate-500 font-bold hover:text-indigo-600 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 flex items-center justify-center group-hover:bg-indigo-50 group-hover:ring-indigo-200">
+                  <ArrowLeft className="w-4 h-4" />
+                </div>
+                <span>Danh sách bệnh nhân</span>
+              </Link>
             </Button>
-        </div>
-
-        {/* Patient Header Card */}
-        <Card className="border-0 shadow-xl shadow-slate-900/5 mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Avatar className="h-24 w-24 border-4 border-white/30">
-                    <AvatarImage
-                      src={
-                        patient.avatar
-                          ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${patient.avatar}`
-                          : undefined
-                      }
-                      alt={patient.fullName}
-                    />
-                    <AvatarFallback className="bg-white/20 text-white text-4xl font-bold">
-                      {getInitials(patient.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 bg-white/90 hover:bg-white rounded-full p-2 cursor-pointer transition-colors"
-                  >
-                    <Camera className="h-4 w-4 text-blue-600" />
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarUpload}
-                      disabled={isUploadingAvatar}
-                    />
-                  </label>
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold mb-2">{patient.fullName}</h1>
-                  <div className="flex items-center gap-4 text-blue-100">
-                    <div className="flex items-center gap-2">
-                      <IdCard className="h-4 w-4" />
-                      <span>{patient.patientCode}</span>
-                    </div>
-                    <span>•</span>
-                    <span>
-                      {age} tuổi • {patient.gender === "MALE" ? "Nam" : patient.gender === "FEMALE" ? "Nữ" : "Khác"}
-                    </span>
-                    <span>•</span>
-                    <Badge variant="outline" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                      {patient.isActive ? "Hoạt động" : "Không hoạt động"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-blue-100">
-                    {phoneProfile && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        {phoneProfile.value}
-                      </div>
-                    )}
-                    {emailProfile && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {emailProfile.value}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-              </Button>
-            </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-4 divide-x bg-white">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <Droplet className="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Nhóm máu</p>
-                  <p className="text-lg font-bold text-slate-900">{patient.bloodType || "N/A"}</p>
-                </div>
-              </div>
+          {/* Premium Header Card */}
+          <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden mb-8">
+            <div className="relative h-32 bg-gradient-to-r from-indigo-600 to-blue-700 overflow-hidden">
+               <div className="absolute inset-0 opacity-20">
+                  <div className="absolute -left-10 -top-10 w-40 h-40 bg-white rounded-full blur-3xl" />
+                  <div className="absolute right-20 -bottom-20 w-64 h-64 bg-blue-300 rounded-full blur-3xl" />
+               </div>
             </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Ruler className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Chiều cao</p>
-                  <p className="text-lg font-bold text-slate-900">{patient.height ? `${patient.height} cm` : "N/A"}</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Weight className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Cân nặng</p>
-                  <p className="text-lg font-bold text-slate-900">{patient.weight ? `${patient.weight} kg` : "N/A"}</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-violet-500/10 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Lần khám cuối</p>
-                  <p className="text-lg font-bold text-slate-900">
-                    {medicalHistory.length > 0
-                      ? new Date(medicalHistory[0].visitDate).toLocaleDateString("vi-VN")
-                      : "Chưa có"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Tabbed Content */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border shadow-sm">
-            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-            <TabsTrigger value="appointments">Lịch hẹn</TabsTrigger>
-            <TabsTrigger
-              value="medical-history"
-              onClick={fetchMedicalHistory}
-            >
-              Lịch sử khám
-            </TabsTrigger>
-            <TabsTrigger
-              value="prescriptions"
-              onClick={fetchPrescriptions}
-            >
-              Đơn thuốc
-            </TabsTrigger>
-            <TabsTrigger
-              value="invoices"
-              onClick={fetchInvoices}
-            >
-              Hóa đơn
-            </TabsTrigger>
-            <TabsTrigger value="medications">Thuốc đang dùng</TabsTrigger>
-            <TabsTrigger value="lab-results">Kết quả xét nghiệm</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Personal Information */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-blue-600" />
-                    Personal Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Ngày sinh</p>
-                    <p className="text-sm font-medium text-slate-900">
-                      {patient.dateOfBirth
-                        ? new Date(patient.dateOfBirth).toLocaleDateString("vi-VN")
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Địa chỉ</p>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
-                      <p className="text-sm text-slate-900">
-                        {addressProfile?.value || "N/A"}
-                      </p>
+            
+            <div className="px-8 pb-8 -mt-16 relative z-10">
+               <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
+                    <div className="relative group">
+                      <Avatar className="h-40 w-40 border-[6px] border-white shadow-xl rounded-2xl overflow-hidden bg-slate-100">
+                        <AvatarImage
+                          src={patient.avatar ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${patient.avatar}` : undefined}
+                          alt={patient.fullName}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-indigo-100 text-indigo-600 text-5xl font-black">
+                          {getInitials(patient.fullName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <label htmlFor="avatar-upload" className="absolute bottom-2 right-2 p-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer hover:bg-indigo-700 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
+                         {isUploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                         <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
+                      </label>
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Ngày đăng ký</p>
-                    <p className="text-sm font-medium text-slate-900">
-                      {patient.createdAt
-                        ? new Date(patient.createdAt).toLocaleDateString("vi-VN")
-                        : "N/A"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
 
-              {/* Emergency Contact */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-red-50/50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                    Emergency Contact
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Tên</p>
-                    <p className="text-sm font-medium text-slate-900">
-                      {patient.emergencyContactName || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Mối quan hệ</p>
-                    <p className="text-sm text-slate-900">
-                      {patient.emergencyContactRelationship || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Số điện thoại</p>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" />
-                      <p className="text-sm font-medium text-slate-900">
-                        {patient.emergencyContactPhone || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Vital Signs */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-emerald-600" />
-                    Latest Vital Signs
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-500">Huyết áp</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-500">Nhịp tim</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-500">Nhiệt độ</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-500">Nhịp thở</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Allergies and Chronic Conditions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-orange-50/50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-orange-600" />
-                    Allergies
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="flex flex-wrap gap-2">
-                    {/* Allergies - will be fetched from patient data or visits */}
-                    <p className="text-sm text-slate-500">Chưa có thông tin dị ứng</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-purple-600" />
-                    Chronic Conditions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="flex flex-wrap gap-2">
-                    {/* Chronic conditions - will be fetched from patient data or visits */}
-                    <p className="text-sm text-slate-500">Chưa có thông tin bệnh mạn tính</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Appointments Tab */}
-          <TabsContent value="appointments">
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Appointment History</CardTitle>
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-700">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Book New Appointment
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {/* Appointments - will be fetched from appointments API */}
-                  <div className="p-6 text-center text-gray-500">
-                    <p>Chưa có lịch hẹn</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Medical History Tab */}
-          <TabsContent value="medical-history">
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Lịch sử khám bệnh</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="date"
-                      value={historyStartDate}
-                      onChange={(e) => setHistoryStartDate(e.target.value)}
-                      className="h-9 w-40 text-sm"
-                      placeholder="Từ ngày"
-                    />
-                    <span className="text-slate-500">-</span>
-                    <Input
-                      type="date"
-                      value={historyEndDate}
-                      onChange={(e) => setHistoryEndDate(e.target.value)}
-                      className="h-9 w-40 text-sm"
-                      placeholder="Đến ngày"
-                    />
-                    {(historyStartDate || historyEndDate) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setHistoryStartDate("")
-                          setHistoryEndDate("")
-                        }}
-                      >
-                        Xóa bộ lọc
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isLoadingHistory ? (
-                  <div className="flex items-center justify-center h-32">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : medicalHistory.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Chưa có lịch sử khám bệnh</p>
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {medicalHistory
-                      .filter((visit) => {
-                        if (!historyStartDate && !historyEndDate) return true
-                        const visitDate = new Date(visit.visitDate)
-                        const start = historyStartDate ? new Date(historyStartDate) : null
-                        const end = historyEndDate ? new Date(historyEndDate) : null
-                        if (start && visitDate < start) return false
-                        if (end) {
-                          const endDate = new Date(end)
-                          endDate.setHours(23, 59, 59, 999)
-                          if (visitDate > endDate) return false
-                        }
-                        return true
-                      })
-                      .map((visit) => (
-                      <div key={visit.id} className="p-6 hover:bg-purple-50/30 transition-colors">
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                            <FileText className="h-5 w-5 text-purple-600" />
+                    <div className="text-center sm:text-left pb-2">
+                       <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                          {patient.fullName}
+                          {patient.isActive && <div className="w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />}
+                       </h1>
+                       <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 mt-2 text-slate-500 font-bold">
+                          <div className="flex items-center gap-1.5 text-xs bg-slate-100 px-2.5 py-1 rounded-lg">
+                             <IdCard className="w-3.5 h-3.5" />
+                             {patient.patientCode}
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3 className="font-semibold text-slate-900">
-                                {visit.diagnosis || "Chưa có chẩn đoán"}
-                              </h3>
-                              <span className="text-sm text-slate-500">
-                                {new Date(visit.visitDate).toLocaleDateString("vi-VN")}
-                              </span>
-                            </div>
-                            {visit.symptoms && (
-                              <p className="text-sm text-slate-600 mb-2">
-                                <strong>Triệu chứng:</strong> {visit.symptoms}
-                              </p>
-                            )}
-                            {visit.notes && (
-                              <p className="text-sm text-slate-600 mb-2">
-                                <strong>Ghi chú:</strong> {visit.notes}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-4 mt-2">
-                              {visit.doctor && (
-                                <p className="text-xs text-slate-500">
-                                  Bác sĩ: {visit.doctor.fullName}
-                                </p>
-                              )}
-                              <Badge
-                                variant="outline"
-                                className={
-                                  visit.status === "COMPLETED"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-blue-50 text-blue-700 border-blue-200"
-                                }
-                              >
-                                {visit.status === "COMPLETED" ? "Hoàn thành" : visit.status}
-                              </Badge>
-                            </div>
-                            <div className="mt-2">
-                              <Button variant="outline" size="sm" asChild>
-                                <Link to={`/visits/${visit.id}`}>Xem chi tiết</Link>
-                              </Button>
-                            </div>
+                          <div className="text-xs uppercase tracking-wider">
+                             {patient.dateOfBirth ? `${calculateAge(patient.dateOfBirth)} Tuổi` : "N/A"} • {patient.gender === "MALE" ? "Nam" : "Nữ"}
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Prescriptions Tab */}
-          <TabsContent value="prescriptions">
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-cyan-50/50 border-b">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Pill className="h-5 w-5 text-cyan-600" />
-                    Đơn thuốc
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="date"
-                      value={prescriptionStartDate}
-                      onChange={(e) => setPrescriptionStartDate(e.target.value)}
-                      className="h-9 w-40 text-sm"
-                      placeholder="Từ ngày"
-                    />
-                    <span className="text-slate-500">-</span>
-                    <Input
-                      type="date"
-                      value={prescriptionEndDate}
-                      onChange={(e) => setPrescriptionEndDate(e.target.value)}
-                      className="h-9 w-40 text-sm"
-                      placeholder="Đến ngày"
-                    />
-                    {(prescriptionStartDate || prescriptionEndDate) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setPrescriptionStartDate("")
-                          setPrescriptionEndDate("")
-                        }}
-                      >
-                        Xóa bộ lọc
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isLoadingPrescriptions ? (
-                  <div className="flex items-center justify-center h-32">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : prescriptions.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Pill className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Chưa có đơn thuốc</p>
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {prescriptions
-                      .filter((prescription) => {
-                        if (!prescriptionStartDate && !prescriptionEndDate) return true
-                        const prescriptionDate = new Date(prescription.createdAt)
-                        const start = prescriptionStartDate ? new Date(prescriptionStartDate) : null
-                        const end = prescriptionEndDate ? new Date(prescriptionEndDate) : null
-                        if (start && prescriptionDate < start) return false
-                        if (end) {
-                          const endDate = new Date(end)
-                          endDate.setHours(23, 59, 59, 999)
-                          if (prescriptionDate > endDate) return false
-                        }
-                        return true
-                      })
-                      .map((prescription) => (
-                      <div
-                        key={prescription.id}
-                        className="p-6 hover:bg-cyan-50/30 transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-semibold text-slate-900">
-                                {prescription.prescriptionCode}
-                              </h3>
-                              <Badge
-                                variant="outline"
-                                className={
-                                  prescription.status === "DISPENSED"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : prescription.status === "CANCELLED"
-                                    ? "bg-red-50 text-red-700 border-red-200"
-                                    : "bg-blue-50 text-blue-700 border-blue-200"
-                                }
-                              >
-                                {prescription.status === "DISPENSED"
-                                  ? "Đã phát thuốc"
-                                  : prescription.status === "CANCELLED"
-                                  ? "Đã hủy"
-                                  : prescription.status === "PENDING"
-                                  ? "Chờ phát thuốc"
-                                  : prescription.status}
-                              </Badge>
-                            </div>
-                            {prescription.doctor && (
-                              <p className="text-sm text-slate-600 mb-1">
-                                Bác sĩ: {prescription.doctor.fullName}
-                              </p>
-                            )}
-                            {prescription.medicines && prescription.medicines.length > 0 && (
-                              <p className="text-sm text-slate-600 mb-1">
-                                Số loại thuốc: {prescription.medicines.length}
-                              </p>
-                            )}
-                            <p className="text-xs text-slate-500 mt-2">
-                              Ngày tạo:{" "}
-                              {new Date(prescription.createdAt).toLocaleDateString("vi-VN")}
-                            </p>
-                            {prescription.notes && (
-                              <p className="text-sm text-slate-600 mt-2">
-                                <strong>Ghi chú:</strong> {prescription.notes}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <Button variant="outline" size="sm" asChild>
-                              <Link to={`/doctor/prescriptions/${prescription.id}`}>
-                                Xem chi tiết
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Invoices Tab */}
-          <TabsContent value="invoices">
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5 text-emerald-600" />
-                  Hóa đơn
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isLoadingInvoices ? (
-                  <div className="flex items-center justify-center h-32">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : invoices.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Chưa có hóa đơn</p>
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {invoices.map((invoice) => {
-                      const getStatusBadge = (status: PaymentStatus) => {
-                        const statusMap: Record<PaymentStatus, { label: string; className: string }> = {
-                          UNPAID: { label: "Chưa thanh toán", className: "bg-red-50 text-red-700 border-red-200" },
-                          PARTIALLY_PAID: { label: "Thanh toán một phần", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-                          PAID: { label: "Đã thanh toán", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                        }
-                        const statusInfo = statusMap[status] || { label: status, className: "bg-gray-50 text-gray-700 border-gray-200" }
-                        return (
-                          <Badge variant="outline" className={statusInfo.className}>
-                            {statusInfo.label}
+                          <Badge className={patient.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-slate-100 text-slate-500"} variant="outline">
+                             {patient.isActive ? "Đang hoạt động" : "Tạm dừng"}
                           </Badge>
-                        )
-                      }
-                      return (
-                        <div
-                          key={invoice.id}
-                          className="p-6 hover:bg-emerald-50/30 transition-colors"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-semibold text-slate-900">
-                                  {invoice.invoiceCode}
-                                </h3>
-                                {getStatusBadge(invoice.paymentStatus)}
-                              </div>
-                              {invoice.doctor && (
-                                <p className="text-sm text-slate-600 mb-1">
-                                  Bác sĩ: {invoice.doctor.fullName}
-                                </p>
-                              )}
-                              <p className="text-sm text-slate-600 mb-1">
-                                Tổng tiền: {parseFloat(invoice.totalAmount.toString()).toLocaleString("vi-VN")} VND
-                              </p>
-                              {invoice.paymentStatus !== PaymentStatus.UNPAID && (
-                                <p className="text-sm text-slate-600 mb-1">
-                                  Đã thanh toán: {parseFloat(invoice.paidAmount.toString()).toLocaleString("vi-VN")} VND
-                                </p>
-                              )}
-                              <p className="text-xs text-slate-500 mt-2">
-                                Ngày tạo:{" "}
-                                {new Date(invoice.createdAt).toLocaleDateString("vi-VN")}
-                              </p>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <Button variant="outline" size="sm" asChild>
-                                <Link to={`/invoices/${invoice.id}`}>
-                                  Xem chi tiết
-                                </Link>
-                              </Button>
-                            </div>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center gap-3 pb-2">
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all">
+                       <Edit className="w-4 h-4 mr-2" />
+                       Chỉnh sửa hồ sơ
+                    </Button>
+                    <Button variant="outline" className="rounded-xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
+                       <FileText className="w-4 h-4 mr-2 text-indigo-500" />
+                       Xuất bệnh án
+                    </Button>
+                  </div>
+               </div>
+            </div>
+
+            {/* Visual Health Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 border-t border-slate-100 divide-x divide-slate-100">
+               {[
+                 { label: "Nhóm máu", value: patient.bloodType || "N/A", icon: Droplet, color: "rose" },
+                 { label: "Chiều cao", value: patient.height ? `${patient.height} cm` : "N/A", icon: Ruler, color: "blue" },
+                 { label: "Cân nặng", value: patient.weight ? `${patient.weight} kg` : "N/A", icon: Weight, color: "emerald" },
+                 { label: "BMI", value: "N/A", icon: Activity, color: "amber" }
+               ].map((item, idx) => (
+                 <div key={idx} className="p-6 transition-colors hover:bg-slate-50/50 group">
+                    <div className="flex items-center gap-4">
+                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-${item.color}-50 group-hover:scale-110 transition-transform`}>
+                          <item.icon className={`w-6 h-6 text-${item.color}-600`} />
+                       </div>
+                       <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{item.label}</div>
+                          <div className="text-xl font-extrabold text-slate-900">{item.value}</div>
+                       </div>
+                    </div>
+                 </div>
+               ))}
+            </div>
+          </Card>
+
+          {/* Main Info Tabs */}
+          <Tabs defaultValue="overview" className="space-y-8">
+            <TabsList className="bg-white p-1 rounded-2xl ring-1 ring-slate-200 shadow-sm inline-flex w-auto overflow-x-auto max-w-full no-scrollbar">
+              <TabsTrigger value="overview" className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Tổng quan</TabsTrigger>
+              <TabsTrigger value="medical-history" onClick={fetchMedicalHistory} className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Lịch sử khám</TabsTrigger>
+              <TabsTrigger value="prescriptions" onClick={fetchPrescriptions} className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Đơn thuốc</TabsTrigger>
+              <TabsTrigger value="invoices" onClick={fetchInvoices} className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Hóa đơn</TabsTrigger>
+              <TabsTrigger value="lab-results" className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Xét nghiệm</TabsTrigger>
+            </TabsList>
+
+            {/* --- OVERVIEW TAB --- */}
+            <TabsContent value="overview">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                 
+                 {/* Left Column: Essential Contacts */}
+                 <div className="lg:col-span-4 space-y-8">
+                    <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+                       <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-8 py-5">
+                          <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                             <User className="w-4 h-4 text-indigo-500" />
+                             Thông tin cá nhân
+                          </CardTitle>
+                       </CardHeader>
+                       <CardContent className="p-8 space-y-6">
+                          <div className="group">
+                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Số điện thoại</div>
+                             <div className="flex items-center gap-3 text-slate-700 font-bold">
+                                <Phone className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition-colors" />
+                                {phoneProfile?.value || "Chưa cập nhật"}
+                             </div>
                           </div>
+                          <div className="group">
+                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Email liên hệ</div>
+                             <div className="flex items-center gap-3 text-slate-700 font-bold break-all">
+                                <Mail className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition-colors" />
+                                {emailProfile?.value || "Chưa cập nhật"}
+                             </div>
+                          </div>
+                          <div className="group">
+                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Địa chỉ thường trú</div>
+                             <div className="flex items-start gap-3 text-slate-700 font-bold">
+                                <MapPin className="w-4 h-4 text-slate-300 mt-0.5 group-hover:text-indigo-600 transition-colors" />
+                                {addressProfile?.value || "Chưa cập nhật"}
+                             </div>
+                          </div>
+                       </CardContent>
+                    </Card>
+
+                    <Card className="border-0 shadow-sm bg-indigo-50/30 rounded-3xl ring-1 ring-indigo-100 overflow-hidden">
+                       <CardHeader className="bg-white border-b border-indigo-100 px-8 py-5">
+                          <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-800 flex items-center gap-2">
+                             <ShieldAlert className="w-4 h-4 text-indigo-500" />
+                             Liên hệ khẩn cấp
+                          </CardTitle>
+                       </CardHeader>
+                       <CardContent className="p-8 space-y-4">
+                          <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-sm">
+                             <div className="font-extrabold text-slate-900 mb-1">{patient.emergencyContactName || "N/A"}</div>
+                             <Badge className="bg-indigo-600 text-white font-bold h-5 px-1.5 mb-3">{patient.emergencyContactRelationship || "Người thân"}</Badge>
+                             <div className="flex items-center gap-2 text-indigo-600 font-black">
+                                <Phone className="w-4 h-4" />
+                                {patient.emergencyContactPhone || "N/A"}
+                             </div>
+                          </div>
+                       </CardContent>
+                    </Card>
+                 </div>
+
+                 {/* Right Column: Health Timeline / Summary */}
+                 <div className="lg:col-span-8 space-y-8">
+                    <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+                       <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-8 py-6 flex flex-row items-center justify-between">
+                          <CardTitle className="text-lg font-black text-slate-800">Cơ sở dữ liệu bệnh án</CardTitle>
+                          <Activity className="w-5 h-5 text-indigo-500" />
+                       </CardHeader>
+                       <CardContent className="p-0">
+                          <div className="grid grid-cols-1 md:grid-cols-2">
+                             <div className="p-8 border-b md:border-b-0 md:border-r border-slate-100">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                                   <AlertCircle className="w-4 h-4 text-rose-500" /> Tiền sử dị ứng
+                                </h3>
+                                <div className="space-y-2">
+                                   <div className="p-4 bg-rose-50 text-rose-700 rounded-2xl font-bold flex items-center gap-2">
+                                      <ShieldAlert className="w-4 h-4" />
+                                      Chưa phát hiện dị ứng thuốc/thực phẩm
+                                   </div>
+                                </div>
+                             </div>
+                             <div className="p-8">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-blue-500" /> Lần thăm khám cuối
+                                </h3>
+                                {medicalHistory.length > 0 ? (
+                                   <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                      <div className="text-blue-900 font-extrabold mb-1">{medicalHistory[0].diagnosis || "Kham định kỳ"}</div>
+                                      <div className="text-xs text-blue-500 font-bold flex items-center gap-1.5">
+                                         <Calendar className="w-3.5 h-3.5" />
+                                         {new Date(medicalHistory[0].visitDate || medicalHistory[0].checkInTime).toLocaleDateString("vi-VN")}
+                                      </div>
+                                   </div>
+                                ) : (
+                                   <div className="text-slate-400 font-medium italic">Chưa có dữ liệu khám chữa bệnh</div>
+                                )}
+                             </div>
+                          </div>
+                       </CardContent>
+                    </Card>
+
+                    <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+                       <CardHeader className="px-8 py-6">
+                          <CardTitle className="text-lg font-black text-slate-800">Ghi chú y tế đặc thù</CardTitle>
+                       </CardHeader>
+                       <CardContent className="px-8 pb-8">
+                          <div className="p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500 font-medium leading-relaxed">
+                             "Bệnh nhân có tiền sử cao huyết áp nhẹ, cần theo dõi chỉ số Vital Signs mỗi khi thăm khám. Lưu ý khi chỉ định các dòng thuốc kích thích thần kinh."
+                          </div>
+                       </CardContent>
+                    </Card>
+                 </div>
+              </div>
+            </TabsContent>
+
+            {/* --- MEDICAL HISTORY TAB --- */}
+            <TabsContent value="medical-history">
+               <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+                  <CardHeader className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                     <div>
+                        <CardTitle className="text-xl font-extrabold text-slate-800">Lịch sử khám bệnh</CardTitle>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mt-1">Dữ liệu ghi chép từ các phiên khám</p>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <Input type="date" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="h-10 rounded-xl bg-white border-slate-200 text-xs font-bold" />
+                        <span className="text-slate-300">—</span>
+                        <Input type="date" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="h-10 rounded-xl bg-white border-slate-200 text-xs font-bold" />
+                     </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                     {isLoadingHistory ? (
+                        <div className="py-24 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
+                     ) : medicalHistory.length === 0 ? (
+                        <div className="py-24 text-center grayscale opacity-50">
+                           <FileSearch className="w-16 h-16 mx-auto mb-4 text-slate-200" />
+                           <p className="font-extrabold text-slate-400 uppercase tracking-widest text-xs">Chưa có lịch sử khám bệnh</p>
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                     ) : (
+                        <div className="divide-y divide-slate-50">
+                           {medicalHistory.map((visit) => (
+                              <div key={visit.id} className="p-8 hover:bg-slate-50/50 transition-all flex flex-col md:flex-row gap-6 relative group">
+                                 <div className="flex-shrink-0 flex flex-col items-center">
+                                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mb-2 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                                       <History className="w-7 h-7" />
+                                    </div>
+                                    <div className="text-[10px] font-black text-slate-400 uppercase">{format(new Date(visit.visitDate || visit.checkInTime), "dd/MM")}</div>
+                                 </div>
+                                 <div className="flex-1 space-y-4">
+                                    <div className="flex items-start justify-between">
+                                       <div>
+                                          <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors uppercase leading-tight">{visit.diagnosis || "Kiểm tra sức khỏe"}</h3>
+                                          <div className="flex items-center gap-3 mt-1 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                             <div className="flex items-center gap-1"><User className="w-3 h-3" /> BS. {visit.doctor?.fullName || "Chuyên khoa"}</div>
+                                             <div className="text-slate-200">|</div>
+                                             <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {format(new Date(visit.visitDate || visit.checkInTime), "HH:mm")}</div>
+                                          </div>
+                                       </div>
+                                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-3 py-1">Đã khám</Badge>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-2xl ring-1 ring-slate-100">
+                                       <div>
+                                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Triệu chứng</div>
+                                          <p className="text-sm text-slate-700 font-medium leading-relaxed">{visit.symptoms || "Không có ghi chép triệu chứng cụ thể"}</p>
+                                       </div>
+                                       <div>
+                                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Ghi chú bác sĩ</div>
+                                          <p className="text-sm text-slate-700 font-medium leading-relaxed">{visit.note || "N/A"}</p>
+                                       </div>
+                                    </div>
+                                    <div className="flex justify-end">
+                                       <Button variant="ghost" className="rounded-xl h-10 font-bold text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 transition-all" asChild>
+                                          <Link to={`/visits/${visit.id}`}>Xem báo cáo chi tiết <ChevronRight className="w-4 h-4 ml-1" /></Link>
+                                       </Button>
+                                    </div>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </CardContent>
+               </Card>
+            </TabsContent>
 
-          {/* Medications Tab */}
-          <TabsContent value="medications">
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-cyan-50/50 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <Pill className="h-5 w-5 text-cyan-600" />
-                  Current Medications
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {/* Current medications - will be fetched from prescriptions */}
-                  <div className="p-6 text-center text-gray-500">
-                    <p>Chưa có thông tin thuốc đang dùng</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {/* --- INVOICES TAB --- */}
+            <TabsContent value="invoices">
+               <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+                  <CardHeader className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
+                     <CardTitle className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                        <Receipt className="w-6 h-6 text-emerald-600" />
+                        Danh sách hóa đơn
+                     </CardTitle>
+                     {!isLoadingInvoices && <Badge className="bg-white border-slate-200 text-slate-600 font-bold">{invoices.length} bản ghi</Badge>}
+                  </CardHeader>
+                  <CardContent className="p-0">
+                     {isLoadingInvoices ? (
+                        <div className="py-24 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-600" /></div>
+                     ) : invoices.length === 0 ? (
+                        <div className="py-24 text-center opacity-40">
+                           <Receipt className="w-16 h-16 mx-auto mb-4 text-slate-200" />
+                           <p className="font-bold uppercase tracking-widest text-xs">Không tìm thấy hóa đơn</p>
+                        </div>
+                     ) : (
+                        <div className="overflow-x-auto">
+                           <table className="w-full text-left">
+                              <thead>
+                                 <tr className="bg-slate-50 border-b border-slate-100">
+                                    <th className="py-5 px-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Mã hóa đơn</th>
+                                    <th className="py-5 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Thời gian</th>
+                                    <th className="py-5 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Tổng tiền (VND)</th>
+                                    <th className="py-5 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
+                                    <th className="py-5 px-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Hành động</th>
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-50">
+                                 {invoices.map((inv) => (
+                                    <tr key={inv.id} className="group hover:bg-emerald-50/20 transition-all duration-200">
+                                       <td className="py-5 px-8 font-black text-slate-900 uppercase text-sm group-hover:text-emerald-700 transition-colors">{inv.invoiceCode}</td>
+                                       <td className="py-5 px-6 italic text-slate-500 text-xs font-bold">{format(new Date(inv.createdAt), "dd/MM/yyyy HH:mm")}</td>
+                                       <td className="py-5 px-6 text-right font-black text-slate-900 group-hover:scale-105 transition-transform origin-right">
+                                          {parseFloat(inv.totalAmount.toString()).toLocaleString("vi-VN")}
+                                       </td>
+                                       <td className="py-5 px-6 text-center">
+                                          {inv.paymentStatus === 'PAID' ? 
+                                             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold rounded-lg px-2.5 py-1">Hoàn tất</Badge> :
+                                             <Badge className="bg-rose-50 text-rose-700 border-rose-100 font-bold rounded-lg px-2.5 py-1">Chưa trả</Badge>
+                                          }
+                                       </td>
+                                       <td className="py-5 px-8 text-right">
+                                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-white hover:shadow-md transition-all group/btn" asChild>
+                                             <Link to={`/invoices/${inv.id}`}><ExternalLink className="w-4 h-4 text-slate-400 group-hover/btn:text-emerald-600 transition-all" /></Link>
+                                          </Button>
+                                       </td>
+                                    </tr>
+                                 ))}
+                              </tbody>
+                           </table>
+                        </div>
+                     )}
+                  </CardContent>
+               </Card>
+            </TabsContent>
 
-          {/* Lab Results Tab */}
-          <TabsContent value="lab-results">
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-teal-50/50 border-b">
-                <CardTitle>Kết quả xét nghiệm</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <div className="p-6 text-center text-gray-500">
-                    <p>Chưa có kết quả xét nghiệm</p>
-                    <p className="text-xs mt-2">Kết quả xét nghiệm sẽ được hiển thị khi có dữ liệu</p>
+            {/* Other tabs can follow same design language... */}
+            <TabsContent value="prescriptions">
+              <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+                <CardHeader className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
+                  <div className="flex flex-col">
+                    <CardTitle className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                       <Pill className="w-6 h-6 text-indigo-600" />
+                       Danh sách đơn thuốc
+                    </CardTitle>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mt-1">Lịch sử kê đơn và chỉ định thuốc</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  {!isLoadingPrescriptions && <Badge className="bg-white border-slate-200 text-slate-600 font-bold">{prescriptions.length} đơn thuốc</Badge>}
+                </CardHeader>
+                <CardContent className="p-0">
+                  {isLoadingPrescriptions ? (
+                     <div className="py-24 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
+                  ) : prescriptions.length === 0 ? (
+                     <div className="py-24 text-center opacity-40">
+                        <Pill className="w-16 h-16 mx-auto mb-4 text-slate-200" />
+                        <p className="font-bold uppercase tracking-widest text-xs">Chưa có đơn thuốc nào</p>
+                     </div>
+                  ) : (
+                     <div className="divide-y divide-slate-50">
+                        {prescriptions.map((pres) => (
+                           <div key={pres.id} className="p-8 hover:bg-slate-50/50 transition-all group">
+                              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                                       <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                       <div className="font-black text-slate-900 text-lg uppercase tracking-tight">{pres.prescriptionCode}</div>
+                                       <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2 mt-0.5">
+                                          <span>{format(new Date(pres.createdAt), "dd/MM/yyyy HH:mm")}</span>
+                                          <span className="text-slate-300">|</span>
+                                          <span>BS. {pres.doctor?.fullName || "N/A"}</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <Badge className={`
+                                    ${pres.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                                      pres.status === 'CANCELLED' ? 'bg-rose-50 text-rose-700 border-rose-100' : 
+                                      'bg-blue-50 text-blue-700 border-blue-100'} 
+                                    font-bold rounded-lg px-3 py-1 h-fit shadow-sm`}>
+                                    {pres.status === 'COMPLETED' ? 'Đã hoàn thành' : pres.status === 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'}
+                                 </Badge>
+                              </div>
+                              
+                              <div className="bg-slate-50/80 rounded-2xl p-6 ring-1 ring-slate-200/50">
+                                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                                    <Pill className="w-3.5 h-3.5" /> Chi tiết thuốc
+                                 </div>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {pres.medicines?.map((item) => (
+                                       <div key={item.id} className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                                          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 font-extrabold text-xs">
+                                             {item.quantity}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                             <div className="font-bold text-slate-800 text-sm leading-tight truncate" title={item.medicine?.name}>{item.medicine?.name}</div>
+                                             <div className="text-[10px] text-slate-500 mt-1 font-bold uppercase tracking-tight">
+                                                {item.dosage} • {item.frequency}
+                                             </div>
+                                          </div>
+                                       </div>
+                                    ))}
+                                 </div>
+                                 {pres.note && (
+                                    <div className="mt-4 pt-4 border-t border-slate-200/50">
+                                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-2">
+                                          <FileText className="w-3 h-3" /> Ghi chú
+                                       </div>
+                                       <p className="text-sm text-slate-700 font-medium italic">{pres.note}</p>
+                                    </div>
+                                 )}
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="lab-results" className="text-center py-24 text-slate-400 font-bold uppercase tracking-widest text-xs opacity-50 bg-white rounded-3xl ring-1 ring-slate-200 shadow-sm">
+               Kết quả xét nghiệm hiện chưa có bản ghi mới
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </ReceptionistSidebar>
   )

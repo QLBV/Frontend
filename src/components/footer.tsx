@@ -1,146 +1,91 @@
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react"
+import { Facebook, Instagram, Linkedin, Twitter, MapPin, Phone, Mail, Clock } from "lucide-react"
+import { Link } from "react-router-dom"
 
 export function Footer() {
   return (
-    <footer className="border-t bg-muted/30">
-      <div className="container mx-auto px-4 py-12 lg:py-16">
-        <div className="grid gap-8 lg:grid-cols-4">
-          <div>
-            <div className="mb-4 flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <svg className="h-6 w-6 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+    <footer className="bg-gray-50 pt-16 border-t border-gray-100">
+      <div className="container mx-auto px-4 pb-12">
+        <div className="grid gap-12 lg:grid-cols-4 md:grid-cols-2 opacity-0 animate-in fade-in slide-in-from-bottom-5 duration-700 fill-mode-forwards">
+          {/* Brand Column */}
+          <div className="space-y-6">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-md">
+                 <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                 </svg>
               </div>
-              <span className="text-xl font-semibold">HealthCare Plus</span>
-            </div>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Providing compassionate, comprehensive healthcare to our community for over 25 years.
+              <span className="text-xl font-bold text-gray-900">HealthCare</span>
+            </Link>
+            <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+              Hệ thống phòng khám đa khoa hiện đại, mang lại trải nghiệm y tế chuẩn quốc tế và chất lượng vượt trội cho người bệnh.
             </p>
             <div className="flex gap-3">
-              <a
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <Facebook className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <Linkedin className="h-4 w-4" />
-              </a>
+              {[Facebook, Twitter, Instagram].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
             </div>
           </div>
 
+          {/* Quick Links */}
           <div>
-            <h3 className="mb-4 font-semibold">Services</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Primary Care
+            <h3 className="font-bold text-gray-900 mb-6 text-base uppercase tracking-wide">Liên kết</h3>
+            <ul className="space-y-3">
+              {['Về chúng tôi', 'Chuyên khoa', 'Quy trình', 'Tin tức'].map((item) => (
+                <li key={item}>
+                  <a href="#" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                    {item}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <h3 className="font-bold text-gray-900 mb-6 text-base uppercase tracking-wide">Liên hệ</h3>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <span className="text-sm text-gray-500 w-full">
+                  123 Đường Số 1, Quận Thủ Đức, TP. Hồ Chí Minh
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-blue-600 shrink-0" />
+                <a href="tel:02835545555" className="text-sm text-gray-500 hover:text-blue-600">
+                  (028) 3554 5555
                 </a>
               </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Urgent Care
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Pediatrics
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Women's Health
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Telehealth
+              <li className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-blue-600 shrink-0" />
+                <a href="mailto:contact@healthcare.vn" className="text-sm text-gray-500 hover:text-blue-600">
+                  contact@healthcare.vn
                 </a>
               </li>
             </ul>
           </div>
 
-          <div>
-            <h3 className="mb-4 font-semibold">Company</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  About Us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Our Providers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="mb-4 font-semibold">Contact</h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <div className="font-medium text-foreground">Phone</div>
-                <a href="tel:5551234567" className="hover:text-foreground">
-                  (555) 123-4567
-                </a>
-              </li>
-              <li>
-                <div className="font-medium text-foreground">Email</div>
-                <a href="mailto:info@healthcareplus.com" className="hover:text-foreground">
-                  info@healthcareplus.com
-                </a>
-              </li>
-              <li>
-                <div className="font-medium text-foreground">Address</div>
-                <div>
-                  123 Medical Center Drive
-                  <br />
-                  City, State 12345
-                </div>
-              </li>
-            </ul>
+          {/* Working Hours */}
+           <div>
+            <h3 className="font-bold text-gray-900 mb-6 text-base uppercase tracking-wide">Vị trí</h3>
+            <div className="bg-gray-200 rounded-xl h-32 w-full flex items-center justify-center">
+               <MapPin className="text-gray-400 h-8 w-8" />
+            </div>
           </div>
         </div>
 
-        <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} HealthCare Plus. All rights reserved.</p>
+        <div className="mt-16 pt-8 border-t border-gray-200">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+             <p className="text-xs text-gray-500 text-center md:text-left">
+                &copy; {new Date().getFullYear()} HealthCare Plus. All rights reserved.
+             </p>
+          </div>
         </div>
       </div>
     </footer>

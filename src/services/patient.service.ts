@@ -37,10 +37,12 @@ export interface Visit {
   appointmentId: number
   patientId: number
   doctorId: number
-  visitDate: string
+  checkInTime: string
+  visitDate?: string // for backward compatibility if any
+  checkOutTime?: string
   symptoms?: string
   diagnosis?: string
-  notes?: string
+  note?: string
   status: string
   vitalSigns?: {
     bloodPressure?: string
@@ -49,13 +51,21 @@ export interface Visit {
     respiratoryRate?: number
     weight?: number
     height?: number
+    spo2?: number
   }
   createdAt: string
   updatedAt: string
   patient?: Patient
   doctor?: {
     id: number
-    fullName: string
+    fullName?: string
+    user?: {
+      fullName: string
+      email: string
+    }
+    specialty?: {
+      name: string
+    }
   }
 }
 
@@ -66,13 +76,23 @@ export interface Prescription {
   doctorId: number
   prescriptionCode: string
   status: string
-  notes?: string
+  note?: string
   createdAt: string
   updatedAt: string
   patient?: Patient
   doctor?: {
     id: number
-    fullName: string
+    fullName?: string
+    user?: {
+      id: number
+      fullName: string
+      email?: string
+      avatar?: string
+    }
+    specialty?: {
+      id: number
+      name: string
+    }
   }
   medicines?: Array<{
     id: number
@@ -105,6 +125,28 @@ export const setupPatientProfile = async (data: {
 }): Promise<Patient> => {
   const response = await api.post("/patients/setup", data)
   // Backend returns { success: true, data: {...} }
+  if (response.data.data) {
+    return response.data.data
+  }
+  return response.data
+}
+
+/**
+ * Create patient (Admin/Receptionist)
+ */
+export const createPatient = async (data: {
+  fullName: string
+  gender: "MALE" | "FEMALE" | "OTHER"
+  dateOfBirth: string
+  cccd: string
+  profiles: Array<{
+    type: "phone" | "email" | "address"
+    value: string
+    city?: string
+    ward?: string
+  }>
+}): Promise<Patient> => {
+  const response = await api.post("/patients", data)
   if (response.data.data) {
     return response.data.data
   }

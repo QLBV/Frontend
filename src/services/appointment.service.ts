@@ -13,6 +13,7 @@ export interface Appointment {
   createdAt: string
   updatedAt: string
   displayStatus?: string
+  slotNumber?: number
   patient?: {
     id: number
     fullName: string
@@ -25,6 +26,10 @@ export interface Appointment {
       fullName: string
       email: string
       avatar?: string
+    }
+    specialty?: {
+      id: number
+      name: string
     }
   }
   shift?: {

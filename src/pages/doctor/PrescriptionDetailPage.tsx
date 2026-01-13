@@ -655,39 +655,39 @@ export default function PrescriptionDetail() {
                 <div>
                   <p className="text-sm font-medium text-slate-600 mb-2">Chẩn đoán</p>
                   <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-slate-900 font-medium">{prescription.visit.diagnosis || 'Chưa có chẩn đoán'}</p>
+                    <p className="text-slate-900 font-medium">{prescription.visit?.diagnosis || 'Chưa có chẩn đoán'}</p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-600 mb-2">Triệu chứng</p>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-slate-900">{prescription.visit.symptoms || 'Chưa ghi nhận triệu chứng'}</p>
+                    <p className="text-slate-900">{prescription.visit?.symptoms || 'Chưa ghi nhận triệu chứng'}</p>
                   </div>
                 </div>
               </div>
               
-              {prescription.visit.vitalSigns && (
+              {prescription.visit?.vitalSigns && (
                 <div>
                   <p className="text-sm font-medium text-slate-600 mb-3">Chỉ số sinh hiệu</p>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="text-center p-3 bg-blue-50 rounded-lg">
                       <p className="text-xs text-slate-600 mb-1">Huyết áp</p>
-                      <p className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.bloodPressure}</p>
+                      <p className="text-lg font-bold text-slate-900">{prescription.visit?.vitalSigns?.bloodPressure}</p>
                       <p className="text-xs text-slate-500">mmHg</p>
                     </div>
                     <div className="text-center p-3 bg-green-50 rounded-lg">
                       <p className="text-xs text-slate-600 mb-1">Nhịp tim</p>
-                      <p className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.heartRate}</p>
+                      <p className="text-lg font-bold text-slate-900">{prescription.visit?.vitalSigns?.heartRate}</p>
                       <p className="text-xs text-slate-500">bpm</p>
                     </div>
                     <div className="text-center p-3 bg-orange-50 rounded-lg">
                       <p className="text-xs text-slate-600 mb-1">Nhiệt độ</p>
-                      <p className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.temperature}</p>
+                      <p className="text-lg font-bold text-slate-900">{prescription.visit?.vitalSigns?.temperature}</p>
                       <p className="text-xs text-slate-500">°C</p>
                     </div>
                     <div className="text-center p-3 bg-purple-50 rounded-lg">
                       <p className="text-xs text-slate-600 mb-1">Cân nặng</p>
-                      <p className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.weight}</p>
+                      <p className="text-lg font-bold text-slate-900">{prescription.visit?.vitalSigns?.weight}</p>
                       <p className="text-xs text-slate-500">kg</p>
                     </div>
                   </div>

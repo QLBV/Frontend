@@ -36,6 +36,7 @@ export interface UserProfile {
     yearsOfExperience: number;
     bio?: string;
     // New employee fields
+    description?: string;
     position?: string;
     degree?: string;
     phone?: string;

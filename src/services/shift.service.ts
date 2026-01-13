@@ -63,6 +63,7 @@ export interface DoctorOnDuty {
   doctorCode: string
   fullName: string
   specialty: string
+  avatar?: string
   shift: {
     id: number
     name: string

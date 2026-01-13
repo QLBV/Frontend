@@ -76,7 +76,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
         city: data.patient?.profiles?.find((p) => p.type === "address")?.city || "",
         ward: data.patient?.profiles?.find((p) => p.type === "address")?.ward || "",
         // Doctor specific
-        bio: data.doctor?.bio || "",
+        bio: data.doctor?.bio || data.doctor?.description || "",
         yearsOfExperience: data.doctor?.yearsOfExperience || 0,
         position: data.doctor?.position || "",
         degree: data.doctor?.degree || "",
@@ -89,7 +89,8 @@ export default function ProfilePage({ role }: ProfilePageProps) {
       const avatarUrl = data.avatar || docWithAvatar?.avatar || data.patient?.avatar;
       
       if (avatarUrl) {
-        setAvatarPreview(`http://localhost:5000${avatarUrl}`);
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '');
+        setAvatarPreview(`${baseUrl}${avatarUrl}?t=${new Date().getTime()}`);
       }
     } catch (error) {
       // Safe error handling to avoid lint 'any' errors
@@ -167,6 +168,10 @@ export default function ProfilePage({ role }: ProfilePageProps) {
 
       toast.success("Cập nhật thông tin thành công");
       setAvatarFile(null); // Reset avatar file after successful upload
+      // Optional: Wait a bit before redirecting so user sees the success toast
+      setTimeout(() => {
+        window.history.back();
+      }, 1000);
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || "Không thể cập nhật thông tin");

@@ -103,9 +103,9 @@ export default function UpdateHealthInfoPage() {
       setSaving(true)
       
       const updateData = {
-        bloodType: bloodType || null,
-        height: height ? parseFloat(height) : null,
-        weight: weight ? parseFloat(weight) : null,
+        bloodType: bloodType || undefined,
+        height: height ? parseFloat(height) : undefined,
+        weight: weight ? parseFloat(weight) : undefined,
         chronicDiseases: chronicDiseases,
         allergies: allergies,
       }
@@ -154,9 +154,28 @@ export default function UpdateHealthInfoPage() {
   return (
     <PatientSidebar userName={user?.fullName || user?.email} patientCode={patient?.patientCode || ""}>
       <div className="p-8 max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Cập nhật thông tin sức khỏe</h1>
-          <p className="text-gray-500">Cập nhật thông tin sức khỏe của bạn</p>
+        {/* Premium Gradient Header */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 p-8 shadow-xl mb-8">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+          </div>
+          
+          <div className="relative z-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-2 flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                    <Activity className="w-8 h-8 text-white" />
+                  </div>
+                  Cập Nhật Sức Khỏe
+                </h1>
+                <p className="text-blue-100 text-lg max-w-xl">
+                  Cập nhật các chỉ số cơ thể, nhóm máu và thông tin y tế quan trọng khác để bác sĩ nắm bắt tình hình sức khỏe của bạn tốt hơn.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Card>

@@ -264,11 +264,11 @@ export default function UserDetailPage() {
                   <div className="relative">
                     <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-2xl overflow-hidden">
                       {user.avatar ? (
-                        <img 
-                          src={user.avatar} 
-                          alt={user.fullName}
-                          className="w-20 h-20 rounded-full object-cover"
-                        />
+                          <img 
+                            src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${user.avatar}`} 
+                            alt={user.fullName}
+                            className="w-20 h-20 rounded-full object-cover"
+                          />
                       ) : (
                         user.fullName.charAt(0).toUpperCase()
                       )}

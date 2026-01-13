@@ -45,7 +45,7 @@ const AdminSidebar = ({ children, userName }: AdminSidebarProps) => {
     {
       title: "Report",
       items: [
-        { label: "Báo cáo tài chính", href: "/admin/reports/financial", icon: <Banknote size={24} strokeWidth={2.5} /> },
+        { label: "Financial", href: "/admin/reports/financial", icon: <Banknote size={24} strokeWidth={2.5} /> },
         { label: "Appointments", href: "/admin/reports/appointments", icon: <CalendarDays size={24} strokeWidth={2.5} /> },
         { label: "Patients", href: "/admin/reports/patient-statistics", icon: <UsersRound size={24} strokeWidth={2.5} /> },
         { label: "Medicines", href: "/admin/reports/medicines", icon: <ClipboardList size={24} strokeWidth={2.5} /> }
@@ -58,13 +58,6 @@ const AdminSidebar = ({ children, userName }: AdminSidebarProps) => {
         { label: "Employee", href: "/admin/employees", icon: <UsersRound size={24} strokeWidth={2.5} /> },
         { label: "Patients", href: "/admin/patients", icon: <UserCheck size={24} strokeWidth={2.5} /> }
 
-      ]
-    },
-    {
-      title: "System",
-      items: [
-        { label: "Audit Logs", href: "/admin/audit-logs", icon: <FileText size={24} strokeWidth={2.5} /> },
-        { label: "Permissions", href: "/admin/permissions", icon: <Component size={24} strokeWidth={2.5} /> }
       ]
     },
     {

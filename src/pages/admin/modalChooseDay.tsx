@@ -8,10 +8,11 @@ import { toast } from "sonner"
 interface Doctor {
   id: number
   doctorCode: string
-  user: {
+    user: {
     id: number
     fullName: string
     email: string
+    avatar?: string
   }
   specialty: {
     id: number
@@ -85,7 +86,11 @@ export default function ScheduleEventModal({
         toast.success('Đã phân công bác sĩ thành công')
         
         // Call onSuccess to trigger refetch in parent component
-        onSuccess()
+        onSuccess({
+          doctorId: doctor.id,
+          shiftId: selectedShiftId,
+          workDate: selectedDate
+        })
         
         onClose() // Đóng modal
       } else {
@@ -104,29 +109,41 @@ export default function ScheduleEventModal({
     return `${shift.startTime} - ${shift.endTime}`
   }
 
+  const getAvatarInitials = (fullName: string) => {
+    return fullName
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
   return (
-    <div className="fixed inset-0 bg-white bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+    <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6 w-96 max-w-md mx-4 animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Schedule Event</h3>
-          <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>✕</Button>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Schedule Event</h3>
+          <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0" onClick={onClose} disabled={loading}>✕</Button>
         </div>
 
         {/* Doctor info */}
-        <div className="mb-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+        <div className="mb-6">
+          <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
             <div
-              className={`w-10 h-10 rounded-full ${getAvatarColor(
+              className={`w-12 h-12 rounded-full ${getAvatarColor(
                 doctor.user.fullName
-              )} flex items-center justify-center text-white font-semibold text-sm`}
+              )} flex items-center justify-center text-white font-bold text-base overflow-hidden shrink-0 shadow-sm`}
             >
-              {doctor.user.fullName
-                .split(' ')
-                .map(name => name.charAt(0))
-                .join('')
-                .toUpperCase()
-                .slice(0, 2)}
+              {doctor.user.avatar ? (
+                <img 
+                  src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${doctor.user.avatar}`} 
+                  alt={doctor.user.fullName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                getAvatarInitials(doctor.user.fullName)
+              )}
             </div>
             <div>
               <div className="font-medium">{doctor.user.fullName}</div>

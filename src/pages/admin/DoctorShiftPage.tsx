@@ -13,15 +13,21 @@ import api from "@/lib/api"
 import { 
   Calendar, 
   Clock, 
-  User, 
   ChevronLeft,
   ChevronRight,
   X,
   AlertTriangle,
   CheckCircle,
   Users,
-  Stethoscope
+  Stethoscope,
+  Ban
 } from "lucide-react"
+
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
 
 // Doctor Shift interface
 interface DoctorShift {
@@ -37,6 +43,7 @@ interface DoctorShift {
     user: {
       fullName: string
       email: string
+      avatar?: string
     }
     specialty: {
       name: string
@@ -320,62 +327,80 @@ export default function DoctorShiftPage() {
                         {shiftsForDay.length > 0 ? (
                           <div className="space-y-2">
                             {shiftsForDay.map(shift => (
-                              <div
-                                key={shift.id}
-                                className={`p-3 rounded-lg border-l-4 relative group shadow-sm hover:shadow-md transition-all ${
-                                  shift.status === 'ACTIVE' ? 'bg-green-50 border-green-500 hover:bg-green-100/50' :
-                                  shift.status === 'CANCELLED' ? 'bg-red-50 border-red-500 hover:bg-red-100/50' :
-                                  'bg-yellow-50 border-yellow-500 hover:bg-yellow-100/50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <User className="w-4 h-4 text-slate-600" />
-                                      <span className="font-semibold text-sm text-slate-900">{shift.doctor.user.fullName}</span>
-                                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                        {shift.doctor.specialty.name}
-                                      </Badge>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                                      <Clock className="w-3 h-3" />
-                                      <span className="font-medium">{shift.shift.name}: {shift.shift.startTime} - {shift.shift.endTime}</span>
-                                    </div>
-                                    {shift.cancelReason && (
-                                      <div className="text-xs text-red-600 mt-1 bg-red-50 p-1 rounded">
-                                        <strong>Lý do hủy:</strong> {shift.cancelReason}
+                              <HoverCard openDelay={100} closeDelay={100}>
+                                <HoverCardTrigger asChild>
+                                  <div
+                                    className={`p-3 rounded-lg border-l-4 relative group shadow-sm hover:shadow-md transition-all cursor-pointer ${
+                                      shift.status === 'ACTIVE' ? 'bg-green-50 border-green-500 hover:bg-green-100/50' :
+                                      shift.status === 'CANCELLED' ? 'bg-red-50 border-red-500 hover:bg-red-100/50' :
+                                      'bg-yellow-50 border-yellow-500 hover:bg-yellow-100/50'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] text-blue-700 font-bold overflow-hidden shrink-0 border border-blue-200">
+                                            {shift.doctor.user.avatar ? (
+                                              <img 
+                                                src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${shift.doctor.user.avatar}`} 
+                                                alt={shift.doctor.user.fullName}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              shift.doctor.user.fullName.charAt(0).toUpperCase()
+                                            )}
+                                          </div>
+                                          <span className="font-semibold text-sm text-slate-900 line-clamp-1">{shift.doctor.user.fullName}</span>
+                                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap hidden sm:inline-flex">
+                                            {shift.doctor.specialty.name}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                                          <Clock className="w-3 h-3 flex-shrink-0" />
+                                          <span className="font-medium whitespace-nowrap">{shift.shift.name}: {shift.shift.startTime} - {shift.shift.endTime}</span>
+                                        </div>
+                                        {shift.cancelReason && (
+                                          <div className="text-xs text-red-600 mt-1 bg-red-50 p-1 rounded">
+                                            <strong>Lý do hủy:</strong> {shift.cancelReason}
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
+                                      
+                                      <div className="flex items-center gap-2 pl-2">
+                                        <Badge 
+                                          variant="outline" 
+                                          className={`text-xs font-medium whitespace-nowrap ${
+                                            shift.status === 'ACTIVE' ? 'bg-green-100 text-green-800 border-green-300' :
+                                            shift.status === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-300' :
+                                            'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                          }`}
+                                        >
+                                          {shift.status === 'ACTIVE' ? 'Đang hoạt động' :
+                                           shift.status === 'CANCELLED' ? 'Đã hủy' : 'Đã thay thế'}
+                                        </Badge>
+                                      </div>
+                                    </div>
                                   </div>
-                                  
-                                  <div className="flex items-center gap-2">
-                                    <Badge 
-                                      variant="outline" 
-                                      className={`text-xs font-medium ${
-                                        shift.status === 'ACTIVE' ? 'bg-green-100 text-green-800 border-green-300' :
-                                        shift.status === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-300' :
-                                        'bg-yellow-100 text-yellow-800 border-yellow-300'
-                                      }`}
-                                    >
-                                      {shift.status === 'ACTIVE' ? 'Đang hoạt động' :
-                                       shift.status === 'CANCELLED' ? 'Đã hủy' : 'Đã thay thế'}
-                                    </Badge>
-                                    
-                                    {/* Cancel button for active shifts */}
-                                    {shift.status === 'ACTIVE' && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0 hover:bg-red-100 hover:text-red-700"
-                                        onClick={() => handleCancelShift(shift)}
-                                        title="Hủy ca trực"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
+                                </HoverCardTrigger>
+                                <HoverCardContent align="start" className="w-56 p-2 bg-white/95 backdrop-blur-sm shadow-xl border-slate-100">
+                                   <div className="flex flex-col gap-1">
+                                      {shift.status === 'ACTIVE' ? (
+                                        <Button 
+                                          variant="ghost" 
+                                          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 font-medium" 
+                                          onClick={() => handleCancelShift(shift)}
+                                        >
+                                          <Ban className="w-4 h-4 mr-2" />
+                                          Hủy ca trực
+                                        </Button>
+                                      ) : (
+                                        <div className="text-center text-xs text-slate-400 py-2 italic">
+                                          Không có thao tác khả dụng
+                                        </div>
+                                      )}
+                                   </div>
+                                </HoverCardContent>
+                              </HoverCard>
                             ))}
                           </div>
                         ) : (

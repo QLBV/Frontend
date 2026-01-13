@@ -8,6 +8,9 @@ import {
   Plus,
   Ban,
   UserCheck,
+  Users,
+  Sparkles,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +41,7 @@ export default function EmployeeListPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
+  const [totalPages, setTotalPages] = useState(1)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -52,12 +56,16 @@ export default function EmployeeListPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true)
-      const params: any = {}
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage
+      }
       if (searchQuery) params.search = searchQuery
       if (roleFilter !== "all") params.roleId = parseInt(roleFilter)
       
-      const data = await EmployeeService.getEmployees(params)
+      const { employees: data, pagination } = await EmployeeService.getEmployees(params)
       setEmployees(data)
+      setTotalPages(pagination?.totalPages || 1)
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Không thể tải danh sách nhân viên")
     } finally {
@@ -67,12 +75,16 @@ export default function EmployeeListPage() {
 
   useEffect(() => {
     fetchEmployees()
-  }, [roleFilter])
+  }, [roleFilter, currentPage])
 
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchEmployees()
+      if (currentPage === 1) {
+        fetchEmployees()
+      } else {
+        setCurrentPage(1)
+      }
     }, 500)
     return () => clearTimeout(timer)
   }, [searchQuery])
@@ -103,10 +115,8 @@ export default function EmployeeListPage() {
     )
   }
 
-  // Pagination logic
-  const totalPages = Math.ceil(employees.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentEmployees = employees.slice(startIndex, startIndex + itemsPerPage)
+  // Use server-side data directly
+  const currentEmployees = employees
 
   const handleDeleteClick = (employee: Employee) => {
     setEmployeeToDelete(employee)
@@ -152,150 +162,272 @@ export default function EmployeeListPage() {
 
   return (
     <AdminSidebar>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
-            <p className="text-gray-500 mt-1">Manage all clinic staff (Doctors, Receptionists, Admins)</p>
-          </div>
-          <Button onClick={() => navigate("/admin/users/add")} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Employee
-          </Button>
+      <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
+        {/* Advanced Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/30 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[10%] right-[-5%] w-[35%] h-[35%] bg-purple-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="md:col-span-2 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              placeholder="Search by name, email, or code..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Roles" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="1">Admin</SelectItem>
-              <SelectItem value="4">Doctor</SelectItem>
-              <SelectItem value="2">Receptionist</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="relative p-6 lg:p-10">
+          <div className="max-w-[1700px] mx-auto space-y-8">
+            
+            {/* Premium Compact Header */}
+            <div className="relative overflow-hidden rounded-[32px] bg-white/40 backdrop-blur-3xl p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
+              {/* Animated Background Gradients */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-indigo-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-purple-400/5 rounded-full blur-[50px] -translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '3s' }} />
+              </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50/50">
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Employee</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Code</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Role</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Phone</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Position</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Status</th>
-                    <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="py-20 text-center">
-                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 mb-2" />
-                        <p className="text-gray-500">Loading employees...</p>
-                      </td>
-                    </tr>
-                  ) : currentEmployees.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-20 text-center text-gray-500">
-                        No employees found
-                      </td>
-                    </tr>
-                  ) : (
-                    currentEmployees.map((emp) => (
-                      <tr key={emp.id} className="border-b hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-                              {emp.user.fullName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{emp.user.fullName}</div>
-                              <div className="text-xs text-gray-500">{emp.user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 font-mono text-sm">{emp.employeeCode}</td>
-                        <td className="py-4 px-6">{getRoleBadge(emp.user.role)}</td>
-                        <td className="py-4 px-6 text-sm text-gray-600">{emp.phone || "-"}</td>
-                        <td className="py-4 px-6 text-sm text-gray-600">{emp.position || "-"}</td>
-                        <td className="py-4 px-6">{getStatusBadge(emp.isActive)}</td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-blue-600"
-                              onClick={() => navigate(`/admin/employees/${emp.id}`)}
-                            >
-                              Details
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={emp.isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}
-                              onClick={() => handleToggleStatusClick(emp)}
-                              title={emp.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
-                            >
-                              {emp.isActive ? <Ban className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDeleteClick(emp)}
-                              title="Xóa vĩnh viễn"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <div className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                <div className="flex items-center gap-5">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full scale-110 group-hover:scale-125 transition-transform duration-500" />
+                    <div className="relative h-14 w-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/40 transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
+                      <Users className="h-7 w-7 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Badge className="bg-indigo-500/10 text-indigo-600 border-0 font-black uppercase tracking-[0.2em] text-[9px] px-2.5 py-0.5 rounded-full animate-in fade-in slide-in-from-left-4 duration-700">
+                        <Sparkles className="w-3 h-3 mr-1 text-indigo-500 animate-spin-slow" />
+                        Workforce Hub
+                      </Badge>
+                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-200/50">
+                        <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping" />
+                        Active
+                      </div>
+                    </div>
+                    <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+                      Quản lý Nhân viên
+                    </h1>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
+                      Đội ngũ y bác sĩ, lễ tân & khối văn phòng
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Stats & Actions */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="bg-white/60 backdrop-blur-xl rounded-[20px] px-5 py-2.5 border border-white/60 shadow-sm group/stat hover:bg-indigo-50/50 transition-all duration-500">
+                    <p className="text-indigo-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 leading-none">
+                      <Users className="w-2.5 h-2.5" /> Tổng nhân sự
+                    </p>
+                    <p className="text-[15px] font-black text-slate-800 leading-none tabular-nums">
+                      {employees.length} <span className="text-[10px] text-slate-400 font-bold ml-0.5">Staffs</span>
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => navigate("/admin/users/add")}
+                    className="bg-slate-900 hover:bg-slate-800 text-white h-12 px-6 rounded-2xl font-black shadow-lg shadow-slate-200 transition-all hover:scale-105 active:scale-95"
+                  >
+                    <Plus className="h-4 w-4 mr-2 stroke-[3]" />
+                    Thêm nhân viên
+                  </Button>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Premium Filter Bar */}
+            <div className="bg-white/60 backdrop-blur-xl p-3 rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[300px]">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <Input
+                    placeholder="Tìm kiếm nhân viên (Tên, Email, Mã NV)..."
+                    className="w-full h-12 pl-11 pr-4 bg-white border border-slate-100 focus:bg-white focus:border-indigo-500/50 rounded-2xl transition-all text-sm font-medium shadow-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="flex items-center gap-3 px-4 h-12 bg-white rounded-2xl border border-slate-100 shadow-sm min-w-[170px]">
+                  <Filter className="w-4 h-4 text-indigo-500" />
+                  <Select value={roleFilter} onValueChange={(val) => { setRoleFilter(val); setCurrentPage(1); }}>
+                    <SelectTrigger className="border-0 p-0 h-auto focus:ring-0 shadow-none font-black text-slate-700">
+                      <SelectValue placeholder="Tất cả vai trò" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                      <SelectItem value="all" className="font-bold py-3 rounded-xl">Tất cả vai trò</SelectItem>
+                      <SelectItem value="1" className="font-bold py-3 rounded-xl">Admin</SelectItem>
+                      <SelectItem value="4" className="font-bold py-3 rounded-xl">Doctor</SelectItem>
+                      <SelectItem value="2" className="font-bold py-3 rounded-xl">Receptionist</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Premium Employee Table */}
+            <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-slate-100 bg-slate-50/50">
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Nhân viên</th>
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Mã NV</th>
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Vai trò</th>
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Điện thoại</th>
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Chức vụ</th>
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Trạng thái</th>
+                        <th className="text-left py-5 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr>
+                          <td colSpan={7} className="py-20 text-center">
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-indigo-600 mb-2" />
+                            <p className="text-slate-500 font-medium">Đang tải danh sách...</p>
+                          </td>
+                        </tr>
+                      ) : currentEmployees.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-20 text-center text-slate-500">
+                            Không tìm thấy nhân viên
+                          </td>
+                        </tr>
+                      ) : (
+                        currentEmployees.map((emp) => (
+                          <tr key={emp.id} className="border-b border-slate-100 hover:bg-indigo-50/30 transition-colors duration-200 group">
+                            <td className="py-5 px-8">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-sm overflow-hidden shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-3 duration-300">
+                                  {(emp.user?.avatar || emp.avatar) ? (
+                                    <img 
+                                      src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${emp.user?.avatar || emp.avatar}`} 
+                                      alt={emp.user?.fullName}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    emp.user?.fullName?.charAt(0).toUpperCase() || 'EMP'
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-black text-slate-900 text-sm">{emp.user.fullName}</div>
+                                  <div className="text-xs text-slate-500 font-medium mt-0.5">{emp.user.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-5 px-8 font-mono text-sm font-bold text-slate-700">{emp.employeeCode}</td>
+                            <td className="py-5 px-8">{getRoleBadge(emp.user.role)}</td>
+                            <td className="py-5 px-8 text-sm text-slate-600 font-medium">{emp.phone || "-"}</td>
+                            <td className="py-5 px-8 text-sm text-slate-600 font-medium">{emp.position || "-"}</td>
+                            <td className="py-5 px-8">{getStatusBadge(emp.isActive)}</td>
+                            <td className="py-5 px-8">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-9 px-3 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-xl transition-all font-bold text-xs"
+                                  onClick={() => navigate(`/admin/employees/${emp.id}`)}
+                                >
+                                  Chi tiết
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-9 w-9 p-0 rounded-xl transition-all ${emp.isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}`}
+                                  onClick={() => handleToggleStatusClick(emp)}
+                                  title={emp.isActive ? "Vô hiệu hóa" : "Kích hoạt"}
+                                >
+                                  {emp.isActive ? <Ban className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all"
+                                  onClick={() => handleDeleteClick(emp)}
+                                  title="Xóa vĩnh viễn"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
-            >
-              Previous
-            </Button>
-            <div className="text-sm text-gray-500">
-              Page {currentPage} of {totalPages}
+        {employees.length > 0 && (
+          <div className="flex items-center justify-between mt-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-slate-500 font-medium whitespace-nowrap">
+                Hiển thị trang <span className="text-slate-900 font-bold">{currentPage}</span> / <span className="text-slate-900 font-bold">{totalPages}</span>
+              </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
-            >
-              Next
-            </Button>
+            
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(currentPage - 1)}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Show first, last, current, and pages around current
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "ghost"}
+                      size="sm"
+                      className={`h-9 w-9 p-0 rounded-lg font-bold text-sm transition-all ${
+                        currentPage === page 
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700 hover:scale-105" 
+                          : "text-slate-600 hover:bg-slate-100 hover:text-blue-600"
+                      }`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                }
+                
+                // Show ellipses
+                if (
+                  (page === 2 && currentPage > 3) || 
+                  (page === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return <span key={page} className="px-1 text-slate-400 font-bold">...</span>;
+                }
+                
+                return null;
+              })}
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Button>
+            </div>
           </div>
         )}
 
@@ -370,6 +502,8 @@ export default function EmployeeListPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </div>
+        </div>
       </div>
     </AdminSidebar>
   )

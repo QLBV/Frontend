@@ -13,6 +13,7 @@ export interface PrescriptionDetail {
   dosageAfternoon: number
   dosageEvening: number
   instruction: string
+  days?: number
   createdAt: string
   updatedAt: string
 }
@@ -22,7 +23,7 @@ export interface Patient {
   fullName: string
   dateOfBirth: string
   gender: "MALE" | "FEMALE" | "OTHER"
-  phoneNumber: string
+  phoneNumber?: string
   email?: string
   address?: string
   cccd?: string
@@ -65,7 +66,7 @@ export interface Prescription {
   // Related data
   patient: Patient
   doctor: Doctor
-  visit: Visit
+  visit?: Visit
   details: PrescriptionDetail[]
 }
 

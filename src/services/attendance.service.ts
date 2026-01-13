@@ -20,6 +20,7 @@ export interface Attendance {
     fullName: string
     email: string
     role?: string
+    avatar?: string
   }
   date: string
   checkInTime?: string

@@ -582,113 +582,263 @@ export default function InvoiceDetailPage() {
           </Card>
         )}
 
-        {/* Edit Dialog */}
+        {/* Edit Dialog - Premium Design */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Chỉnh sửa hóa đơn</DialogTitle>
-              <DialogDescription>Cập nhật giảm giá và ghi chú cho hóa đơn</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="discount">Giảm giá (VND)</Label>
-                <Input
-                  id="discount"
-                  type="number"
-                  min="0"
-                  value={editDiscount}
-                  onChange={(e) => setEditDiscount(e.target.value)}
-                  placeholder="0"
-                />
+          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
+            {/* Premium Gradient Header */}
+            <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-6 text-white">
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
               </div>
-              <div>
-                <Label htmlFor="note">Ghi chú</Label>
+              <div className="relative flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <Edit className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-bold text-white mb-1">Chỉnh sửa hóa đơn</DialogTitle>
+                  <DialogDescription className="text-blue-100 text-sm">
+                    Cập nhật giảm giá và ghi chú cho hóa đơn #{invoice?.invoiceCode}
+                  </DialogDescription>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-6 space-y-5 bg-gradient-to-b from-slate-50/50 to-white">
+              {/* Discount Field */}
+              <div className="space-y-2">
+                <Label htmlFor="discount" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-emerald-500" />
+                  Giảm giá (VND)
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="discount"
+                    type="number"
+                    min="0"
+                    value={editDiscount}
+                    onChange={(e) => setEditDiscount(e.target.value)}
+                    placeholder="0"
+                    className="h-12 pl-4 pr-16 text-lg font-semibold border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl bg-white shadow-sm"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">VND</span>
+                </div>
+                <p className="text-xs text-slate-500 pl-1">Nhập số tiền giảm giá áp dụng cho hóa đơn</p>
+              </div>
+
+              {/* Note Field */}
+              <div className="space-y-2">
+                <Label htmlFor="note" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-amber-500" />
+                  Ghi chú
+                </Label>
                 <Textarea
                   id="note"
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
-                  placeholder="Nhập ghi chú..."
+                  placeholder="Nhập ghi chú cho hóa đơn..."
                   rows={4}
+                  className="resize-none border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl bg-white shadow-sm"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Hủy
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsEditDialogOpen(false)}
+                className="h-10 px-5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl font-medium"
+              >
+                Hủy bỏ
               </Button>
-              <Button onClick={handleUpdateInvoice} disabled={isLoadingUpdate}>
-                {isLoadingUpdate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Lưu
+              <Button 
+                onClick={handleUpdateInvoice} 
+                disabled={isLoadingUpdate}
+                className="h-10 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {isLoadingUpdate ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Lưu thay đổi
+                  </>
+                )}
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
 
-        {/* Payment Dialog */}
+        {/* Payment Dialog - Premium Design */}
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Thêm thanh toán</DialogTitle>
-              <DialogDescription>
-                Số tiền còn lại: {remainingAmount.toLocaleString("vi-VN")} VND
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="paymentAmount">Số tiền (VND) *</Label>
-                <Input
-                  id="paymentAmount"
-                  type="number"
-                  min="0.01"
-                  max={remainingAmount}
-                  step="0.01"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder="Nhập số tiền"
-                />
+          <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
+            {/* Premium Gradient Header */}
+            <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-6 text-white">
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
               </div>
-              <div>
-                <Label htmlFor="paymentMethod">Phương thức thanh toán *</Label>
+              <div className="relative flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <DialogTitle className="text-xl font-bold text-white mb-1">Thêm thanh toán</DialogTitle>
+                  <DialogDescription className="text-emerald-100 text-sm">
+                    Hóa đơn #{invoice?.invoiceCode}
+                  </DialogDescription>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-emerald-200 uppercase tracking-wider font-medium">Còn lại</p>
+                  <p className="text-2xl font-bold text-white">{remainingAmount.toLocaleString("vi-VN")} <span className="text-sm font-normal text-emerald-200">VND</span></p>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-6 space-y-5 bg-gradient-to-b from-slate-50/50 to-white">
+              {/* Amount Field */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentAmount" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-emerald-500" />
+                  Số tiền thanh toán <span className="text-rose-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="paymentAmount"
+                    type="number"
+                    min="0.01"
+                    max={remainingAmount}
+                    step="0.01"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    placeholder="Nhập số tiền"
+                    className="h-12 pl-4 pr-16 text-lg font-semibold border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 rounded-xl bg-white shadow-sm"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">VND</span>
+                </div>
+                {/* Quick amount buttons */}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentAmount(remainingAmount.toString())}
+                    className="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-200"
+                  >
+                    Thanh toán hết
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentAmount((remainingAmount / 2).toFixed(0))}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                  >
+                    50%
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment Method Field */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-blue-500" />
+                  Phương thức thanh toán <span className="text-rose-500">*</span>
+                </Label>
                 <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 rounded-xl bg-white shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={PaymentMethod.CASH}>Tiền mặt</SelectItem>
-                    <SelectItem value={PaymentMethod.BANK_TRANSFER}>Chuyển khoản</SelectItem>
-                    <SelectItem value={PaymentMethod.QR_CODE}>QR Code</SelectItem>
+                  <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                    <SelectItem value={PaymentMethod.CASH} className="py-3 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                          <DollarSign className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <span className="font-medium">Tiền mặt</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value={PaymentMethod.BANK_TRANSFER} className="py-3 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <Activity className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="font-medium">Chuyển khoản ngân hàng</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value={PaymentMethod.QR_CODE} className="py-3 cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-violet-600" />
+                        </div>
+                        <span className="font-medium">QR Code</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="paymentReference">Mã tham chiếu</Label>
+
+              {/* Reference Field */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentReference" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-violet-500" />
+                  Mã tham chiếu
+                </Label>
                 <Input
                   id="paymentReference"
                   value={paymentReference}
                   onChange={(e) => setPaymentReference(e.target.value)}
-                  placeholder="Nhập mã tham chiếu (nếu có)"
+                  placeholder="Mã giao dịch, số hóa đơn..."
+                  className="h-11 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 rounded-xl bg-white shadow-sm"
                 />
               </div>
-              <div>
-                <Label htmlFor="paymentNote">Ghi chú</Label>
+
+              {/* Note Field */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentNote" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-amber-500" />
+                  Ghi chú
+                </Label>
                 <Textarea
                   id="paymentNote"
                   value={paymentNote}
                   onChange={(e) => setPaymentNote(e.target.value)}
-                  placeholder="Nhập ghi chú..."
+                  placeholder="Thêm ghi chú cho giao dịch..."
                   rows={3}
+                  className="resize-none border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 rounded-xl bg-white shadow-sm"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-                Hủy
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsPaymentDialogOpen(false)}
+                className="h-10 px-5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl font-medium"
+              >
+                Hủy bỏ
               </Button>
-              <Button onClick={handleAddPayment} disabled={isLoadingPayment}>
-                {isLoadingPayment ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Xác nhận
+              <Button 
+                onClick={handleAddPayment} 
+                disabled={isLoadingPayment || !paymentAmount || parseFloat(paymentAmount) <= 0}
+                className="h-10 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+              >
+                {isLoadingPayment ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Xác nhận thanh toán
+                  </>
+                )}
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -18,6 +18,16 @@ export interface IAppointment {
   date: string;
   time: string;
   doctor: IDoctor;
+  patient: {
+    id: number;
+    name: string;
+    code: string;
+    gender?: string;
+    dob?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+  };
   type: string;
   location: string;
   reason: string;

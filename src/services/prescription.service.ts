@@ -51,6 +51,7 @@ export class PrescriptionService {
       dosageNoon: number
       dosageAfternoon: number
       dosageEvening: number
+      days?: number
       instruction: string
     }>
     note?: string
@@ -72,6 +73,7 @@ export class PrescriptionService {
       dosageNoon: number
       dosageAfternoon: number
       dosageEvening: number
+      days?: number
       instruction: string
     }>
     note?: string
@@ -88,6 +90,16 @@ export class PrescriptionService {
   static async cancelPrescription(id: number): Promise<PrescriptionApiResponse> {
     try {
       const response = await api.post(`/prescriptions/${id}/cancel`)
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  }
+
+  // Lock prescription (make non-editable)
+  static async lockPrescription(id: number): Promise<PrescriptionApiResponse> {
+    try {
+      const response = await api.post(`/prescriptions/${id}/lock`)
       return response.data
     } catch (error: any) {
       throw error
@@ -128,6 +140,22 @@ export class PrescriptionService {
 
   // Transform API data to match frontend interface
   static transformPrescriptionData(apiData: any): Prescription {
+    // Get patient phone from profiles or direct field
+    const patientPhone = apiData.patient?.user?.profiles?.find((p: any) => p.type === 'phone')?.value 
+      || apiData.patient?.phone 
+      || apiData.patient?.phoneNumber 
+      || undefined
+
+    // Get patient email from user or direct field  
+    const patientEmail = apiData.patient?.user?.email 
+      || apiData.patient?.email 
+      || undefined
+
+    // Get doctor phone from profiles or direct field
+    const doctorPhone = apiData.doctor?.user?.profiles?.find((p: any) => p.type === 'phone')?.value
+      || apiData.doctor?.phoneNumber
+      || undefined
+
     return {
       id: apiData.id,
       prescriptionCode: apiData.prescriptionCode,
@@ -139,38 +167,38 @@ export class PrescriptionService {
       note: apiData.note,
       createdAt: apiData.createdAt,
       updatedAt: apiData.updatedAt,
-      // These would need to be populated from separate API calls or included in the response
       patient: {
         id: apiData.patientId,
-        fullName: apiData.patient?.fullName || "Đang tải...",
-        dateOfBirth: apiData.patient?.dateOfBirth || "1990-01-01",
+        fullName: apiData.patient?.user?.fullName || apiData.patient?.fullName || "N/A",
+        dateOfBirth: apiData.patient?.dateOfBirth || "",
         gender: apiData.patient?.gender || "MALE",
-        phoneNumber: apiData.patient?.phoneNumber || "Đang tải...",
-        email: apiData.patient?.email || "Đang tải...",
-        address: apiData.patient?.address || "Đang tải...",
-        cccd: apiData.patient?.cccd || "Đang tải..."
+        phoneNumber: patientPhone,
+        email: patientEmail,
+        address: apiData.patient?.address || undefined,
+        cccd: apiData.patient?.cccd || undefined
       },
       doctor: {
         id: apiData.doctorId,
-        fullName: apiData.doctor?.fullName || "Đang tải...",
-        specialty: apiData.doctor?.specialty || "Đang tải...",
-        degree: apiData.doctor?.degree || "Đang tải...",
-        position: apiData.doctor?.position || "Đang tải...",
-        phoneNumber: apiData.doctor?.phoneNumber || "Đang tải...",
-        email: apiData.doctor?.email || "Đang tải..."
+        // Don't include "BS." here - let UI handle the prefix
+        fullName: apiData.doctor?.user?.fullName || apiData.doctor?.fullName || "N/A",
+        specialty: apiData.doctor?.specialty?.name || (typeof apiData.doctor?.specialty === 'string' ? apiData.doctor?.specialty : ""),
+        degree: apiData.doctor?.degree || undefined,
+        position: apiData.doctor?.position || undefined,
+        phoneNumber: doctorPhone,
+        email: apiData.doctor?.user?.email || apiData.doctor?.email || undefined
       },
-      visit: {
+      visit: apiData.visit ? {
         id: apiData.visitId,
         checkInTime: apiData.visit?.checkInTime || apiData.createdAt,
-        diagnosis: apiData.visit?.diagnosis || "Đang tải...",
-        symptoms: apiData.visit?.symptoms || "Đang tải...",
-        vitalSigns: {
-          bloodPressure: apiData.visit?.vitalSigns?.bloodPressure || "Đang tải...",
-          heartRate: apiData.visit?.vitalSigns?.heartRate || "Đang tải...",
-          temperature: apiData.visit?.vitalSigns?.temperature || "Đang tải...",
-          weight: apiData.visit?.vitalSigns?.weight || "Đang tải..."
-        }
-      },
+        diagnosis: apiData.visit?.diagnosis || undefined,
+        symptoms: apiData.visit?.symptoms || undefined,
+        vitalSigns: apiData.visit?.vitalSigns ? {
+          bloodPressure: apiData.visit.vitalSigns.bloodPressure || undefined,
+          heartRate: apiData.visit.vitalSigns.heartRate || undefined,
+          temperature: apiData.visit.vitalSigns.temperature || undefined,
+          weight: apiData.visit.vitalSigns.weight || undefined
+        } : undefined
+      } : undefined,
       details: apiData.details?.map((detail: any) => ({
         id: detail.id,
         prescriptionId: detail.prescriptionId,
@@ -183,6 +211,7 @@ export class PrescriptionService {
         dosageNoon: parseFloat(detail.dosageNoon || 0),
         dosageAfternoon: parseFloat(detail.dosageAfternoon || 0),
         dosageEvening: parseFloat(detail.dosageEvening || 0),
+        days: detail.days,
         instruction: detail.instruction,
         createdAt: detail.createdAt,
         updatedAt: detail.updatedAt

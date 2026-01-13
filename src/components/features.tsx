@@ -1,70 +1,88 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, Clock, Heart, Shield, Stethoscope, Users } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { DoctorService, type PublicDoctor } from "@/services/doctor.service"
 
 export function Features() {
-  const features = [
-    {
-      icon: Stethoscope,
-      title: "Primary Care",
-      description:
-        "Comprehensive primary care services for patients of all ages, from preventive care to chronic disease management.",
-    },
-    {
-      icon: Heart,
-      title: "Specialized Care",
-      description:
-        "Access to board-certified specialists across multiple disciplines to address your specific health needs.",
-    },
-    {
-      icon: Clock,
-      title: "Convenient Hours",
-      description:
-        "Extended hours including evenings and weekends to fit your busy schedule. Same-day appointments available.",
-    },
-    {
-      icon: Shield,
-      title: "Insurance Partners",
-      description: "We work with most major insurance providers to make quality healthcare accessible and affordable.",
-    },
-    {
-      icon: Activity,
-      title: "Advanced Technology",
-      description:
-        "State-of-the-art medical equipment and electronic health records for accurate diagnosis and treatment.",
-    },
-    {
-      icon: Users,
-      title: "Family Medicine",
-      description: "Continuity of care for the whole family with providers who understand your unique health history.",
-    },
-  ]
+  const [doctors, setDoctors] = useState<PublicDoctor[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const data = await DoctorService.getPublicDoctors()
+        // Take only 3 for display
+        setDoctors(data.slice(0, 3))
+      } catch (error) {
+        console.error("Failed to fetch doctors:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDoctors()
+  }, [])
 
   return (
-    <section id="services" className="py-20 lg:py-32">
+    <section id="doctors" className="py-20 lg:py-24 bg-blue-50/30">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 text-balance text-3xl font-bold lg:text-4xl">Comprehensive Healthcare Services</h2>
-          <p className="mx-auto max-w-2xl text-pretty text-lg text-muted-foreground">
-            From routine checkups to specialized treatments, we provide the full spectrum of healthcare services to keep
-            you and your family healthy.
-          </p>
+        {/* Header with Navigation */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="max-w-2xl">
+            <span className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-3 block">ĐỘI NGŨ CỦA CHÚNG TÔI</span>
+            <h2 className="text-3xl font-serif font-bold lg:text-4xl text-gray-900 mb-4">Đội ngũ bác sĩ tiêu biểu</h2>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" className="rounded-full h-10 w-10 border-gray-200 hover:bg-white hover:border-gray-300">
+               <ChevronLeft className="h-5 w-5 text-gray-600" />
+            </Button>
+            <Button variant="outline" size="icon" className="rounded-full h-10 w-10 border-transparent bg-blue-600 text-white hover:bg-blue-700">
+               <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
-            <Card key={index} className="border-2 transition-all hover:border-primary/50 hover:shadow-lg">
-              <CardHeader>
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <feature.icon className="h-6 w-6 text-primary" />
+        {loading ? (
+           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map(i => (
+                 <div key={i} className="h-96 rounded-2xl bg-gray-200 animate-pulse"></div>
+              ))}
+           </div>
+        ) : (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {doctors.map((doctor, index) => (
+              <Card key={index} className="group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white rounded-2xl">
+                <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                  <img
+                    src={doctor.user?.avatar || "https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"}
+                    alt={doctor.user?.fullName}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
+                    }}
+                  />
                 </div>
-                <CardTitle>{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">{feature.description}</CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="p-6">
+                  <h3 className="mb-1 text-lg font-bold text-gray-900">{doctor.user?.fullName}</h3>
+                  <p className="text-blue-600 text-sm font-semibold mb-3">
+                     {doctor.specialty?.name || "Bác sĩ Chuyên khoa"}
+                  </p>
+                  <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-2">
+                    {doctor.position || "Chuyên gia y tế tận tâm"}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {doctors.length === 0 && (
+               <div className="col-span-full text-center py-10 text-gray-500">
+                  Chưa có thông tin bác sĩ.
+               </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   )

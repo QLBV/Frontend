@@ -11,46 +11,91 @@ export function AppointmentStats({ stats }: { stats: StatsProps }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       <StatCard 
-        label="Total Appointments" 
+        label="Tổng lịch hẹn" 
         value={stats.total} 
-        icon={<Calendar className="w-5 h-5 text-indigo-600" />} 
-        bgColor="bg-indigo-50"
-        borderColor="border-indigo-100"
+        icon={<Calendar className="w-6 h-6" />} 
+        colorScheme="indigo"
       />
       <StatCard 
-        label="Upcoming" 
+        label="Sắp tới" 
         value={stats.upcoming} 
-        icon={<Clock className="w-5 h-5 text-blue-600" />} 
-        bgColor="bg-blue-50"
-        borderColor="border-blue-100"
+        icon={<Clock className="w-6 h-6" />} 
+        colorScheme="blue"
       />
       <StatCard 
-        label="Completed" 
+        label="Đã hoàn thành" 
         value={stats.completed} 
-        icon={<CheckCircle className="w-5 h-5 text-emerald-600" />} 
-        bgColor="bg-emerald-50"
-        borderColor="border-emerald-100"
+        icon={<CheckCircle className="w-6 h-6" />} 
+        colorScheme="emerald"
       />
       <StatCard 
-        label="Cancelled" 
+        label="Đã hủy" 
         value={stats.cancelled} 
-        icon={<XCircle className="w-5 h-5 text-red-600" />} 
-        bgColor="bg-red-50"
-        borderColor="border-red-100"
+        icon={<XCircle className="w-6 h-6" />} 
+        colorScheme="red"
       />
     </div>
   );
 }
 
 // --- INTERNAL COMPONENT ---
-function StatCard({ label, value, icon, bgColor, borderColor }: any) {
+type ColorScheme = "indigo" | "blue" | "emerald" | "red";
+
+const colorStyles: Record<ColorScheme, { bg: string; iconBg: string; iconColor: string; shadow: string; border: string }> = {
+  indigo: {
+    bg: "bg-gradient-to-br from-indigo-50 to-indigo-100/50",
+    iconBg: "bg-gradient-to-br from-indigo-500 to-indigo-600",
+    iconColor: "text-white",
+    shadow: "shadow-lg shadow-indigo-100",
+    border: "border-indigo-200/50"
+  },
+  blue: {
+    bg: "bg-gradient-to-br from-blue-50 to-blue-100/50",
+    iconBg: "bg-gradient-to-br from-blue-500 to-blue-600",
+    iconColor: "text-white",
+    shadow: "shadow-lg shadow-blue-100",
+    border: "border-blue-200/50"
+  },
+  emerald: {
+    bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/50",
+    iconBg: "bg-gradient-to-br from-emerald-500 to-emerald-600",
+    iconColor: "text-white",
+    shadow: "shadow-lg shadow-emerald-100",
+    border: "border-emerald-200/50"
+  },
+  red: {
+    bg: "bg-gradient-to-br from-red-50 to-red-100/50",
+    iconBg: "bg-gradient-to-br from-red-500 to-red-600",
+    iconColor: "text-white",
+    shadow: "shadow-lg shadow-red-100",
+    border: "border-red-200/50"
+  }
+};
+
+interface StatCardProps {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  colorScheme: ColorScheme;
+}
+
+function StatCard({ label, value, icon, colorScheme }: StatCardProps) {
+  const styles = colorStyles[colorScheme];
+  
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-xl p-4 flex items-center justify-between shadow-sm`}>
+    <div className={`
+      ${styles.bg} ${styles.shadow} ${styles.border}
+      border rounded-2xl p-5 
+      flex items-center justify-between 
+      transition-all duration-300 
+      hover:scale-[1.02] hover:shadow-xl
+      cursor-default
+    `}>
       <div>
-        <p className="text-sm font-medium text-slate-600">{label}</p>
-        <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
+        <p className="text-sm font-medium text-slate-500 mb-1">{label}</p>
+        <p className="text-3xl font-bold text-slate-900">{value}</p>
       </div>
-      <div className="p-2 bg-white rounded-full shadow-sm">
+      <div className={`${styles.iconBg} ${styles.iconColor} p-3 rounded-xl shadow-md`}>
         {icon}
       </div>
     </div>

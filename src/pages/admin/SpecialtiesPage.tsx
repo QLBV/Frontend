@@ -10,12 +10,15 @@ import {
   Loader2,
   Users,
   Eye,
-  Activity,
   Stethoscope,
-  MoreHorizontal,
   Save,
-  FileText
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Filter,
+  ArrowRight,
 } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -36,18 +39,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import AdminSidebar from "@/components/sidebar/admin"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { SpecialtyService, type Specialty, type Doctor } from "@/services/specialty.service"
 import api from "@/lib/api"
 
@@ -55,6 +58,7 @@ export default function SpecialtiesPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -65,22 +69,54 @@ export default function SpecialtiesPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalSpecialties, setTotalSpecialties] = useState(0)
+  const itemsPerPage = 8
 
   // Form states
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    isActive: true,
   })
 
   useEffect(() => {
     fetchSpecialties()
-  }, [])
+  }, [currentPage])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage === 1) {
+        fetchSpecialties()
+      } else {
+        setCurrentPage(1)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery, statusFilter])
 
   const fetchSpecialties = async () => {
     try {
       setIsLoading(true)
-      const data = await SpecialtyService.getSpecialties()
-      setSpecialties(data)
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchQuery.trim() || undefined,
+      }
+
+      if (statusFilter === "active") {
+        params.active = true
+      } else if (statusFilter === "inactive") {
+        params.active = false
+      }
+
+      const response = await SpecialtyService.getSpecialties(params)
+      setSpecialties(response.specialties)
+      setTotalPages(response.totalPages)
+      setTotalSpecialties(response.total)
     } catch (error: any) {
       if (error.response?.status === 429) {
         toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
@@ -109,7 +145,7 @@ export default function SpecialtiesPage() {
   }
 
   const handleCreate = () => {
-    setFormData({ name: "", description: "" })
+    setFormData({ name: "", description: "", isActive: true })
     setIsCreateDialogOpen(true)
   }
 
@@ -118,6 +154,7 @@ export default function SpecialtiesPage() {
     setFormData({
       name: specialty.name,
       description: specialty.description || "",
+      isActive: specialty.isActive !== false, // Use true by default
     })
     setIsEditDialogOpen(true)
   }
@@ -144,12 +181,13 @@ export default function SpecialtiesPage() {
       const response = await api.post("/specialties", {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
+        isActive: formData.isActive,
       })
 
       if (response.data.success) {
         toast.success("Tạo chuyên khoa thành công!")
         setIsCreateDialogOpen(false)
-        setFormData({ name: "", description: "" })
+        setFormData({ name: "", description: "", isActive: true })
         fetchSpecialties()
       } else {
         throw new Error(response.data.message || "Không thể tạo chuyên khoa")
@@ -176,13 +214,14 @@ export default function SpecialtiesPage() {
       const response = await api.put(`/specialties/${selectedSpecialty.id}`, {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
+        isActive: formData.isActive,
       })
 
       if (response.data.success) {
         toast.success("Cập nhật chuyên khoa thành công!")
         setIsEditDialogOpen(false)
         setSelectedSpecialty(null)
-        setFormData({ name: "", description: "" })
+        setFormData({ name: "", description: "", isActive: true })
         fetchSpecialties()
       } else {
         throw new Error(response.data.message || "Không thể cập nhật chuyên khoa")
@@ -224,100 +263,96 @@ export default function SpecialtiesPage() {
     }
   }
 
-  const filteredSpecialties = specialties.filter((specialty) =>
-    specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (specialty.description || "").toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // No local filtering needed anymore as it's handled on server
+  const displaySpecialties = specialties
 
   return (
     <AdminSidebar>
-      <div className="min-h-screen bg-slate-50/50">
-        <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+      <div className="relative p-6 lg:p-8 min-h-screen bg-slate-50/50">
+        <div className="max-w-[1600px] mx-auto space-y-6">
           
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Quản lý Chuyên khoa</h1>
-              <p className="text-slate-500 mt-1">Thiết lập và quản lý các chuyên khoa y tế</p>
+          {/* Simplified Header Section */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <Stethoscope className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Quản lý Chuyên khoa
+                </h1>
+                <p className="text-slate-500 text-sm font-medium">
+                  Thiết lập danh mục chuyên môn và đội ngũ bác sĩ.
+                </p>
+              </div>
             </div>
-            <Button 
-              onClick={handleCreate} 
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm chuyên khoa
-            </Button>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                <div className="mr-3 p-1.5 bg-indigo-50 rounded-lg">
+                  <Users className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider leading-none mb-1">Tổng quy mô</p>
+                  <p className="text-lg font-bold text-slate-900 leading-none tabular-nums">{totalSpecialties}</p>
+                </div>
+              </div>
+              <Button 
+                onClick={handleCreate}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white h-11 px-6 rounded-xl font-bold transition-all shadow-md shadow-indigo-100"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm chuyên khoa
+              </Button>
+            </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-sm bg-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Stethoscope className="w-16 h-16 text-indigo-600" />
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-50 rounded-xl">
-                    <Stethoscope className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Tổng chuyên khoa</p>
-                    <h3 className="text-2xl font-bold text-slate-900">{specialties.length}</h3>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card className="border-0 shadow-sm bg-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Users className="w-16 h-16 text-blue-600" />
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 rounded-xl">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Bác sĩ chuyên khoa</p>
-                    <h3 className="text-2xl font-bold text-slate-900">--</h3>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card className="border-0 shadow-sm bg-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Activity className="w-16 h-16 text-emerald-600" />
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-50 rounded-xl">
-                    <Activity className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Đang hoạt động</p>
-                    <h3 className="text-2xl font-bold text-slate-900">{specialties.length}</h3>
-                  </div>
+          {/* Compact Filter Bar */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
+            <div className="flex flex-col xl:flex-row gap-3">
+              {/* Search input with focus effects */}
+              <div className="relative flex-grow group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 </div>
-              </CardContent>
-            </Card>
+                <Input
+                  placeholder="Tìm kiếm chuyên khoa (Tên, Mô tả)..."
+                  className="w-full h-11 pl-11 pr-4 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl transition-all text-sm font-medium"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* Filters grid */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                    <Filter className="w-3.5 h-3.5 text-slate-400" />
+                    <SelectValue placeholder="Trạng thái" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="all" className="text-sm font-medium py-2.5">Tất cả trạng thái</SelectItem>
+                    <SelectItem value="active" className="text-sm font-medium py-2.5 text-emerald-600">Đang hoạt động</SelectItem>
+                    <SelectItem value="inactive" className="text-sm font-medium py-2.5 text-slate-500">Ngưng hoạt động</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           {/* Specialties List */}
-          <Card className="border border-slate-200 shadow-sm overflow-hidden bg-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-4">
+          <Card className="border-0 shadow-lg overflow-hidden bg-white rounded-[24px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-4 border-b border-slate-50">
               <div className="flex flex-col gap-1">
-                <CardTitle className="text-lg font-semibold text-slate-900">Danh sách chuyên khoa</CardTitle>
-                <CardDescription>Các chuyên khoa hiện có trong hệ thống</CardDescription>
-              </div>
-              <div className="relative w-full max-w-xs">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Tìm kiếm..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                />
+                <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                  Danh sách chuyên khoa
+                </CardTitle>
+                <CardDescription className="font-medium text-xs">Các chuyên khoa hiện có trong hệ thống ({totalSpecialties})</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -325,175 +360,272 @@ export default function SpecialtiesPage() {
                 <div className="flex items-center justify-center py-20">
                   <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
                 </div>
-              ) : filteredSpecialties.length === 0 ? (
+              ) : displaySpecialties.length === 0 ? (
                 <div className="text-center py-20 bg-slate-50/50">
                   <Stethoscope className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-slate-900">Không tìm thấy chuyên khoa</h3>
                   <p className="text-slate-500 mt-1">Thử thay đổi từ khóa tìm kiếm hoặc thêm mới</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader className="bg-slate-50/50">
-                    <TableRow>
-                      <TableHead className="w-[100px] pl-6">ID</TableHead>
-                      <TableHead>Tên chuyên khoa</TableHead>
-                      <TableHead>Mô tả</TableHead>
-                      <TableHead className="text-right pr-6">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSpecialties.map((specialty) => (
-                      <TableRow key={specialty.id} className="group hover:bg-slate-50/50 transition-colors">
-                        <TableCell className="pl-6 font-mono text-xs text-slate-500">#{specialty.id}</TableCell>
-                        <TableCell>
-                          <div className="font-medium text-slate-900">{specialty.name}</div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-slate-600 text-sm line-clamp-1 max-w-[400px]">
-                            {specialty.description || <span className="text-slate-400 italic">Không có mô tả</span>}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right pr-6">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleViewDoctors(specialty)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  <span>Xem bác sĩ</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleEdit(specialty)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  <span>Chỉnh sửa</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDelete(specialty)} className="text-red-600 focus:text-red-600">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Xóa chuyên khoa</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  <Table>
+                    <TableHeader className="bg-slate-50/50 border-y border-slate-100">
+                        <TableRow>
+                          <TableHead className="w-[100px] pl-6 font-bold uppercase text-[11px] tracking-widest text-slate-500">ID</TableHead>
+                          <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Tên chuyên khoa</TableHead>
+                          <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Mô tả</TableHead>
+                          <TableHead className="font-bold uppercase text-[11px] tracking-widest text-slate-500">Trạng thái</TableHead>
+                          <TableHead className="text-right pr-6 font-bold uppercase text-[11px] tracking-widest text-slate-500">Thao tác</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                    <TableBody>
+                      {displaySpecialties.map((specialty) => (
+                        <TableRow key={specialty.id} className="group hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0">
+                          <TableCell className="pl-6 font-mono text-xs text-slate-400 font-bold">#{specialty.id}</TableCell>
+                          <TableCell>
+                            <div className="font-bold text-slate-900">{specialty.name}</div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-slate-600 text-sm font-medium line-clamp-1 max-w-[300px]">
+                              {specialty.description || <span className="text-slate-300 italic text-xs">Không có mô tả</span>}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {specialty.isActive !== false ? (
+                              <Badge className="bg-emerald-100/50 text-emerald-700 border-emerald-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                                <span className="h-1 w-1 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
+                                HOẠT ĐỘNG
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-slate-100 text-slate-500 border-slate-200 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                                <span className="h-1 w-1 rounded-full bg-slate-400 mr-1.5" />
+                                TẠM NGƯNG
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right pr-6">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                onClick={() => handleViewDoctors(specialty)}
+                                title="Xem bác sĩ"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                onClick={() => handleEdit(specialty)}
+                                title="Chỉnh sửa"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                onClick={() => handleDelete(specialty)}
+                                title="Xóa chuyên khoa"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination Control */}
+                  <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                        Trang <span className="text-slate-900 font-bold">{currentPage}</span> / {totalPages}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 || 
+                          page === totalPages || 
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "ghost"}
+                              size="sm"
+                              className={`h-8 w-8 p-0 rounded-lg font-bold text-xs transition-all ${
+                                currentPage === page 
+                                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 hover:bg-indigo-700" 
+                                  : "text-slate-600 hover:bg-white hover:text-indigo-600 border border-transparent hover:border-slate-200"
+                              }`}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        }
+                        if (
+                          (page === 2 && currentPage > 3) || 
+                          (page === totalPages - 1 && currentPage < totalPages - 2)
+                        ) {
+                          return <span key={page} className="px-1 text-slate-400 font-bold text-[10px]">...</span>;
+                        }
+                        return null;
+                      })}
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
 
           {/* Create Dialog */}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Thêm chuyên khoa mới</DialogTitle>
-                <DialogDescription>
-                  Nhập thông tin chuyên khoa y tế mới vào hệ thống
+            <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border shadow-lg rounded-xl bg-white">
+              <div className="p-6 border-b border-slate-100">
+                <DialogTitle className="text-xl font-bold text-slate-900">
+                  Thêm chuyên khoa mới
+                </DialogTitle>
+                <DialogDescription className="text-slate-500 text-sm mt-1">
+                  Nhập thông tin để đăng ký chuyên khoa mới vào hệ thống.
                 </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="create-name">Tên chuyên khoa <span className="text-red-500">*</span></Label>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="create-name" className="text-sm font-semibold text-slate-700">Tên chuyên khoa <span className="text-red-500">*</span></Label>
                   <Input
                     id="create-name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ví dụ: Nội khoa, Ngoại khoa..."
+                    placeholder="VD: Tim mạch, Nhi khoa..."
+                    className="h-10 rounded-lg border-slate-200 focus:border-indigo-500 transition-all"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-description">Mô tả</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="create-description" className="text-sm font-semibold text-slate-700">Mô tả</Label>
                   <Textarea
                     id="create-description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Mô tả chi tiết về chuyên khoa..."
-                    rows={4}
+                    placeholder="Mô tả ngắn gọn về chuyên khoa..."
+                    rows={3}
+                    className="rounded-lg border-slate-200 focus:border-indigo-500 transition-all resize-none"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold text-slate-900">Trạng thái hoạt động</Label>
+                    <p className="text-[11px] text-slate-500">Cho phép bệnh nhân chọn chuyên khoa này</p>
+                  </div>
+                  <Switch
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                   />
                 </div>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={isCreating}
+
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <Button variant="ghost" onClick={() => setIsCreateDialogOpen(false)} disabled={isCreating} className="rounded-lg h-9">
+                  Hủy
+                </Button>
+                <Button 
+                  onClick={handleCreateSubmit} 
+                  disabled={isCreating} 
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg h-9 px-6 font-bold shadow-sm"
                 >
-                  Hủy bỏ
+                  {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Lưu dữ liệu"}
                 </Button>
-                <Button onClick={handleCreateSubmit} disabled={isCreating} className="bg-indigo-600 hover:bg-indigo-700">
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Đang xử lý...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Lưu chuyên khoa
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
 
           {/* Edit Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Chỉnh sửa chuyên khoa</DialogTitle>
-                <DialogDescription>
-                  Cập nhật thông tin cho chuyên khoa {selectedSpecialty?.name}
+            <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border shadow-lg rounded-xl bg-white">
+              <div className="p-6 border-b border-slate-100">
+                <DialogTitle className="text-xl font-bold text-slate-900">
+                  Chỉnh sửa chuyên khoa
+                </DialogTitle>
+                <DialogDescription className="text-slate-500 text-sm mt-1">
+                  Cập nhật các thông số cho chuyên khoa <span className="font-bold text-slate-900">{selectedSpecialty?.name}</span>.
                 </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Tên chuyên khoa <span className="text-red-500">*</span></Label>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-name" className="text-sm font-semibold text-slate-700">Tên chuyên khoa <span className="text-red-500">*</span></Label>
                   <Input
                     id="edit-name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ví dụ: Nội khoa, Ngoại khoa..."
+                    placeholder="VD: Tim mạch, Nhi khoa..."
+                    className="h-10 rounded-lg border-slate-200 focus:border-indigo-500 transition-all"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-description">Mô tả</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-description" className="text-sm font-semibold text-slate-700">Mô tả</Label>
                   <Textarea
                     id="edit-description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Mô tả chi tiết về chuyên khoa..."
-                    rows={4}
+                    placeholder="Mô tả ngắn gọn về chuyên khoa..."
+                    rows={3}
+                    className="rounded-lg border-slate-200 focus:border-indigo-500 transition-all resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold text-slate-900">Trạng thái hoạt động</Label>
+                    <p className="text-[11px] text-slate-500">Bật/tắt khả năng tiếp nhận bệnh nhân mới</p>
+                  </div>
+                  <Switch
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                   />
                 </div>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                  disabled={isUpdating}
+
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} disabled={isUpdating} className="rounded-lg h-9">
+                  Hủy
+                </Button>
+                <Button 
+                  onClick={handleUpdateSubmit} 
+                  disabled={isUpdating} 
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg h-9 px-6 font-bold shadow-sm"
                 >
-                  Hủy bỏ
+                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cập nhật thay đổi"}
                 </Button>
-                <Button onClick={handleUpdateSubmit} disabled={isUpdating} className="bg-indigo-600 hover:bg-indigo-700">
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Đang xử lý...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Lưu thay đổi
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
 
@@ -537,67 +669,76 @@ export default function SpecialtiesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* View Doctors Dialog */}
           <Dialog open={isViewDoctorsDialogOpen} onOpenChange={setIsViewDoctorsDialogOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Stethoscope className="w-5 h-5 text-indigo-600" />
-                  Bác sĩ thuộc chuyên khoa: {selectedSpecialty?.name}
-                </DialogTitle>
-                <DialogDescription>
-                  Danh sách nhân sự y tế đang hoạt động trong chuyên khoa này
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                {isLoadingDoctors ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                  </div>
-                ) : doctorsBySpecialty.length === 0 ? (
-                  <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                    <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 text-sm">Chưa có bác sĩ nào trong chuyên khoa này</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {doctorsBySpecialty.map((doctor) => (
-                      <Card key={doctor.id} className="border border-slate-200 hover:border-indigo-200 transition-colors">
-                        <CardContent className="p-3 flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm shrink-0">
-                            {doctor.user?.fullName?.charAt(0) || "D"}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm text-slate-900 truncate" title={doctor.user?.fullName}>
-                              {doctor.user?.fullName || "N/A"}
-                            </p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              <Badge variant="secondary" className="text-[10px] px-1 h-5 bg-slate-100 text-slate-600 font-mono">
-                                {doctor.doctorCode}
+            <DialogContent className="max-w-md p-0 overflow-hidden border shadow-lg rounded-xl bg-white">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-xl font-bold text-slate-900">
+                    Bác sĩ chuyên khoa {selectedSpecialty?.name}
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-500 text-sm">
+                    Danh sách các bác sĩ thuộc chuyên khoa này
+                  </DialogDescription>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="max-h-[400px] overflow-y-auto pr-2">
+                  {isLoadingDoctors ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-slate-400 mb-2" />
+                      <p className="text-sm text-slate-500">Đang tải danh sách...</p>
+                    </div>
+                  ) : doctorsBySpecialty.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
+                      <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                      <h3 className="text-base font-semibold text-slate-900 mb-1">Chưa có bác sĩ nào</h3>
+                      <p className="text-slate-500 text-sm">
+                        Chuyên khoa này hiện chưa được gán bác sĩ nào.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {doctorsBySpecialty.map((doctor) => (
+                        <div key={doctor.id} className="flex items-center gap-4 p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors">
+                          <Avatar className="h-12 w-12 border border-slate-200">
+                            <AvatarImage src={doctor.user?.avatar} />
+                            <AvatarFallback className="bg-slate-100 text-slate-600 font-bold uppercase">
+                              {doctor.user?.fullName?.charAt(0) || "D"}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex-grow min-w-0">
+                            <h4 className="text-sm font-bold text-slate-900 truncate">
+                              {doctor.user?.fullName || "Chưa cập nhật"}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-slate-500 font-medium">{doctor.doctorCode}</span>
+                              <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[10px] font-bold rounded px-1.5 py-0">
+                                {doctor.degree || "Bác sĩ"}
                               </Badge>
-                              {doctor.degree && (
-                                <Badge variant="outline" className="text-[10px] px-1 h-5 border-indigo-200 text-indigo-700">
-                                  {doctor.degree}
-                                </Badge>
-                              )}
                             </div>
                           </div>
-                          <Link to={`/admin/doctors/${doctor.id}`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600">
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                          
+                          <Link to={`/admin/doctors?search=${doctor.doctorCode}`} className="h-8 w-8 hover:bg-indigo-50 flex items-center justify-center rounded-full text-indigo-600 transition-colors">
+                            <ArrowRight className="h-4 w-4" />
                           </Link>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsViewDoctorsDialogOpen(false)}>
-                  Đóng
+
+              <div className="p-6 bg-white flex justify-end border-t border-slate-100">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsViewDoctorsDialogOpen(false)}
+                  className="rounded-xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50"
+                >
+                  Close Panel
                 </Button>
-              </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

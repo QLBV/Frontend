@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import DoctorSidebar from '@/components/sidebar/doctor'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,8 +20,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Stethoscope,
-  X
+  X,
+  Search,
+  RefreshCw
 } from "lucide-react"
+import { ShiftService, type Shift as ShiftTemplate } from "@/services/shift.service"
 
 // Doctor Shift interface
 interface DoctorShift {
@@ -67,13 +71,9 @@ interface PersonalSchedule {
   description: string
   status: "active" | "completed" | "cancelled"
   patientName?: string
+  shiftId?: number
 }
 
-const timeSlots = [
-  { label: "MORNING", time: "8 AM - 12 PM", icon: "🌅" },
-  { label: "AFTERNOON", time: "1 PM - 5 PM", icon: "☀️" },
-  { label: "EVENING", time: "6 PM - 10 PM", icon: "🌙" }
-]
 
 export default function DoctorShiftPage() {
   const { user, loading: authLoading } = useAuth()
@@ -86,7 +86,20 @@ export default function DoctorShiftPage() {
   const [doctorShifts, setDoctorShifts] = useState<DoctorShift[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [personalSchedule, setPersonalSchedule] = useState<PersonalSchedule[]>([])
+  const [shifts, setShifts] = useState<ShiftTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  
+  // Filtered schedule
+  const filteredPersonalSchedule = useMemo(() => {
+    if (!searchQuery.trim()) return personalSchedule
+    const query = searchQuery.toLowerCase()
+    return personalSchedule.filter(item => 
+      item.title.toLowerCase().includes(query) ||
+      item.description.toLowerCase().includes(query) ||
+      (item.patientName && item.patientName.toLowerCase().includes(query))
+    )
+  }, [personalSchedule, searchQuery])
   
   // Cancel shift modal states
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -173,6 +186,16 @@ export default function DoctorShiftPage() {
         toast.error(err.response?.data?.message || 'Không thể tải danh sách lịch hẹn')
       }
 
+      // Fetch shift templates
+      try {
+        const templates = await ShiftService.getShifts()
+        // Sort by start time
+        templates.sort((a, b) => a.startTime.localeCompare(b.startTime))
+        setShifts(templates)
+      } catch (err) {
+        console.error('Failed to fetch shift templates:', err)
+      }
+
       // Create combined personal schedule with fetched data
       createPersonalSchedule(fetchedShifts, fetchedAppointments)
       
@@ -214,7 +237,8 @@ export default function DoctorShiftPage() {
         title: `Ca trực ${shift.shift.name}`,
         description: `Ca ${shift.shift.name.toLowerCase()}`,
         status: shift.status === "ACTIVE" ? "active" : 
-               shift.status === "CANCELLED" ? "cancelled" : "active"
+               shift.status === "CANCELLED" ? "cancelled" : "active",
+        shiftId: shift.shift.id
       })
       
       console.log(`🔍 Added shift to schedule:`, {
@@ -264,54 +288,46 @@ export default function DoctorShiftPage() {
 
   // Get schedule for selected date
   const getScheduleForDate = (date: string) => {
-    const filtered = personalSchedule.filter(item => {
+    const filtered = filteredPersonalSchedule.filter(item => {
       // Normalize dates for comparison (handle both YYYY-MM-DD formats)
       const itemDate = item.date ? item.date.split('T')[0] : ''
       const targetDate = date ? date.split('T')[0] : ''
       return itemDate === targetDate
     })
-    console.log(`🔍 getScheduleForDate for ${date}:`, filtered.length, filtered)
     return filtered
   }
 
-  // Get schedule for time slot
-  const getScheduleForTimeSlot = (date: string, slotIndex: number) => {
+  // Get schedule for shift template
+  const getScheduleForShift = (date: string, shiftTemplate: ShiftTemplate) => {
     const scheduleForDay = getScheduleForDate(date)
-    console.log(`🔍 getScheduleForTimeSlot for date ${date}, slotIndex ${slotIndex}, scheduleForDay:`, scheduleForDay)
     
     return scheduleForDay.filter(item => {
-      // Parse time - could be "07:00 - 12:00" or "14:30"
-      let startHour = 0
-      let endHour = 0
+      // If it's a shift, match by ID
+      if (item.type === 'shift' && item.shiftId) {
+        return item.shiftId === shiftTemplate.id
+      }
+      
+      // If no shiftId or it's an appointment, check time overlap
+      // Parse shift template times
+      const shiftStart = parseInt(shiftTemplate.startTime.split(':')[0])
+      const shiftEnd = parseInt(shiftTemplate.endTime.split(':')[0])
+
+      // Parse item time
+      let itemStart = 0
+      let itemEnd = 0
       
       if (item.time.includes(' - ')) {
-        // Format: "07:00 - 12:00"
         const [start, end] = item.time.split(' - ')
-        startHour = parseInt(start.split(':')[0])
-        endHour = parseInt(end.split(':')[0])
+        itemStart = parseInt(start.split(':')[0])
+        itemEnd = parseInt(end.split(':')[0])
       } else {
-        // Format: "14:30"
-        startHour = parseInt(item.time.split(':')[0])
-        endHour = startHour + 1 // Assume 1 hour duration
+        itemStart = parseInt(item.time.split(':')[0])
+        itemEnd = itemStart + 1
       }
-      
-      console.log(`🔍 Item ${item.id}: time="${item.time}", startHour=${startHour}, endHour=${endHour}`)
-      
-      // Check if the item overlaps with the time slot
-      if (slotIndex === 0) {
-        // Morning: 8 AM - 12 PM
-        // Item overlaps if it starts before 12 and ends after 8
-        return (startHour < 12 && endHour > 8) || (startHour >= 8 && startHour < 12)
-      }
-      if (slotIndex === 1) {
-        // Afternoon: 1 PM - 5 PM
-        return (startHour < 17 && endHour > 13) || (startHour >= 13 && startHour < 17)
-      }
-      if (slotIndex === 2) {
-        // Evening: 6 PM - 10 PM
-        return (startHour < 22 && endHour > 18) || (startHour >= 18 && startHour < 22)
-      }
-      return false
+
+      // Check overlap
+      // Overlap if (StartA < EndB) and (EndA > StartB)
+      return (itemStart < shiftEnd) && (itemEnd > shiftStart)
     })
   }
 
@@ -466,23 +482,38 @@ export default function DoctorShiftPage() {
           {/* Main Schedule Area */}
           <div className="lg:col-span-3">
             {/* Week Navigation */}
-            <div className="flex items-center gap-3 mb-4">
-              <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
-              <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <h2 className="text-lg font-semibold">
-                {weekDates[0].toLocaleDateString('vi-VN', { month: 'long', day: 'numeric' })} - {weekDates[6].toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </h2>
-              <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <div className="ml-auto">
+            {/* Week Navigation & Search */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
+                <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <h2 className="text-lg font-semibold">
+                  {weekDates[0].toLocaleDateString('vi-VN', { month: 'long', day: 'numeric' })} - {weekDates[6].toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </h2>
+                <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="relative w-full md:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input 
+                    placeholder="Tìm kiếm lịch trình..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-9 bg-white"
+                  />
+                </div>
                 <Button 
                   variant="outline"
+                  size="sm"
                   onClick={() => fetchDoctorData()}
+                  title="Làm mới dữ liệu"
                 >
-                  Làm mới
+                  <RefreshCw className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -526,17 +557,23 @@ export default function DoctorShiftPage() {
 
               {/* Time Slots */}
               <CardContent className="p-0">
-                {timeSlots.map((slot, slotIndex) => (
-                  <div key={slot.label} className="grid grid-cols-8 border-b min-h-[160px]">
+                {shifts.map((shift, shiftIndex) => (
+                  <div key={shift.id} className="grid grid-cols-8 border-b min-h-[160px]">
                     <div className="p-4 bg-gray-50 border-r text-center">
-                      <div className="text-2xl">{slot.icon}</div>
-                      <div className="font-medium">{slot.label}</div>
-                      <div className="text-xs text-gray-500">{slot.time}</div>
+                      <div className="text-xl mb-1">
+                        {shift.name.toLowerCase().includes('sáng') ? '🌅' : 
+                         shift.name.toLowerCase().includes('chiều') ? '☀️' : 
+                         shift.name.toLowerCase().includes('tối') ? '🌙' : '⏰'}
+                      </div>
+                      <div className="font-medium">{shift.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {shift.startTime.substring(0, 5)} - {shift.endTime.substring(0, 5)}
+                      </div>
                     </div>
 
                     {weekDates.map((date, dayIndex) => {
                       const dateStr = date.toISOString().split('T')[0]
-                      const scheduleForSlot = getScheduleForTimeSlot(dateStr, slotIndex)
+                      const scheduleForSlot = getScheduleForShift(dateStr, shift)
                       
                       return (
                         <div key={dayIndex} className="p-2 border-r">
@@ -553,19 +590,6 @@ export default function DoctorShiftPage() {
                                   <User className="w-3 h-3" />
                                 }
                                 <span className="font-medium">{item.title}</span>
-                                
-                                {/* Cancel button for shifts - DISABLED: Only admin can cancel shifts */}
-                                {/* {item.type === 'shift' && item.status === 'active' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 p-0 hover:bg-red-100"
-                                    onClick={() => handleCancelShift(item)}
-                                    title="Hủy ca trực"
-                                  >
-                                    <X className="w-3 h-3 text-red-600" />
-                                  </Button>
-                                )} */}
                               </div>
                               <div className="text-gray-600">{item.time}</div>
                               <div className="text-gray-500">{item.description}</div>

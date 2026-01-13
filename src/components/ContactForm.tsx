@@ -1,30 +1,39 @@
 import React from 'react';
-import { MapPin, Phone, Mail, Map as MapIcon } from 'lucide-react';
+import { MapPin, Phone, Mail, Map as MapIcon, Send } from 'lucide-react';
 
 const ContactForm = () => {
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 font-sans">
-      <div className="flex flex-col lg:flex-row bg-card rounded-[20px] shadow-xl overflow-hidden border border-border/50">
+    <div id="contact" className="w-full max-w-7xl mx-auto p-4 md:p-6 font-sans py-20">
+      <div className="mb-12 text-center">
+         <span className="text-blue-600 font-bold text-xs tracking-widest uppercase mb-3 block">LIÊN HỆ VỚI CHÚNG TÔI</span>
+         <h2 className="text-3xl font-bold lg:text-4xl text-gray-900">Gửi thắc mắc của bạn</h2>
+      </div>
+
+      <div className="flex flex-col lg:flex-row bg-white rounded-3xl shadow-xl shadow-gray-200/50 overflow-hidden border border-gray-100">
         
         {/* === Left Section: Contact Info (Blue) === */}
-        <div className="w-full lg:w-5/12 bg-primary text-primary-foreground p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
+        <div className="w-full lg:w-5/12 bg-blue-600 text-white p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
           
           {/* Content */}
           <div className="relative z-10 space-y-8">
             <div>
-              <h2 className="text-3xl font-bold mb-4">Get in Touch</h2>
-              <p className="text-primary-foreground/90 leading-relaxed">
-                Have questions or need assistance? Fill out the form or visit us directly.
+              <h3 className="text-2xl font-bold mb-4">Thông tin liên hệ</h3>
+              <p className="text-blue-100 leading-relaxed">
+                Bạn có câu hỏi hoặc cần hỗ trợ? Điền vào biểu mẫu hoặc ghé thăm chúng tôi trực tiếp.
               </p>
             </div>
 
             <div className="space-y-6">
               {/* Location */}
               <div className="flex items-start gap-4">
-                <MapPin className="w-6 h-6 mt-1 shrink-0" />
+                <div className="bg-white/20 p-2 rounded-lg">
+                   <MapPin className="w-6 h-6 shrink-0" />
+                </div>
                 <div>
-                  <h3 className="font-bold text-lg">Location</h3>
-                  <p className="text-primary-foreground/80 text-sm mt-1 leading-relaxed">
+                  <h4 className="font-bold text-lg">Địa chỉ</h4>
+                  <p className="text-blue-100 text-sm mt-1 leading-relaxed">
                     Hàn Thuyên, khu phố 6 P, Thủ Đức,<br />
                     Thành phố Hồ Chí Minh
                   </p>
@@ -33,23 +42,27 @@ const ContactForm = () => {
 
               {/* Phone */}
               <div className="flex items-start gap-4">
-                <Phone className="w-6 h-6 mt-1 shrink-0" />
+                <div className="bg-white/20 p-2 rounded-lg">
+                   <Phone className="w-6 h-6 shrink-0" />
+                </div>
                 <div>
-                  <h3 className="font-bold text-lg">Phone</h3>
-                  <p className="text-primary-foreground/80 text-sm mt-1">
-                    Main: (212) 555-0123<br />
-                    Emergency: 911
+                  <h4 className="font-bold text-lg">Điện thoại</h4>
+                  <p className="text-blue-100 text-sm mt-1">
+                    Hotline: (028) 3554 5555<br />
+                    Cấp cứu: 115
                   </p>
                 </div>
               </div>
 
               {/* Email */}
               <div className="flex items-start gap-4">
-                <Mail className="w-6 h-6 mt-1 shrink-0" />
+                <div className="bg-white/20 p-2 rounded-lg">
+                   <Mail className="w-6 h-6 shrink-0" />
+                </div>
                 <div>
-                  <h3 className="font-bold text-lg">Email</h3>
-                  <p className="text-primary-foreground/80 text-sm mt-1">
-                    contact@citygeneral.com
+                  <h4 className="font-bold text-lg">Email</h4>
+                  <p className="text-blue-100 text-sm mt-1">
+                    contact@healthcare.vn
                   </p>
                 </div>
               </div>
@@ -58,7 +71,7 @@ const ContactForm = () => {
 
           {/* === Map Section === */}
           <div className="mt-12 relative z-10">
-            <div className="h-48 w-full rounded-xl overflow-hidden relative bg-blue-900/20 border border-white/20 group">
+            <div className="h-48 w-full rounded-2xl overflow-hidden relative bg-blue-900/20 border border-white/20 group shadow-lg">
               
               {/* Google Map Iframe */}
               <iframe 
@@ -72,84 +85,82 @@ const ContactForm = () => {
                 className="absolute inset-0 w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
               />
 
-              {/* Overlay Button - Opens Full Map in New Tab */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none">
+              {/* Overlay Button */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                  <a 
                    href="https://maps.google.com/?q=Hàn+Thuyên,+khu+phố+6+P,+Thủ+Đức,+Thành+phố+Hồ+Chí+Minh" 
                    target="_blank" 
                    rel="noopener noreferrer"
-                   className="pointer-events-auto flex items-center gap-2 bg-white/90 backdrop-blur-md hover:bg-white text-blue-900 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg hover:scale-105"
+                   className="pointer-events-auto flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-xl hover:scale-105"
                  >
                     <MapIcon size={16} />
-                    View on Map
+                    Xem bản đồ
                  </a>
               </div>
-              
             </div>
           </div>
-          
-          {/* Decorative Circle (Optional visual flair) */}
-          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl z-0 pointer-events-none"></div>
         </div>
 
         {/* === Right Section: Form (White) === */}
-        <div className="w-full lg:w-7/12 bg-card p-8 md:p-12">
-          <h2 className="text-2xl font-bold text-foreground mb-8">Request a Call Back</h2>
+        <div className="w-full lg:w-7/12 bg-white p-8 md:p-12">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Gửi tin nhắn</h3>
+          <p className="text-gray-500 mb-8">Chúng tôi sẽ phản hồi trong thời gian sớm nhất.</p>
           
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* First Name */}
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-muted-foreground">First Name</label>
+                <label className="text-sm font-semibold text-gray-700">Họ</label>
                 <input 
                   type="text" 
-                  placeholder="John"
-                  className="w-full px-4 py-3 rounded-xl border border-input bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                  placeholder="Nguyễn"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
               
               {/* Last Name */}
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-muted-foreground">Last Name</label>
+                <label className="text-sm font-semibold text-gray-700">Tên</label>
                 <input 
                   type="text" 
-                  placeholder="Doe"
-                  className="w-full px-4 py-3 rounded-xl border border-input bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                  placeholder="Văn An"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
             </div>
 
             {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-muted-foreground">Email Address</label>
+              <label className="text-sm font-semibold text-gray-700">Email</label>
               <input 
                 type="email" 
-                placeholder="john@example.com"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                placeholder="example@gmail.com"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
               />
             </div>
 
             {/* Phone Number */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-muted-foreground">Phone Number</label>
+              <label className="text-sm font-semibold text-gray-700">Số điện thoại</label>
               <input 
                 type="tel" 
-                placeholder="(555) 000-0000"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                placeholder="(090) 000-0000"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
               />
             </div>
 
             {/* Department */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-muted-foreground">Department</label>
+              <label className="text-sm font-semibold text-gray-700">Phòng ban liên hệ</label>
               <div className="relative">
-                <select className="w-full px-4 py-3 rounded-xl border border-input bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none text-foreground cursor-pointer">
-                  <option>General Inquiry</option>
-                  <option>Cardiology</option>
-                  <option>Pediatrics</option>
-                  <option>Emergency</option>
+                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none appearance-none text-gray-700 cursor-pointer">
+                  <option>Tư vấn chung</option>
+                  <option>Khoa Tim mạch</option>
+                  <option>Khoa Nhi</option>
+                  <option>Cấp cứu</option>
+                  <option>Đặt lịch hẹn</option>
                 </select>
-                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-muted-foreground">
+                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
@@ -157,20 +168,21 @@ const ContactForm = () => {
 
             {/* Message */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-muted-foreground">Message</label>
+              <label className="text-sm font-semibold text-gray-700">Lời nhắn</label>
               <textarea 
                 rows={4}
-                placeholder="How can we help you?"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none"
+                placeholder="Nội dung cần hỗ trợ..."
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none resize-none"
               ></textarea>
             </div>
 
             {/* Submit Button */}
             <button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/25 mt-2 active:scale-[0.99]"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 mt-4 active:scale-[0.99] flex items-center justify-center gap-2"
             >
-              Submit Request
+              <Send className="w-5 h-5" />
+              Gửi Tin Nhắn
             </button>
           </form>
         </div>

@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import DoctorSidebar from '@/components/sidebar/doctor'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/api"
 import { toast } from "sonner"
@@ -12,16 +11,20 @@ import { PrescriptionService } from '@/services/prescription.service'
 import type { Prescription } from '@/types/prescription.types'
 import { 
   ArrowLeft, 
-  User, 
   Save,
   Plus,
   Trash2,
   Pill,
-  FileText,
-  Heart,
   Activity,
-  Search,
-  Loader2
+  Loader2,
+  User,
+  Heart,
+  Thermometer,
+  Scale,
+  Stethoscope,
+  FileText,
+  Sparkles,
+  Clock
 } from "lucide-react"
 
 // Interfaces
@@ -44,6 +47,7 @@ interface Medication {
   dosageAfternoon: number
   dosageEvening: number
   instruction: string
+  days: number
 }
 
 export default function EditPrescriptionPage() {
@@ -102,7 +106,8 @@ export default function EditPrescriptionPage() {
               dosageNoon: detail.dosageNoon || 0,
               dosageAfternoon: detail.dosageAfternoon || 0,
               dosageEvening: detail.dosageEvening || 0,
-              instruction: detail.instruction || ""
+              instruction: detail.instruction || "",
+              days: detail.days || 1
             }))
             setMedications(loadedMedications)
             // Initialize search terms
@@ -122,7 +127,8 @@ export default function EditPrescriptionPage() {
               dosageNoon: 0,
               dosageAfternoon: 0,
               dosageEvening: 0,
-              instruction: ""
+              instruction: "",
+              days: 1
             }])
           }
           
@@ -158,11 +164,14 @@ export default function EditPrescriptionPage() {
 
   // Lọc danh sách thuốc theo từ khóa tìm kiếm
   const getFilteredMedicines = (searchTerm: string) => {
-    if (!searchTerm) return []
-    return medicines.filter(medicine =>
-      medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      medicine.category.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5)
+    if (!searchTerm || typeof searchTerm !== 'string') return []
+    const term = searchTerm.toLowerCase()
+    
+    return medicines.filter(medicine => {
+      const name = medicine?.name?.toLowerCase() || ""
+      const category = medicine?.category?.toLowerCase() || ""
+      return name.includes(term) || category.includes(term)
+    }).slice(0, 5)
   }
 
   // Chọn thuốc từ danh sách gợi ý
@@ -184,7 +193,8 @@ export default function EditPrescriptionPage() {
       dosageNoon: 0,
       dosageAfternoon: 0,
       dosageEvening: 0,
-      instruction: ""
+      instruction: "",
+      days: 1
     }
     setMedications([...medications, newMedication])
   }
@@ -320,10 +330,16 @@ export default function EditPrescriptionPage() {
   if (loading) {
     return (
       <DoctorSidebar>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex items-center justify-center h-[70vh]">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-slate-600">Đang tải dữ liệu đơn thuốc...</p>
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 animate-pulse mx-auto mb-6 flex items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-white" />
+              </div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full blur-xl opacity-30 animate-pulse" />
+            </div>
+            <p className="text-slate-600 font-medium">Đang tải dữ liệu đơn thuốc...</p>
+            <p className="text-slate-400 text-sm mt-1">Vui lòng đợi trong giây lát</p>
           </div>
         </div>
       </DoctorSidebar>
@@ -333,14 +349,17 @@ export default function EditPrescriptionPage() {
   if (error && !prescription) {
     return (
       <DoctorSidebar>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-500 mb-4">
-              <Activity className="h-12 w-12 mx-auto mb-2" />
-              <p className="text-lg font-medium">Lỗi tải dữ liệu</p>
-              <p className="text-sm">{error}</p>
+        <div className="flex items-center justify-center h-[70vh]">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 mx-auto mb-6 flex items-center justify-center shadow-lg shadow-red-200">
+              <Activity className="h-10 w-10 text-white" />
             </div>
-            <Button onClick={() => navigate("/doctor/prescriptions")}>
+            <p className="text-xl font-bold text-slate-900 mb-2">Lỗi tải dữ liệu</p>
+            <p className="text-slate-500 mb-6">{error}</p>
+            <Button 
+              onClick={() => navigate("/doctor/prescriptions")}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6"
+            >
               Quay lại danh sách đơn thuốc
             </Button>
           </div>
@@ -357,14 +376,17 @@ export default function EditPrescriptionPage() {
   if (prescription.status !== 'DRAFT') {
     return (
       <DoctorSidebar>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-amber-500 mb-4">
-              <Activity className="h-12 w-12 mx-auto mb-2" />
-              <p className="text-lg font-medium">Không thể chỉnh sửa</p>
-              <p className="text-sm">Đơn thuốc này đã được khóa và không thể chỉnh sửa.</p>
+        <div className="flex items-center justify-center h-[70vh]">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 mx-auto mb-6 flex items-center justify-center shadow-lg shadow-amber-200">
+              <Activity className="h-10 w-10 text-white" />
             </div>
-            <Button onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}>
+            <p className="text-xl font-bold text-slate-900 mb-2">Không thể chỉnh sửa</p>
+            <p className="text-slate-500 mb-6">Đơn thuốc này đã được khóa và không thể chỉnh sửa.</p>
+            <Button 
+              onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6"
+            >
               Xem chi tiết đơn thuốc
             </Button>
           </div>
@@ -375,347 +397,371 @@ export default function EditPrescriptionPage() {
 
   return (
     <DoctorSidebar>
-      <div className="space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6 pb-10">
         
-        {/* Back Button */}
-        <div className="flex items-center gap-4 -ml-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Quay lại chi tiết đơn thuốc
-          </Button>
-        </div>
-
-        {/* Error Alert */}
-        {error && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
-            {error}
+        {/* Premium Header with Glassmorphism */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-6 shadow-xl">
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
           </div>
-        )}
-
-        {/* Patient Info Header */}
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl">
-                  {prescription.patient.fullName.charAt(0)}
+          
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}
+                className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200 hover:scale-105"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="w-5 h-5 text-amber-300" />
+                  <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Chỉnh sửa đơn thuốc</span>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900">{prescription.patient.fullName}</h1>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      ID: #{prescription.patientId}
-                    </span>
-                    <span>{calculateAge(prescription.patient.dateOfBirth)} tuổi</span>
-                    <span>{prescription.patient.gender === "MALE" ? "Nam" : "Nữ"}</span>
-                  </div>
-                  <div className="mt-2 text-sm text-slate-600">
-                    <div>SĐT: {prescription.patient.phoneNumber}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-right">
-                <div className="text-sm text-slate-600">Mã đơn: {prescription.prescriptionCode}</div>
-                <div className="text-sm text-slate-600">Ngày tạo</div>
-                <div className="font-semibold text-slate-900">{new Date(prescription.createdAt).toLocaleDateString()}</div>
+                <h1 className="text-2xl font-bold text-white">#{prescription.prescriptionCode}</h1>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}
+                className="h-10 px-5 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-xl"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                onClick={handleSavePrescription}
+                disabled={saving}
+                className="h-10 px-6 text-sm font-bold bg-white text-indigo-600 hover:bg-white/90 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Lưu thay đổi
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
 
-        {/* Diagnosis Information */}
-        {prescription.visit && (
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-600" />
-                <CardTitle className="text-xl">Chẩn Đoán</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                {/* Diagnosis Details */}
-                <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Form Area */}
+          <div className="lg:col-span-3 space-y-6">
+            
+            {/* Medications Table - Premium Design */}
+            <Card className="border-0 shadow-xl rounded-2xl overflow-hidden bg-white">
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200/80 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200">
+                    <Pill className="w-5 h-5 text-white" />
+                  </div>
                   <div>
-                    <Label className="text-sm font-medium text-slate-600">Chẩn đoán chính</Label>
-                    <div className="mt-1 p-3 bg-blue-50 rounded-lg">
-                      <div className="font-semibold text-slate-900">{prescription.visit.diagnosis || "Chưa có chẩn đoán"}</div>
+                    <h3 className="text-sm font-bold text-slate-800">Danh mục thuốc kê đơn</h3>
+                    <p className="text-xs text-slate-500">{medications.length} loại thuốc</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={addMedication}
+                  size="sm"
+                  className="h-9 px-4 text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl shadow-lg shadow-emerald-200 transition-all duration-200 hover:scale-105"
+                >
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Thêm thuốc
+                </Button>
+              </div>
+
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50/80">
+                        <th className="p-3 text-center w-12 font-bold text-slate-600 text-xs uppercase tracking-wider">#</th>
+                        <th className="p-3 text-left font-bold text-slate-600 text-xs uppercase tracking-wider">Tên thuốc</th>
+                        <th className="p-3 text-center w-20 font-bold text-blue-600 text-xs uppercase tracking-wider">Số lượng</th>
+                        <th className="p-3 text-center w-16 font-bold text-slate-600 text-xs uppercase tracking-wider">Ngày</th>
+                        <th className="p-3 text-center w-16 font-bold text-amber-600 text-xs uppercase tracking-wider">Sáng</th>
+                        <th className="p-3 text-center w-16 font-bold text-orange-600 text-xs uppercase tracking-wider">Trưa</th>
+                        <th className="p-3 text-center w-16 font-bold text-blue-600 text-xs uppercase tracking-wider">Chiều</th>
+                        <th className="p-3 text-center w-16 font-bold text-violet-600 text-xs uppercase tracking-wider">Tối</th>
+                        <th className="p-3 text-left font-bold text-slate-600 text-xs uppercase tracking-wider">Hướng dẫn</th>
+                        <th className="p-3 text-center w-14"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {medications.map((medication, index) => (
+                        <tr 
+                          key={medication.id} 
+                          className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent transition-all duration-200 group"
+                        >
+                          <td className="p-3 text-center">
+                            <span className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center text-xs font-bold text-slate-500 group-hover:text-blue-600 transition-colors mx-auto">
+                              {index + 1}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <div className="relative">
+                              <Input
+                                placeholder="Tìm kiếm thuốc..."
+                                value={searchTerms[medication.id] || medication.name}
+                                onChange={(e) => handleMedicineSearch(medication.id, e.target.value)}
+                                onFocus={() => setShowSuggestions(prev => ({ ...prev, [medication.id]: (searchTerms[medication.id] || medication.name).length > 0 }))}
+                                className="h-10 text-sm border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl font-medium bg-slate-50/50 hover:bg-white transition-colors"
+                              />
+                              {showSuggestions[medication.id] && (
+                                <div className="absolute z-30 w-96 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto">
+                                  {getFilteredMedicines(searchTerms[medication.id] || medication.name).map((medicine) => (
+                                    <div
+                                      key={medicine.id}
+                                      className="p-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent cursor-pointer border-b border-slate-50 last:border-b-0 transition-colors"
+                                      onClick={() => selectMedicine(medication.id, medicine)}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                          <Pill className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="font-bold text-slate-800 text-sm">{medicine.name}</div>
+                                          <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                                            <span>Kho: {medicine.currentStock} {medicine.unit}</span>
+                                            <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                                            <span>{medicine.category}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {getFilteredMedicines(searchTerms[medication.id] || medication.name).length === 0 && (
+                                    <div className="p-4 text-center text-slate-400 text-sm">
+                                      Không tìm thấy thuốc phù hợp
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <div className="h-10 flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black rounded-xl shadow-md shadow-blue-200 min-w-[4rem] text-sm">
+                              {medication.quantity || 0}
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={medication.days || ""}
+                              onChange={(e) => {
+                                const days = parseInt(e.target.value) || 0
+                                if (days >= 0) {
+                                  const dailyDosage = (medication.dosageMorning || 0) + (medication.dosageNoon || 0) + (medication.dosageAfternoon || 0) + (medication.dosageEvening || 0)
+                                  updateMedication(medication.id, 'days', days)
+                                  updateMedication(medication.id, 'quantity', dailyDosage * days)
+                                }
+                              }}
+                              className="h-10 p-2 text-center border-slate-200 bg-slate-50/50 rounded-xl font-bold text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                          </td>
+                          {[
+                            { field: 'dosageMorning', color: 'amber' },
+                            { field: 'dosageNoon', color: 'orange' },
+                            { field: 'dosageAfternoon', color: 'blue' },
+                            { field: 'dosageEvening', color: 'violet' }
+                          ].map(({ field, color }) => (
+                            <td key={field} className="p-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={medication[field as keyof Medication] || ""}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value) || 0
+                                  if (value >= 0) {
+                                    updateMedication(medication.id, field as keyof Medication, value)
+                                    
+                                    // Calculate new total quantity
+                                    const m = { ...medication, [field]: value }
+                                    const dailyDosage = (m.dosageMorning || 0) + (m.dosageNoon || 0) + (m.dosageAfternoon || 0) + (m.dosageEvening || 0)
+                                    updateMedication(medication.id, 'quantity', dailyDosage * (m.days || 1))
+                                  }
+                                }}
+                                className={`h-10 p-2 text-center border-${color}-200 bg-${color}-50/30 rounded-xl font-bold text-${color}-700 focus:border-${color}-500 focus:ring-2 focus:ring-${color}-100`}
+                              />
+                            </td>
+                          ))}
+                          <td className="p-2">
+                            <Input
+                              placeholder="VD: Uống sau ăn..."
+                              value={medication.instruction}
+                              onChange={(e) => updateMedication(medication.id, 'instruction', e.target.value)}
+                              className="h-10 text-sm border-slate-200 rounded-xl bg-slate-50/50 hover:bg-white transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                          </td>
+                          <td className="p-2 text-center">
+                            <Button
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => removeMedication(medication.id)}
+                              disabled={medications.length === 1}
+                              className="h-9 w-9 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-30"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Note Area - Premium Design */}
+            <Card className="border-0 shadow-xl rounded-2xl overflow-hidden bg-white">
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200/80 p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-200">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Lời dặn của bác sĩ</h3>
+                  <p className="text-xs text-slate-500">Hướng dẫn chi tiết cho bệnh nhân</p>
+                </div>
+              </div>
+              <CardContent className="p-4">
+                <Textarea
+                  placeholder="Nhập hướng dẫn sử dụng thuốc chi tiết, lời khuyên về chế độ sinh hoạt, ăn uống..."
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  rows={4}
+                  className="resize-none border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl text-sm leading-relaxed bg-slate-50/50 hover:bg-white transition-colors"
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Side Info Panel - Premium Design */}
+          <div className="space-y-6">
+            {/* Patient Identity Card */}
+            <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
+              <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-5 text-white">
+                {/* Decorative elements */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                  <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                </div>
+                
+                <div className="relative flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-black shadow-lg">
+                    {prescription.patient.fullName.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold leading-tight">{prescription.patient.fullName}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <User className="w-3.5 h-3.5 text-white/60" />
+                      <span className="text-xs font-medium text-white/70">Mã BN: #{prescription.patientId}</span>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Triệu chứng & Ghi chú</Label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                      <div className="text-slate-900">{prescription.visit.symptoms || "Chưa có triệu chứng"}</div>
+              <CardContent className="p-4 space-y-4">
+                {/* Patient Info Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tuổi</span>
                     </div>
+                    <p className="text-lg font-black text-slate-800">{calculateAge(prescription.patient.dateOfBirth)}</p>
+                  </div>
+                  <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Giới tính</span>
+                    </div>
+                    <p className="text-lg font-black text-slate-800">{prescription.patient.gender === "MALE" ? "Nam" : "Nữ"}</p>
+                  </div>
+                </div>
+
+                {/* Diagnosis Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <Stethoscope className="w-4 h-4 text-rose-500" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chẩn đoán</span>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50/50 rounded-xl border border-rose-100">
+                    <p className="text-sm font-semibold text-rose-900 leading-relaxed italic">
+                      "{prescription.visit?.diagnosis || "Chưa cập nhật kết quả chẩn đoán"}"
+                    </p>
                   </div>
                 </div>
 
                 {/* Vital Signs */}
-                {prescription.visit.vitalSigns && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Activity className="w-4 h-4 text-blue-600" />
-                      <Label className="text-sm font-medium text-slate-600">Chỉ số sinh hiệu</Label>
+                {prescription.visit?.vitalSigns && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1">
+                      <Activity className="w-4 h-4 text-emerald-500" />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sinh hiệu</span>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-xs text-slate-600 mb-1">Huyết áp</div>
-                        <div className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.bloodPressure || "N/A"}</div>
-                        <div className="text-xs text-slate-500">mmHg</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl border border-blue-100 text-center">
+                        <Heart className="w-4 h-4 text-blue-500 mx-auto mb-1" />
+                        <p className="text-[9px] font-bold text-blue-400 uppercase">Huyết áp</p>
+                        <p className="text-sm font-black text-blue-700">{prescription.visit.vitalSigns.bloodPressure || "--"}</p>
                       </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-xs text-slate-600 mb-1">Nhịp tim</div>
-                        <div className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.heartRate || "N/A"}</div>
-                        <div className="text-xs text-slate-500">bpm</div>
+                      <div className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50/50 rounded-xl border border-emerald-100 text-center">
+                        <Activity className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
+                        <p className="text-[9px] font-bold text-emerald-400 uppercase">Nhịp tim</p>
+                        <p className="text-sm font-black text-emerald-700">{prescription.visit.vitalSigns.heartRate || "--"}</p>
                       </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <div className="text-xs text-slate-600 mb-1">Nhiệt độ</div>
-                        <div className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.temperature || "N/A"}</div>
-                        <div className="text-xs text-slate-500">°C</div>
+                      <div className="p-3 bg-gradient-to-br from-orange-50 to-amber-50/50 rounded-xl border border-orange-100 text-center">
+                        <Thermometer className="w-4 h-4 text-orange-500 mx-auto mb-1" />
+                        <p className="text-[9px] font-bold text-orange-400 uppercase">Nhiệt độ</p>
+                        <p className="text-sm font-black text-orange-700">{prescription.visit.vitalSigns.temperature || "--"}°C</p>
                       </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-xs text-slate-600 mb-1">Cân nặng</div>
-                        <div className="text-lg font-bold text-slate-900">{prescription.visit.vitalSigns.weight || "N/A"}</div>
-                        <div className="text-xs text-slate-500">kg</div>
+                      <div className="p-3 bg-gradient-to-br from-violet-50 to-purple-50/50 rounded-xl border border-violet-100 text-center">
+                        <Scale className="w-4 h-4 text-violet-500 mx-auto mb-1" />
+                        <p className="text-[9px] font-bold text-violet-400 uppercase">Cân nặng</p>
+                        <p className="text-sm font-black text-violet-700">{prescription.visit.vitalSigns.weight || "--"} kg</p>
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
 
-        {/* Prescription Form */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Pill className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-xl">Chỉnh Sửa Đơn Thuốc</CardTitle>
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button
+                onClick={handleSavePrescription}
+                disabled={saving}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:via-indigo-700 hover:to-violet-700 text-white rounded-xl font-bold text-sm shadow-xl shadow-blue-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {saving ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    LƯU ĐƠN THUỐC
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}
+                className="w-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 font-semibold h-10 text-sm rounded-xl transition-colors"
+              >
+                Hủy thay đổi
+              </Button>
             </div>
-            <Button
-              onClick={addMedication}
-              className="bg-green-600 hover:bg-green-700 text-white"
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Thêm thuốc
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left p-3 font-semibold text-slate-700 w-12">STT</th>
-                    <th className="text-left p-3 font-semibold text-slate-700">Tên thuốc</th>
-                    <th className="text-left p-3 font-semibold text-slate-700 w-24">Tổng SL</th>
-                    <th className="text-left p-3 font-semibold text-slate-700 w-20">Sáng</th>
-                    <th className="text-left p-3 font-semibold text-slate-700 w-20">Trưa</th>
-                    <th className="text-left p-3 font-semibold text-slate-700 w-20">Chiều</th>
-                    <th className="text-left p-3 font-semibold text-slate-700 w-20">Tối</th>
-                    <th className="text-left p-3 font-semibold text-slate-700">Ghi chú</th>
-                    <th className="text-left p-3 font-semibold text-slate-700 w-16">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {medications.map((medication, index) => (
-                    <tr key={medication.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-3 text-center font-medium text-slate-600">
-                        {index + 1}
-                      </td>
-                      <td className="p-3">
-                        <div className="relative">
-                          <div className="relative">
-                            <Input
-                              placeholder="Tìm kiếm thuốc..."
-                              value={searchTerms[medication.id] || medication.name}
-                              onChange={(e) => handleMedicineSearch(medication.id, e.target.value)}
-                              onFocus={() => setShowSuggestions(prev => ({ ...prev, [medication.id]: (searchTerms[medication.id] || medication.name).length > 0 }))}
-                              className="border-gray-300 focus:border-blue-500 pr-8"
-                            />
-                            <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          </div>
-                          
-                          {/* Dropdown gợi ý thuốc */}
-                          {showSuggestions[medication.id] && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                              {getFilteredMedicines(searchTerms[medication.id] || medication.name).map((medicine) => (
-                                <div
-                                  key={medicine.id}
-                                  className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                  onClick={() => selectMedicine(medication.id, medicine)}
-                                >
-                                  <div className="font-medium text-slate-900">{medicine.name}</div>
-                                  <div className="text-sm text-slate-600">{medicine.category} • {medicine.unit} • Stock: {medicine.currentStock}</div>
-                                </div>
-                              ))}
-                              {getFilteredMedicines(searchTerms[medication.id] || medication.name).length === 0 && (
-                                <div className="p-3 text-gray-500 text-center">
-                                  Không tìm thấy thuốc phù hợp
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={medication.quantity || ""}
-                          className="border-gray-300 bg-gray-50 text-center font-semibold text-blue-600"
-                          readOnly
-                          title="Tự động tính từ tổng các liều"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={medication.dosageMorning || ""}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value) || 0
-                            if (value >= 0) {
-                              updateMedication(medication.id, 'dosageMorning', value)
-                            }
-                          }}
-                          className="border-gray-300 focus:border-blue-500 text-center"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={medication.dosageNoon || ""}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value) || 0
-                            if (value >= 0) {
-                              updateMedication(medication.id, 'dosageNoon', value)
-                            }
-                          }}
-                          className="border-gray-300 focus:border-blue-500 text-center"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={medication.dosageAfternoon || ""}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value) || 0
-                            if (value >= 0) {
-                              updateMedication(medication.id, 'dosageAfternoon', value)
-                            }
-                          }}
-                          className="border-gray-300 focus:border-blue-500 text-center"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={medication.dosageEvening || ""}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value) || 0
-                            if (value >= 0) {
-                              updateMedication(medication.id, 'dosageEvening', value)
-                            }
-                          }}
-                          className="border-gray-300 focus:border-blue-500 text-center"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          placeholder="Ghi chú..."
-                          value={medication.instruction}
-                          onChange={(e) => updateMedication(medication.id, 'instruction', e.target.value)}
-                          className="border-gray-300 focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="p-3 text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeMedication(medication.id)}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                          disabled={medications.length === 1}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Additional Notes */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-xl">Ghi Chú Thêm</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="Nhập ghi chú thêm về cách sử dụng thuốc, lưu ý đặc biệt..."
-              value={additionalNotes}
-              onChange={(e) => setAdditionalNotes(e.target.value)}
-              rows={4}
-              className="resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              maxLength={500}
-            />
-            <div className="text-xs text-slate-500 mt-1">
-              {additionalNotes.length}/500 ký tự
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-end pb-6">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/doctor/prescriptions/${prescription.id}`)}
-            className="flex items-center gap-2"
-          >
-            Hủy
-          </Button>
-          
-          <Button
-            onClick={handleSavePrescription}
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Đang lưu...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Lưu thay đổi
-              </>
-            )}
-          </Button>
+          </div>
         </div>
       </div>
     </DoctorSidebar>

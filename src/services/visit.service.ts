@@ -1,14 +1,49 @@
 import api from "@/lib/api"
 
+export interface PrescriptionDetail {
+  id: number
+  medicineName: string
+  medicineId: number
+  quantity: number
+  unit: string
+  dosageMorning: number
+  dosageNoon: number
+  dosageAfternoon: number
+  dosageEvening: number
+  days: number
+  instruction?: string
+  medicine?: {
+    id: number
+    name: string
+    unit: string
+    price: number
+  }
+}
+
+export interface Prescription {
+  id: number
+  prescriptionCode: string
+  visitId: number
+  patientId: number
+  doctorId: number
+  status: string
+  note?: string
+  totalAmount: number
+  createdAt: string
+  details?: PrescriptionDetail[]
+}
+
 export interface Visit {
   id: number
   appointmentId: number
   patientId: number
   doctorId: number
-  visitDate: string
+  visitDate?: string
+  checkInTime: string
+  checkOutTime?: string
   symptoms?: string
   diagnosis?: string
-  notes?: string
+  note?: string
   status: string
   vitalSigns?: {
     bloodPressure?: string
@@ -17,6 +52,7 @@ export interface Visit {
     respiratoryRate?: number
     weight?: number
     height?: number
+    spo2?: number
   }
   createdAt: string
   updatedAt: string
@@ -27,17 +63,33 @@ export interface Visit {
   }
   doctor?: {
     id: number
-    fullName: string
+    fullName?: string
+    user?: {
+      fullName: string
+      email: string
+    }
+    specialty?: {
+      id: number
+      name: string
+    }
   }
   appointment?: {
     id: number
     date: string
     shift?: {
+      id: number
       name: string
       startTime: string
       endTime: string
     }
   }
+  prescription?: Prescription
+  invoice?: {
+    id: number
+    paymentStatus: string
+    totalAmount: number
+  }
+  displayStatus?: string
 }
 
 /**
@@ -113,6 +165,7 @@ export const completeVisit = async (
   data: {
     diagnosis: string
     note?: string
+    vitalSigns?: any
     examinationFee?: number
   }
 ): Promise<Visit> => {

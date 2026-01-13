@@ -15,6 +15,9 @@ import {
   Edit,
   RefreshCw,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -77,13 +80,33 @@ const getMedicineStatus = (medicine: Medicine): "in-stock" | "low-stock" | "near
 const getStatusBadge = (status: "in-stock" | "low-stock" | "near-expiry" | "expired") => {
   switch (status) {
     case "expired":
-      return <Badge variant="destructive">Hết hạn</Badge>
+      return (
+        <Badge className="bg-rose-100/50 text-rose-700 border-rose-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+          <span className="h-1 w-1 rounded-full bg-rose-500 mr-1.5" />
+          HẾT HẠN
+        </Badge>
+      )
     case "near-expiry":
-      return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Sắp hết hạn</Badge>
+      return (
+        <Badge className="bg-amber-100/50 text-amber-700 border-amber-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+          <span className="h-1 w-1 rounded-full bg-amber-500 mr-1.5 animate-pulse" />
+          SẮP HẾT HẠN
+        </Badge>
+      )
     case "low-stock":
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Sắp hết</Badge>
+      return (
+        <Badge className="bg-orange-100/50 text-orange-700 border-orange-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+          <span className="h-1 w-1 rounded-full bg-orange-500 mr-1.5 animate-pulse" />
+          SẮP HẾT
+        </Badge>
+      )
     default:
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Còn hàng</Badge>
+      return (
+        <Badge className="bg-emerald-100/50 text-emerald-700 border-emerald-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+          <span className="h-1 w-1 rounded-full bg-emerald-500 mr-1.5" />
+          CÒN HÀNG
+        </Badge>
+      )
   }
 }
 
@@ -105,26 +128,41 @@ export default function InventoryPage() {
   const [selectedGroup, setSelectedGroup] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [groups, setGroups] = useState<string[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const itemsPerPage = 10
   const [isAutoMarking, setIsAutoMarking] = useState(false)
   const [isAutoMarkDialogOpen, setIsAutoMarkDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchMedicines()
+  }, [currentPage, selectedGroup, selectedStatus])
+
+  useEffect(() => {
     fetchAlerts()
   }, [])
 
   const fetchMedicines = async () => {
     try {
       setIsLoading(true)
-      const response = await MedicineService.getMedicines({
-        page: 1,
-        limit: 50,
-      })
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage,
+      }
+      
+      if (searchQuery) params.search = searchQuery
+      if (selectedGroup !== "all") params.group = selectedGroup
+      if (selectedStatus !== "all") params.status = selectedStatus
+
+      const response = await MedicineService.getMedicines(params)
       if (response.medicines) {
         setMedicines(response.medicines)
-        // Extract unique groups
-        const uniqueGroups = Array.from(new Set(response.medicines.map(m => m.group))).sort()
-        setGroups(uniqueGroups)
+        setTotalPages(response.totalPages || 1)
+        
+        if (groups.length === 0) {
+          const uniqueGroups = Array.from(new Set(response.medicines.map(m => m.group))).sort()
+          setGroups(uniqueGroups)
+        }
       }
     } catch (error: any) {
       if (error.response?.status === 429) {
@@ -160,25 +198,19 @@ export default function InventoryPage() {
     }
   }
 
-  // Filter medicines
-  const filteredMedicines = medicines.filter((medicine) => {
-    const matchesSearch = 
-      medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      medicine.medicineCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      medicine.group.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesGroup = selectedGroup === "all" || medicine.group === selectedGroup
-    
-    const status = getMedicineStatus(medicine)
-    const matchesStatus = 
-      selectedStatus === "all" ||
-      (selectedStatus === "low-stock" && status === "low-stock") ||
-      (selectedStatus === "near-expiry" && status === "near-expiry") ||
-      (selectedStatus === "expired" && status === "expired") ||
-      (selectedStatus === "in-stock" && status === "in-stock")
-    
-    return matchesSearch && matchesGroup && matchesStatus
-  })
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage === 1) {
+        fetchMedicines()
+      } else {
+        setCurrentPage(1)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Data is now handled server-side through fetchMedicines
+  const displayMedicines = medicines
 
   const handleAutoMarkExpired = async () => {
     try {
@@ -202,83 +234,116 @@ export default function InventoryPage() {
 
   return (
     <AdminSidebar>
-      <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">Quản lý Kho Thuốc</h1>
-              <p className="text-slate-600">Tổng quan và quản lý tồn kho thuốc</p>
+      <div className="relative p-6 lg:p-8">
+        <div className="max-w-[1700px] mx-auto space-y-6">
+          
+          {/* Simplified Header Section */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <Package className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Quản lý kho thuốc
+                </h1>
+                <p className="text-slate-500 text-sm font-medium">
+                  Theo dõi số lượng, kiểm kê và xuất nhập kho y tế.
+                </p>
+              </div>
             </div>
-            <div className="flex gap-3">
+
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setIsAutoMarkDialogOpen(true)}
-                className="border-orange-200 hover:bg-orange-50"
+                className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Tự động đánh dấu hết hạn
+                <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                Auto-fix hết hạn
               </Button>
-              <Button asChild variant="outline">
+              <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+              <Button asChild variant="outline" size="sm" className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50">
                 <Link to="/admin/medicines/imports">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Lịch sử nhập
+                  <Upload className="h-3.5 w-3.5 mr-2" />
+                  Nhập kho
                 </Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" size="sm" className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50">
                 <Link to="/admin/medicines/exports">
-                  <Download className="h-4 w-4 mr-2" />
-                  Lịch sử xuất
+                  <Download className="h-3.5 w-3.5 mr-2" />
+                  Xuất kho
                 </Link>
               </Button>
-              <Button asChild>
+              <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white h-9 rounded-lg font-bold text-xs px-4">
                 <Link to="/admin/medicines/create">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm thuốc mới
+                  <Plus className="h-3.5 w-3.5 mr-2" />
+                  Thêm thuốc
                 </Link>
               </Button>
             </div>
           </div>
-        </div>
 
-        {/* Alert Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng số thuốc</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{totalMedicines}</div>
-              <p className="text-sm text-slate-500 mt-1">Loại thuốc trong kho</p>
+        {/* Simplified Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-blue-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                <Package className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tổng loại thuốc</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-2xl font-bold text-slate-900">{totalMedicines}</h3>
+                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">Mã hàng</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-green-50/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Còn hàng</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{inStockCount}</div>
-              <p className="text-sm text-slate-500 mt-1">Thuốc đủ tồn kho</p>
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-emerald-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <CheckCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đang còn hàng</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-2xl font-bold text-slate-900">{inStockCount}</h3>
+                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">Ổn định</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-yellow-50/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Sắp hết</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-yellow-600">{lowStockCount}</div>
-              <p className="text-sm text-slate-500 mt-1">Thuốc dưới mức tối thiểu</p>
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-yellow-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mức tồn thấp</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-2xl font-bold text-slate-900">{lowStockCount}</h3>
+                  <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded uppercase">Cần nhập</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-orange-50/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Sắp hết hạn</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{expiringCount}</div>
-              <p className="text-sm text-slate-500 mt-1">Thuốc hết hạn trong 30 ngày</p>
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-orange-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sắp hết hạn</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-2xl font-bold text-slate-900">{expiringCount}</h3>
+                  <span className="text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase">{"< 30 Ngày"}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -373,55 +438,66 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* Filters and Search */}
-        <Card className="mb-6 border-0 shadow-lg">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Tìm kiếm theo tên, mã, nhóm..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+        {/* Compact Filter Bar */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
+          <div className="flex flex-col xl:flex-row gap-3">
+            {/* Search input with focus effects */}
+            <div className="relative flex-grow group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
               </div>
-              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn nhóm thuốc" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả nhóm</SelectItem>
-                  {groups.map((group) => (
-                    <SelectItem key={group} value={group}>
-                      {group}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="in-stock">Còn hàng</SelectItem>
-                  <SelectItem value="low-stock">Sắp hết</SelectItem>
-                  <SelectItem value="near-expiry">Sắp hết hạn</SelectItem>
-                  <SelectItem value="expired">Hết hạn</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="Tìm kiếm thuốc (Tên, Mã, Nhóm)..."
+                className="w-full h-11 pl-11 pr-4 bg-slate-50 border-transparent focus:bg-white focus:border-blue-500/50 rounded-xl transition-all text-sm font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Medicine List */}
+            {/* Filters grid */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
+                <div className="px-3 flex items-center gap-2 border-r border-slate-200 mr-1">
+                  <Filter className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bộ lọc</span>
+                </div>
+                
+                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                  <SelectTrigger className="h-9 w-[160px] border-none bg-transparent focus:ring-0 text-xs font-bold text-slate-700">
+                    <SelectValue placeholder="Nhóm thuốc" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả nhóm</SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group} value={group}>
+                        {group}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="w-px h-4 bg-slate-200 mx-1" />
+
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="h-9 w-[140px] border-none bg-transparent focus:ring-0 text-xs font-bold text-slate-700">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                    <SelectItem value="in-stock">Còn hàng</SelectItem>
+                    <SelectItem value="low-stock">Sắp hết</SelectItem>
+                    <SelectItem value="near-expiry">Sắp hết hạn</SelectItem>
+                    <SelectItem value="expired">Hết hạn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Danh sách thuốc ({filteredMedicines.length})</span>
+              <span>Danh sách thuốc ({displayMedicines.length})</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -436,12 +512,12 @@ export default function InventoryPage() {
               </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               </div>
-            ) : filteredMedicines.length === 0 ? (
+            ) : displayMedicines.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-500">Không tìm thấy thuốc nào</p>
@@ -449,86 +525,85 @@ export default function InventoryPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Mã</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Tên thuốc</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Nhóm</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Số lượng</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Giá nhập</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Giá bán</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Hết hạn</th>
-                      <th className="text-left p-3 text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="text-right p-3 text-sm font-semibold text-slate-700">Thao tác</th>
-                    </tr>
-                  </thead>
+                  <thead className="bg-slate-50/50 border-y border-slate-100">
+                  <tr>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Thông tin thuốc</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Nhóm</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Tồn kho</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Giá nhập</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Giá bán</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Hạn sử dụng</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Trạng thái</th>
+                    <th className="p-4 text-right font-bold uppercase text-[11px] tracking-widest text-slate-500">Thao tác</th>
+                  </tr>
+                </thead>
                   <tbody>
-                    {filteredMedicines.map((medicine) => {
+                    {displayMedicines.map((medicine) => {
                       const status = getMedicineStatus(medicine)
                       const daysLeft = getDaysUntilExpiry(medicine.expiryDate)
                       return (
                         <tr key={medicine.id} className="border-b hover:bg-slate-50 transition-colors">
-                          <td className="p-3">
-                            <span className="font-mono text-sm text-slate-600">{medicine.medicineCode}</span>
+                          <td className="p-4">
+                            <span className="font-mono text-sm text-slate-600 font-bold">{medicine.medicineCode}</span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-4">
                             <div>
-                              <p className="font-medium text-slate-900">{medicine.name}</p>
+                              <p className="font-bold text-slate-900">{medicine.name}</p>
                               {medicine.manufacturer && (
-                                <p className="text-xs text-slate-500">{medicine.manufacturer}</p>
+                                <p className="text-xs text-slate-500 font-medium">{medicine.manufacturer}</p>
                               )}
                             </div>
                           </td>
-                          <td className="p-3">
-                            <Badge variant="outline">{medicine.group}</Badge>
+                          <td className="p-4">
+                            <Badge variant="outline" className="bg-slate-50 font-bold">{medicine.group}</Badge>
                           </td>
-                          <td className="p-3">
+                          <td className="p-4">
                             <div>
-                              <span className="font-medium">
+                              <span className="font-bold text-slate-900">
                                 {medicine.quantity} {getUnitLabel(medicine.unit)}
                               </span>
-                              <p className="text-xs text-slate-500">
-                                Tối thiểu: {medicine.minStockLevel} {getUnitLabel(medicine.unit)}
+                              <p className="text-[10px] text-slate-500 font-semibold uppercase">
+                                Tối thiểu: {medicine.minStockLevel}
                               </p>
                             </div>
                           </td>
-                          <td className="p-3">
-                            <span className="text-slate-700">
-                              {medicine.importPrice.toLocaleString()} VND
+                          <td className="p-4">
+                            <span className="text-slate-600 font-semibold text-sm">
+                              {medicine.importPrice.toLocaleString()}đ
                             </span>
                           </td>
-                          <td className="p-3">
-                            <span className="font-medium text-slate-900">
-                              {medicine.salePrice.toLocaleString()} VND
+                          <td className="p-4">
+                            <span className="font-bold text-blue-600">
+                              {medicine.salePrice.toLocaleString()}đ
                             </span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-4">
                             <div>
-                              <span className="text-sm">
+                              <span className="text-sm font-bold text-slate-700">
                                 {format(new Date(medicine.expiryDate), "dd/MM/yyyy", { locale: vi })}
                               </span>
                               {daysLeft <= 30 && daysLeft >= 0 && (
-                                <p className="text-xs text-orange-600">
-                                  Còn {daysLeft} ngày
+                                <p className="text-[10px] text-orange-600 font-bold uppercase tracking-tight">
+                                {daysLeft} ngày
                                 </p>
                               )}
                               {daysLeft < 0 && (
-                                <p className="text-xs text-red-600">Đã hết hạn</p>
+                                <p className="text-[10px] text-red-600 font-bold uppercase">Đã hết hạn</p>
                               )}
                             </div>
                           </td>
-                          <td className="p-3">
+                          <td className="p-4">
                             {getStatusBadge(status)}
                           </td>
-                          <td className="p-3">
-                            <div className="flex items-center justify-end gap-2">
-                              <Link to={`/pharmacy/${medicine.id}`}>
-                                <Button variant="ghost" size="sm">
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Link to={`/admin/medicines/${medicine.id}`}>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50">
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
                               <Link to={`/admin/medicines/${medicine.id}/edit`}>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50">
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </Link>
@@ -539,6 +614,70 @@ export default function InventoryPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Pagination Component */}
+            {displayMedicines.length > 0 && (
+              <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                    Trang <span className="text-slate-900 font-bold">{currentPage}</span> / {totalPages}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          className={`h-8 w-8 p-0 rounded-lg font-bold text-xs transition-colors ${
+                            currentPage === page 
+                              ? "bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700" 
+                              : "text-slate-600 hover:bg-white hover:text-blue-600 border border-transparent hover:border-slate-200"
+                          }`}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    }
+                    if (
+                      (page === 2 && currentPage > 3) || 
+                      (page === totalPages - 1 && currentPage < totalPages - 2)
+                    ) {
+                      return <span key={page} className="px-1 text-slate-400 font-bold text-[10px]">...</span>;
+                    }
+                    return null;
+                  })}
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
@@ -599,6 +738,7 @@ export default function InventoryPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </AdminSidebar>
   )

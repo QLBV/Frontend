@@ -192,7 +192,7 @@ export default function EmployeeDetailPage() {
               <div className="relative group mx-auto w-32 h-32 mb-4">
                 {employee.avatar ? (
                   <img 
-                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${employee.avatar}`} 
+                    src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${employee.avatar}`} 
                     alt={employee.user.fullName}
                     className="w-full h-full rounded-full object-cover border-4 border-blue-50 shadow-sm"
                   />

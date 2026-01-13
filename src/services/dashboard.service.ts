@@ -56,6 +56,7 @@ export interface RecentActivity {
   user?: {
     id: number
     fullName: string
+    avatar?: string
   }
 }
 
@@ -86,6 +87,14 @@ export interface DashboardData {
       name: string
       date: string
       revenue: number
+    }>
+    todayStatusDistribution?: Array<{
+      status: string
+      count: number
+    }>
+    monthlyStatusDistribution?: Array<{
+      status: string
+      count: number
     }>
   }
 }
@@ -206,9 +215,11 @@ export class DashboardService {
   /**
    * Get all dashboard data at once
    */
-  static async getDashboardData(): Promise<DashboardData> {
+  static async getDashboardData(days: number = 7, month?: number, year?: number): Promise<DashboardData> {
     try {
-      const response = await api.get('/dashboard')
+      const response = await api.get('/dashboard', { 
+        params: { days, month, year } 
+      })
       if (response.data.success) {
         return response.data.data
       }

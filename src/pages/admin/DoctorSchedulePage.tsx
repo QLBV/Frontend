@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+
 import AdminSidebar from "@/components/sidebar/admin"
-import ScheduleEventModal from "./modalChooseDay"
+import ScheduleEventModal from "./ModalChooseDay"
 import api from "@/lib/api"
 import { toast } from "sonner"
 
@@ -27,15 +27,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  User,
   XCircle,
   RotateCcw,
   Loader2,
   AlertTriangle,
   CheckCircle,
+  Sparkles,
+  CalendarDays,
+  Filter,
 } from "lucide-react"
 
 /* ================= TYPES ================= */
@@ -53,6 +54,7 @@ interface Doctor {
     id: number
     fullName: string
     email: string
+    avatar?: string
   }
   specialty: {
     id: number
@@ -75,7 +77,7 @@ interface DoctorShift {
 
 /* ================= PAGE ================= */
 export default function DoctorSchedulePage() {
-  const navigate = useNavigate()
+
 
   // States
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -285,9 +287,14 @@ export default function DoctorSchedulePage() {
 
     try {
       setCancelLoading(true)
-      const response = await api.post(`/doctor-shifts/${selectedShiftToCancel.id}/cancel-and-reschedule`, {
+      const payload: any = {
         cancelReason: cancelReason.trim()
-      })
+      }
+      if (previewData?.replacementDoctorId) {
+        payload.replacementDoctorId = previewData.replacementDoctorId
+      }
+      
+      const response = await api.post(`/doctor-shifts/${selectedShiftToCancel.id}/cancel-and-reschedule`, payload)
 
       if (response.data.success) {
         const result = response.data.data
@@ -426,73 +433,104 @@ export default function DoctorSchedulePage() {
 
   return (
     <AdminSidebar>
-      <div className="p-8 max-w-7xl mx-auto">
+      <div className="relative min-h-screen p-4 lg:p-8 max-w-[1600px] mx-auto space-y-8">
+        
+        {/* Background Gradients */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-20 left-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
 
-        {/* HEADER */}
-        <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate("/admin/doctors")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Quay lại danh sách
-          </Button>
-
-          <div className="flex justify-between items-center mt-4">
+        {/* Header Section */}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-indigo-100/50">
+          <div className="flex items-start gap-4">
+            <div className="hidden lg:flex p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/30 text-white">
+              <CalendarDays className="w-8 h-8" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">The Schedule</h1>
-              <p className="text-gray-600 mt-2">
-                Manage your shifts, appointments, and on-leave duties.
+              <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-600">
+                Lịch Trực Bác Sĩ
+              </h1>
+              <p className="text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
+                Quản lý phân công ca trực, lịch khám và nghỉ phép của nhân sự
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => setShowAddEvent(!showAddEvent)}>
-                {showAddEvent ? "Cancel" : "+ Add Event"}
+          </div>
+
+          <div className="flex items-center gap-3">
+             <Button 
+                onClick={() => setShowAddEvent(!showAddEvent)}
+                className={`${
+                  showAddEvent 
+                    ? "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" 
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20"
+                } rounded-xl px-6 h-11 font-bold transition-all hover:scale-105 active:scale-95`}
+              >
+                {showAddEvent ? (
+                  <>
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Hủy chế độ chỉnh sửa
+                  </>
+                ) : (
+                  <>
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    Thêm / Điều chỉnh Lịch
+                  </>
+                )}
               </Button>
-            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
 
           {/* ================= MAIN SCHEDULE ================= */}
           <div className="lg:col-span-3">
-            <div className="flex items-center gap-3 mb-4">
-              <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
-              <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <h2 className="text-lg font-semibold">
-                {weekStart.toLocaleDateString('vi-VN', { month: 'long', day: 'numeric' })} - {weekEnd.toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}
+            <div className="flex items-center justify-between mb-6 bg-white/60 backdrop-blur-md p-2 rounded-2xl border border-white/60 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={goToToday} className="bg-white border-slate-200 text-slate-700 font-bold hover:bg-slate-50">
+                  Hôm nay
+                </Button>
+                <div className="flex bg-white rounded-lg border border-slate-200 p-0.5">
+                    <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')} className="h-8 w-8 p-0 rounded-md hover:bg-slate-100">
+                        <ChevronLeft className="w-4 h-4 text-slate-600" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')} className="h-8 w-8 p-0 rounded-md hover:bg-slate-100">
+                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                    </Button>
+                </div>
+              </div>
+              <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                {weekStart.toLocaleDateString('vi-VN', { month: 'long', day: 'numeric' })} <span className="text-slate-400 mx-1">—</span> {weekEnd.toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}
               </h2>
-              <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+              <div className="w-[100px]" /> {/* Spacer for centering if needed, or keeping structure */}
             </div>
 
-            <Card>
+            <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white/80 backdrop-blur-xl overflow-hidden rounded-[24px] ring-1 ring-slate-200/50">
               {/* ===== WEEK HEADER ===== */}
-              <div className="grid grid-cols-8 border-b bg-white">
-                <div className="p-4 border-r text-xs text-gray-500 uppercase">
-                  Time
+              <div className="grid grid-cols-8 border-b border-indigo-50 bg-indigo-50/30">
+                <div className="p-4 border-r border-indigo-50 text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center justify-center">
+                  Ca trực
                 </div>
                 {weekDates.map((date, index) => {
                   const isToday = date.toDateString() === new Date().toDateString()
-                  const dayName = date.toLocaleDateString('vi-VN', { weekday: 'short' }).toUpperCase()
+                  const dayName = date.toLocaleDateString('vi-VN', { weekday: 'short' })
                   const dayNumber = date.getDate()
                   
                   return (
                     <div
                       key={index}
-                      className={`p-4 text-center border-r last:border-r-0 ${
-                        isToday ? "bg-blue-50" : ""
+                      className={`p-3 text-center border-r border-indigo-50 last:border-r-0 ${
+                        isToday ? "bg-white" : ""
                       }`}
                     >
-                      <div className="text-xs text-gray-500 uppercase mb-1">
+                      <div className={`text-[10px] font-black uppercase mb-1 ${isToday ? "text-blue-600" : "text-slate-400"}`}>
                         {dayName}
                       </div>
                       <div
-                        className={`text-lg font-semibold mx-auto ${
+                        className={`text-xl font-black mx-auto transition-all ${
                           isToday
-                            ? "bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
-                            : ""
+                            ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl w-10 h-10 flex items-center justify-center shadow-lg shadow-blue-500/30 scale-110"
+                            : "text-slate-700"
                         }`}
                       >
                         {dayNumber}
@@ -505,11 +543,15 @@ export default function DoctorSchedulePage() {
               {/* ===== TIME SLOTS ===== */}
               <CardContent className="p-0">
                 {shifts.map((shift) => (
-                  <div key={shift.id} className="grid grid-cols-8 border-b min-h-[160px]">
-                    <div className="p-4 bg-gray-50 border-r text-center">
-                      <div className="text-2xl">{getShiftIcon(shift.name)}</div>
-                      <div className="font-medium">{shift.name}</div>
-                      <div className="text-xs text-gray-500">{formatShiftTime(shift)}</div>
+                  <div key={shift.id} className="grid grid-cols-8 border-b border-slate-100 min-h-[180px] hover:bg-slate-50/30 transition-colors">
+                    <div className="p-4 border-r border-slate-100 text-center flex flex-col justify-center items-center bg-slate-50/50">
+                      <div className="text-3xl mb-2 drop-shadow-sm filter grayscale-[0.2] hover:grayscale-0 transition-all cursor-default" title={shift.name}>
+                        {getShiftIcon(shift.name)}
+                      </div>
+                      <div className="font-bold text-slate-700 text-sm mb-1">{shift.name}</div>
+                      <Badge variant="secondary" className="bg-slate-200 text-slate-600 hover:bg-slate-300 border-0 text-[10px] px-1.5 h-5">
+                          {formatShiftTime(shift)}
+                      </Badge>
                     </div>
 
                     {weekDates.map((date, dayIndex) => {
@@ -523,63 +565,92 @@ export default function DoctorSchedulePage() {
                       const cancelledShifts = shiftsForDay.filter(ds => ds.status === 'CANCELLED')
                       
                       return (
-                        <div key={dayIndex} className="p-2 border-r">
+                        <div key={dayIndex} className="p-2 border-r border-slate-100 relative group/cell">
                           {/* Active shifts */}
-                          {activeShifts.map(doctorShift => (
+                          {filters.consultations && activeShifts.map(doctorShift => {
+                            const doctorName = doctorShift.doctor?.user?.fullName || 'N/A';
+                            return (
                             <div
                               key={doctorShift.id}
-                              className="p-2 mb-2 rounded-lg text-xs border-l-4 bg-blue-50 border-blue-500 relative group"
+                              className="p-2 mb-2 rounded-xl text-xs bg-white border border-slate-100 shadow-sm shadow-slate-200/50 hover:shadow-md hover:shadow-blue-200 hover:border-blue-300 transition-all relative group/card flex flex-col items-center text-center gap-1.5 min-h-[80px] justify-center"
                             >
-                              <div className="font-medium">Ca trực</div>
-                              <div className="text-gray-600">{doctorShift.doctor?.user?.fullName || 'Unknown Doctor'}</div>
-                              <div className="text-gray-500 text-xs">{doctorShift.doctor?.specialty?.name || 'Unknown Specialty'}</div>
+                              {/* Status Dot */}
+                              <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${doctorShift.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+
+                              {/* Avatar */}
+                              <div className={`w-8 h-8 min-w-[32px] rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm ${getAvatarColor(doctorName)}`}>
+                                   {getAvatarInitials(doctorName)}
+                              </div>
                               
-                              {/* Cancel button - chỉ hiện khi showAddEvent = true */}
+                              {/* Name */}
+                              <span className="font-bold text-slate-800 text-[11px] leading-tight w-full break-words" title={doctorName}>
+                                  {doctorName}
+                              </span>
+                             
+                              {/* Specialty */}
+                              <div className="text-slate-500 text-[9px] w-full truncate px-1 bg-slate-50 rounded-md py-0.5">
+                                {doctorShift.doctor?.specialty?.name || 'Đa khoa'}
+                              </div>
+
+                              {/* Cancel button */}
                               {showAddEvent && (
                                 <button
                                   onClick={() => handleCancelShiftClick(doctorShift)}
                                   disabled={previewLoading || cancelLoading}
                                   className={`absolute -top-1 -right-1 w-5 h-5 ${
                                     previewLoading || cancelLoading 
-                                      ? 'bg-gray-400 cursor-not-allowed' 
-                                      : 'bg-red-500 hover:bg-red-600'
-                                  } text-white rounded-full text-xs transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100`}
-                                  title={previewLoading || cancelLoading ? "Đang xử lý..." : "Hủy ca trực"}
+                                      ? 'bg-slate-400 cursor-not-allowed' 
+                                      : 'bg-red-500 hover:bg-red-600 shadow-red-500/30'
+                                  } text-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all duration-200 transform hover:scale-110 z-10`}
+                                  title="Hủy ca trực"
                                 >
                                   {previewLoading || cancelLoading ? (
                                     <Loader2 className="w-3 h-3 animate-spin" />
                                   ) : (
-                                    <XCircle className="w-3 h-3" />
+                                    <XCircle className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          )})}
+                          
+                          {/* Cancelled shifts */}
+                          {filters.onLeave && cancelledShifts.map(doctorShift => (
+                            <div
+                              key={doctorShift.id}
+                              className="p-2 mb-2 rounded-lg text-xs bg-slate-50 border border-slate-200 opacity-70 hover:opacity-100 transition-opacity relative group/card"
+                            >
+                              <div className="font-bold text-slate-500 line-through mb-1 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                Đã hủy
+                              </div>
+                              <div className="text-slate-500 line-through text-[10px]">
+                                {doctorShift.doctor?.user?.fullName}
+                              </div>
+                              
+                              {showAddEvent && (
+                                <button
+                                  onClick={() => handleRestoreShiftClick(doctorShift)}
+                                  disabled={restoreLoading}
+                                  className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/30 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all duration-200 transform hover:scale-110 z-10"
+                                  title="Khôi phục"
+                                >
+                                  {restoreLoading ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <RotateCcw className="w-3.5 h-3.5" />
                                   )}
                                 </button>
                               )}
                             </div>
                           ))}
                           
-                          {/* Cancelled shifts - hiển thị với style khác và có restore button */}
-                          {cancelledShifts.map(doctorShift => (
-                            <div
-                              key={doctorShift.id}
-                              className="p-2 mb-2 rounded-lg text-xs border-l-4 bg-gray-100 border-gray-400 relative group opacity-60"
-                            >
-                              <div className="font-medium line-through">Ca trực (Đã hủy)</div>
-                              <div className="text-gray-500 line-through">{doctorShift.doctor?.user?.fullName || 'Unknown Doctor'}</div>
-                              {showAddEvent && (
-                                <button
-                                  onClick={() => handleRestoreShiftClick(doctorShift)}
-                                  disabled={restoreLoading}
-                                  className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 hover:bg-green-600 text-white rounded-full text-xs transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100"
-                                  title="Khôi phục ca trực"
-                                >
-                                  {restoreLoading ? (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    <RotateCcw className="w-3 h-3" />
-                                  )}
-                                </button>
-                              )}
+                          {/* Add button placeholder if empty and editing */}
+                          {showAddEvent && activeShifts.length === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 pointer-events-none">
+                                <div className="text-slate-300 text-xs font-bold">+ Trống</div>
                             </div>
-                          ))}
+                          )}
                         </div>
                       )
                     })}
@@ -594,23 +665,27 @@ export default function DoctorSchedulePage() {
             {!showAddEvent ? (
               <>
                 {/* Mini Calendar */}
-                <Card>
-                  <CardHeader><CardTitle>
-                    {currentWeek.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
-                  </CardTitle></CardHeader>
+                <Card className="border-0 shadow-lg shadow-slate-200/20 bg-white/60 backdrop-blur-xl rounded-[24px]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black text-slate-800 uppercase tracking-widest">THÁNG {currentWeek.getMonth() + 1}, {currentWeek.getFullYear()}</CardTitle>
+                  </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold mb-2">
                       {["CN","T2","T3","T4","T5","T6","T7"].map(d => (
-                        <div key={d} className="text-gray-500">{d}</div>
+                        <div key={d} className="text-slate-400">{d}</div>
                       ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 text-center">
                       {Array.from({ length: 31 }, (_, i) => i + 1).map(d => {
                         const isToday = d === new Date().getDate() && 
                                        currentWeek.getMonth() === new Date().getMonth()
                         return (
                           <div
                             key={d}
-                            className={`p-2 rounded cursor-pointer ${
-                              isToday ? "bg-blue-600 text-white rounded-full" : "hover:bg-gray-100"
+                            className={`aspect-square flex items-center justify-center rounded-lg cursor-pointer text-xs font-bold transition-all ${
+                              isToday 
+                              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110" 
+                              : "text-slate-600 hover:bg-white hover:shadow-md"
                             }`}
                           >
                             {d}
@@ -622,73 +697,104 @@ export default function DoctorSchedulePage() {
                 </Card>
 
                 {/* Filters */}
-                <Card>
-                  <CardHeader className="flex justify-between">
-                    <CardTitle>Calendars</CardTitle>
-                    <Button variant="ghost" size="sm" onClick={toggleAll}>
-                      {filters.consultations && filters.onLeave ? "Deselect All" : "Select All"}
+                <Card className="border-0 shadow-lg shadow-slate-200/20 bg-white/60 backdrop-blur-xl rounded-[24px]">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <Filter className="w-3.5 h-3.5" />
+                        Bộ Lọc
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={toggleAll} className="h-6 text-[10px] uppercase font-bold text-slate-400 hover:text-blue-600">
+                      {filters.consultations && filters.onLeave ? "Bỏ chọn" : "Chọn tất cả"}
                     </Button>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={filters.consultations} onChange={() => toggleFilter("consultations")} />
-                      Ca trực
-                      <Badge>{doctorShifts.filter(ds => ds.status === 'ACTIVE').length}</Badge>
+                    <label className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-slate-100 cursor-pointer hover:bg-white hover:shadow-md transition-all group">
+                      <div className="flex items-center gap-3">
+                         <div className={`w-2 h-2 rounded-full ${filters.consultations ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                         <span className="text-sm font-bold text-slate-700 group-hover:text-blue-700">Ca trực</span>
+                      </div>
+                      <input type="checkbox" className="accent-blue-600 w-4 h-4 cursor-pointer" checked={filters.consultations} onChange={() => toggleFilter("consultations")} />
                     </label>
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={filters.onLeave} onChange={() => toggleFilter("onLeave")} />
-                      Nghỉ phép
-                      <Badge>{doctorShifts.filter(ds => ds.status === 'CANCELLED').length}</Badge>
+                    <label className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-slate-100 cursor-pointer hover:bg-white hover:shadow-md transition-all group">
+                       <div className="flex items-center gap-3">
+                         <div className={`w-2 h-2 rounded-full ${filters.onLeave ? 'bg-red-500' : 'bg-slate-300'}`} />
+                         <span className="text-sm font-bold text-slate-700 group-hover:text-blue-700">Nghỉ phép / Đã hủy</span>
+                      </div>
+                      <input type="checkbox" className="accent-blue-600 w-4 h-4 cursor-pointer" checked={filters.onLeave} onChange={() => toggleFilter("onLeave")} />
                     </label>
+                    
+                    <div className="pt-2 grid grid-cols-2 gap-3">
+                        <div className="bg-emerald-50/50 p-2 rounded-xl text-center border border-emerald-100">
+                            <div className="text-xl font-black text-emerald-600">{doctorShifts.filter(ds => ds.status === 'ACTIVE').length}</div>
+                            <div className="text-[10px] font-bold text-emerald-400 uppercase">Hoạt động</div>
+                        </div>
+                         <div className="bg-red-50/50 p-2 rounded-xl text-center border border-red-100">
+                            <div className="text-xl font-black text-red-600">{doctorShifts.filter(ds => ds.status === 'CANCELLED').length}</div>
+                            <div className="text-[10px] font-bold text-red-400 uppercase">Đã hủy</div>
+                        </div>
+                    </div>
                   </CardContent>
                 </Card>
 
                 {/* Upcoming */}
-                <Card>
-                  <CardHeader><CardTitle>Lịch trực sắp tới</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    {doctorShifts.slice(0, 3).map(ds => (
-                      <div key={ds.id} className="flex gap-3">
-                        <User className="w-5 h-5 mt-1" />
-                        <div>
-                          <div className="font-medium">{ds.shift.name}</div>
-                          <div className="text-sm text-gray-500">{ds.doctor.user.fullName}</div>
-                          <div className="text-xs text-gray-400">{ds.workDate}</div>
-                          <Badge variant="outline" className={ds.status === 'ACTIVE' ? 'border-green-500 text-green-600' : 'border-gray-500'}>
-                            {ds.status === 'ACTIVE' ? 'Đang trực' : ds.status}
-                          </Badge>
+                <Card className="border-0 shadow-lg shadow-slate-200/20 bg-white/60 backdrop-blur-xl rounded-[24px]">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm font-black text-slate-800 uppercase tracking-widest">Sắp diễn ra</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    {doctorShifts
+                        .filter(ds => ds.status === 'ACTIVE')
+                        .sort((a, b) => new Date(a.workDate).getTime() - new Date(b.workDate).getTime()) // Sort by date
+                        .slice(0, 3)
+                        .map(ds => (
+                      <div key={ds.id} className="flex gap-3 p-3 bg-white rounded-2xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md ${getAvatarColor(ds.doctor.user.fullName)}`}>
+                             {getAvatarInitials(ds.doctor.user.fullName)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                             <div className="font-bold text-slate-700 text-sm truncate">{ds.shift.name}</div>
+                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">{ds.workDate.slice(5)}</span>
+                          </div>
+                          <div className="text-xs text-slate-500 font-medium truncate">{ds.doctor.user.fullName}</div>
                         </div>
                       </div>
                     ))}
                     {doctorShifts.length === 0 && (
-                      <p className="text-gray-500 text-sm">Chưa có lịch trực nào</p>
+                      <div className="text-center py-6 text-slate-400 text-sm">Chưa có lịch trực nào</div>
                     )}
                   </CardContent>
                 </Card>
               </>
             ) : (
               /* Doctor list */
-              <Card>
-                <CardHeader><CardTitle>Chọn Bác Sĩ</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
+              <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white backdrop-blur-xl rounded-[24px]">
+                <CardHeader><CardTitle className="text-lg font-black text-slate-800">Chọn Bác Sĩ</CardTitle></CardHeader>
+                <CardContent className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {doctors.map(d => (
                     <div
                       key={d.id}
                       onClick={() => handleDoctorSelect(d)}
-                      className="flex gap-3 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer"
+                      className="flex gap-3 p-3 border border-slate-100 rounded-2xl hover:bg-blue-50/50 hover:border-blue-200 cursor-pointer transition-all group active:scale-95"
                     >
-                      <div className={`w-10 h-10 ${getAvatarColor(d.user.fullName)} rounded-full flex items-center justify-center text-white text-sm font-semibold`}>
-                        {getAvatarInitials(d.user.fullName)}
+                      <div className={`w-10 h-10 ${getAvatarColor(d.user.fullName)} rounded-2xl shadow-lg shadow-slate-200 group-hover:shadow-blue-200 flex items-center justify-center text-white text-sm font-black overflow-hidden transform group-hover:rotate-3 transition-all`}>
+                        {d.user?.avatar ? (
+                          <img 
+                            src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${d.user.avatar}`} 
+                            alt={d.user.fullName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          getAvatarInitials(d.user.fullName)
+                        )}
                       </div>
                       <div>
-                        <div className="font-medium">{d.user.fullName}</div>
-                        <div className="text-sm text-gray-500">{d.specialty.name}</div>
-                        <div className="text-xs text-gray-400">{d.doctorCode}</div>
+                        <div className="font-bold text-slate-800 group-hover:text-blue-700 transition-colors">{d.user.fullName}</div>
+                        <div className="text-xs text-slate-500 font-medium">{d.specialty.name}</div>
+                        <Badge variant="secondary" className="mt-1 text-[10px] bg-slate-100 text-slate-500 border-0 group-hover:bg-blue-100 group-hover:text-blue-600">{d.doctorCode}</Badge>
                       </div>
                     </div>
                   ))}
                   {doctors.length === 0 && (
-                    <p className="text-gray-500 text-sm">Không có bác sĩ nào</p>
+                    <p className="text-slate-500 text-sm text-center py-8">Không có bác sĩ nào</p>
                   )}
                 </CardContent>
               </Card>

@@ -1,9 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DollarSign, Users, Calendar, Search, Eye, Loader2, Calculator, SlidersHorizontal, RotateCcw, FileDown, FileSpreadsheet } from "lucide-react"
+import { 
+  DollarSign, 
+  Users, 
+  Calendar, 
+  Search, 
+  Eye, 
+  Loader2, 
+  Calculator, 
+  SlidersHorizontal, 
+  RotateCcw, 
+  FileDown, 
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Filter
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
@@ -200,245 +216,323 @@ export default function SalaryPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-1">Quản lý lương</h1>
-            <p className="text-slate-600">Tháng {selectedMonth}</p>
+        {/* Simplified Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+              <DollarSign className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Quản lý Lương
+              </h1>
+              <p className="text-slate-500 text-sm font-medium">
+                Bảng lương nhân viên tháng {selectedMonth}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
-             <Button variant="outline" onClick={handleExportPDF} disabled={isExportingPDF}>
-                {isExportingPDF ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileDown className="h-4 w-4 mr-2" />}
-                Xuất PDF
+
+          <div className="flex items-center gap-3">
+             <Button 
+                variant="outline" 
+                size="sm"
+                className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50"
+                onClick={handleExportPDF} 
+                disabled={isExportingPDF}
+              >
+                {isExportingPDF ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <FileDown className="h-3.5 w-3.5 mr-2 text-rose-500" />}
+                PDF
              </Button>
-             <Button variant="outline" onClick={handleExportExcel} disabled={isExportingExcel}>
-                {isExportingExcel ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
-                Xuất Excel
+             <Button 
+                variant="outline" 
+                size="sm"
+                className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50"
+                onClick={handleExportExcel} 
+                disabled={isExportingExcel}
+              >
+                {isExportingExcel ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <FileSpreadsheet className="h-3.5 w-3.5 mr-2 text-emerald-500" />}
+                Excel
              </Button>
-             <Button variant="outline" asChild>
+             <Button 
+                variant="outline" 
+                size="sm"
+                className="border-slate-200 h-9 rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50"
+                asChild
+              >
                 <Link to="/admin/payroll-statistics">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Thống kê chi tiết
+                    <SlidersHorizontal className="h-3.5 w-3.5 mr-2 text-indigo-500" />
+                    Thống kê
                 </Link>
              </Button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng thực nhận</CardTitle>
-              <DollarSign className="h-5 w-5 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-900">
-                {formatCurrency(totalSalaryPayout)}
+        {/* Simplified Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-emerald-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <DollarSign className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tổng chi trả</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-xl font-bold text-slate-900">{formatCurrency(totalSalaryPayout)}</h3>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Số lượng nhân viên</CardTitle>
-              <Users className="h-5 w-5 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{filteredPayrolls.length}</div>
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-blue-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tổng nhân viên</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-xl font-bold text-slate-900">{filteredPayrolls.length}</h3>
+                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">Người</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-violet-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Bác sĩ</CardTitle>
-              <Users className="h-5 w-5 text-violet-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{totalDoctors}</div>
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-indigo-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bác sĩ</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-xl font-bold text-slate-900">{totalDoctors}</h3>
+                  <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded uppercase">Doctors</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tháng làm việc</CardTitle>
-              <Calendar className="h-5 w-5 text-amber-600" />
-            </CardHeader>
-            <CardContent>
-               <div className="flex items-center gap-2">
-                 <Input 
-                   type="month" 
-                   value={selectedMonth} 
-                   onChange={(e) => setSelectedMonth(e.target.value)}
-                   className="font-semibold" 
-                 />
-               </div>
+          <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-amber-200 transition-colors">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Kỳ lương</p>
+                <Input 
+                  type="month" 
+                  value={selectedMonth} 
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="h-7 border-none bg-amber-50/50 focus:bg-white text-xs font-bold text-slate-900 p-1" 
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Action Bar (Calculate) */}
-        <Card className="border-0 shadow-xl mb-6 bg-white">
-          <CardContent className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-             <div className="flex items-center gap-2 text-slate-600">
-               <Calculator className="h-5 w-5 text-blue-500" />
-               <span>Tự động tính lương từ dữ liệu Chấm công & Doanh thu</span>
+        {/* Simplified Action Bar */}
+        <div className="bg-blue-600/10 backdrop-blur-xl rounded-2xl p-4 border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4">
+           <div className="flex items-center gap-3">
+             <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
+               <Calculator className="h-5 w-5 text-white" />
              </div>
-             <Button onClick={handleCalculateClick} disabled={isCalculating} size="lg" className="shadow-md bg-blue-600 hover:bg-blue-700">
-                {isCalculating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Đang tính toán...
-                  </>
-                ) : (
-                  <>
-                    <Calculator className="h-4 w-4 mr-2" />
-                    Tính lương tháng này
-                  </>
-                )}
-              </Button>
-          </CardContent>
-        </Card>
-
-        {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Tìm kiếm theo tên hoặc mã nhân viên..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-40 bg-white">
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="DRAFT">Nháp</SelectItem>
-                    <SelectItem value="APPROVED">Đã phê duyệt</SelectItem>
-                    <SelectItem value="PAID">Đã thanh toán</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFilterStatus("all")
-                    setSearchQuery("")
-                    setPagination({ ...pagination, page: 1 })
-                    fetchPayrolls()
-                  }}
-                  title="Reload"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
+             <div>
+               <p className="text-sm font-bold text-slate-900">Tính toán bảng lương</p>
+               <p className="text-xs text-slate-500 font-medium">Tự động đồng bộ từ Chấm công & Doanh thu dịch vụ.</p>
+             </div>
+           </div>
+           <Button 
+            onClick={handleCalculateClick} 
+            disabled={isCalculating} 
+            size="sm" 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 rounded-lg shadow-lg shadow-blue-100"
+          >
+            {isCalculating ? (
+              <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+            ) : (
+              <Calculator className="h-3.5 w-3.5 mr-2" />
+            )}
+            {isCalculating ? "Đang tính..." : "Tính lương ngay"}
+          </Button>
         </div>
 
-        {/* Salary List */}
-        <Card className="border-0 shadow-xl overflow-hidden">
-          <CardHeader className="bg-slate-50 border-b py-4">
-            <CardTitle className="text-lg text-slate-800">Danh sách lương nhân viên</CardTitle>
-          </CardHeader>
+        {/* Simplified Filters Bar */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mt-6 mb-6">
+          <div className="flex flex-col xl:flex-row gap-3">
+            {/* Search input with focus effects */}
+            <div className="relative flex-grow group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              </div>
+              <Input
+                placeholder="Tìm kiếm theo tên hoặc mã nhân viên..."
+                className="w-full h-11 pl-11 pr-4 bg-slate-50 border-transparent focus:bg-white focus:border-blue-500/50 rounded-xl transition-all text-sm font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Filters grid */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-100">
+                <div className="px-3 flex items-center gap-2 border-r border-slate-200 mr-1">
+                  <Filter className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lọc</span>
+                </div>
+                
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[160px] h-9 border-none bg-transparent focus:ring-0 text-xs font-bold text-slate-700">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                    <SelectItem value="DRAFT">📋 Bản nháp</SelectItem>
+                    <SelectItem value="APPROVED">✅ Đã phê duyệt</SelectItem>
+                    <SelectItem value="PAID">💰 Đã thanh toán</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-11 w-11 p-0 rounded-xl hover:bg-slate-50 text-slate-400"
+                onClick={() => {
+                  setFilterStatus("all")
+                  setSearchQuery("")
+                  setPagination({ ...pagination, page: 1 })
+                  fetchPayrolls()
+                }}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Salary Table Overlay */}
+        <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white">
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                <p className="text-slate-500">Đang tải dữ liệu...</p>
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Đang tải dữ liệu...</p>
               </div>
             ) : filteredPayrolls.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <div className="bg-slate-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                    <Calculator className="h-8 w-8 text-slate-400" />
+              <div className="text-center py-20 bg-slate-50/50">
+                <div className="bg-white rounded-2xl p-6 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-sm ring-1 ring-slate-100">
+                    <Calculator className="h-10 w-10 text-slate-200" />
                 </div>
-                <h3 className="text-lg font-medium text-slate-900">Chưa có dữ liệu lương</h3>
-                <p className="mb-4">Chưa có bảng lương nào được tạo cho tháng {selectedMonth}</p>
-                <Button onClick={handleCalculateClick} disabled={isCalculating}>
-                  Tính lương ngay
+                <h3 className="text-lg font-bold text-slate-900">Chưa có dữ liệu lương</h3>
+                <p className="text-slate-500 text-sm mt-1 mb-6">Bảng lương cho tháng {selectedMonth} chưa được khởi tạo.</p>
+                <Button 
+                  onClick={handleCalculateClick} 
+                  disabled={isCalculating}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
+                >
+                  Khởi tạo bảng lương
                 </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50/50 border-b text-xs uppercase text-slate-500 font-semibold tracking-wider">
-                      <th className="text-left py-3 px-6">Mã NV</th>
-                      <th className="text-left py-3 px-6">Họ tên / Chức vụ</th>
-                      <th className="text-left py-3 px-6">Tổng thu nhập (Gross)</th>
-                      <th className="text-left py-3 px-6 text-center">Hệ số</th>
-                      <th className="text-left py-3 px-6 text-center">Thâm niên</th>
-                      <th className="text-right py-3 px-6">Hoa hồng</th>
-                      <th className="text-right py-3 px-6 text-red-500">Phạt & Khấu trừ</th>
-                      <th className="text-right py-3 px-6 bg-slate-50">Thực nhận</th>
-                      <th className="text-center py-3 px-6">Trạng thái</th>
-                      <th className="text-center py-3 px-6">Thao tác</th>
+                  <thead className="bg-slate-50/50 border-y border-slate-100">
+                    <tr>
+                      <th className="py-4 px-6 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Nhân viên</th>
+                      <th className="py-4 px-6 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Mã NV</th>
+                      <th className="py-4 px-6 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Gross Salary</th>
+                      <th className="py-4 px-6 text-center font-bold uppercase text-[11px] tracking-widest text-slate-500">Hệ số</th>
+                      <th className="py-4 px-6 text-right font-bold uppercase text-[11px] tracking-widest text-slate-500">Hoa hồng</th>
+                      <th className="py-4 px-6 text-right font-bold uppercase text-[11px] tracking-widest text-slate-500 text-rose-500">Khấu trừ</th>
+                      <th className="py-4 px-6 text-right font-bold uppercase text-[11px] tracking-widest text-slate-500 bg-slate-100/30">Thực nhận</th>
+                      <th className="py-4 px-6 text-center font-bold uppercase text-[11px] tracking-widest text-slate-500">Trạng thái</th>
+                      <th className="py-4 px-6 text-right font-bold uppercase text-[11px] tracking-widest text-slate-500">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
+                  <tbody className="divide-y divide-slate-50">
                     {filteredPayrolls.map((payroll) => (
                       <tr
                         key={payroll.id}
-                        className="hover:bg-blue-50/30 transition-colors"
+                        className="group hover:bg-blue-50/20 transition-colors"
                       >
-                        <td className="py-4 px-6 font-medium text-slate-600">
-                            {payroll.employee?.employeeCode || '#'}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-400 overflow-hidden shrink-0 ring-1 ring-slate-100 group-hover:ring-blue-100 transition-all">
+                              {payroll.employee?.avatar ? (
+                                <img 
+                                  src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${payroll.employee.avatar}`} 
+                                  alt={payroll.employee.fullName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-sm">{payroll.employee?.fullName?.charAt(0) || "NV"}</span>
+                              )}
+                            </div>
+                            <div>
+                                <p className="font-bold text-slate-900 text-sm leading-tight">{payroll.employee?.fullName}</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">{payroll.employee?.role}</p>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-4 px-6">
-                            <div className="font-medium text-slate-900">{payroll.employee?.fullName}</div>
-                            <div className="text-xs text-slate-500 mt-0.5 capitalize">{payroll.employee?.role}</div>
+                            <span className="font-mono text-[11px] font-bold text-slate-400 group-hover:text-blue-600 transition-colors">
+                              {payroll.employee?.employeeCode || '#'}
+                            </span>
                         </td>
-                        <td className="py-4 px-6 text-slate-800 font-medium">
-                            {formatCurrency(payroll.grossSalary)}
-                            <div className="text-xs text-slate-400 font-normal mt-0.5">
-                                Cơ bản: {formatCurrency(payroll.baseSalary)}
-                            </div>
+                        <td className="py-4 px-6">
+                            <p className="text-sm font-bold text-slate-700">{formatCurrency(payroll.grossSalary)}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Bản: {formatCurrency(payroll.baseSalary)}</p>
                         </td>
                         <td className="py-4 px-6 text-center">
-                            <Badge variant="secondary" className="font-normal">{payroll.coefficient}</Badge>
+                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-0 font-bold text-[10px] rounded-md px-1.5 py-0">
+                              x{payroll.coefficient}
+                            </Badge>
                         </td>
-                        <td className="py-4 px-6 text-center text-slate-600">
-                            {payroll.experience} năm
+                        <td className="py-4 px-6 text-right font-semibold text-slate-600 text-sm">
+                          {payroll.commission ? formatCurrency(payroll.commission) : <span className="text-slate-200">—</span>}
                         </td>
-                        <td className="py-4 px-6 text-right text-slate-600">
-                          {payroll.commission ? formatCurrency(payroll.commission) : "-"}
-                        </td>
-                        <td className="py-4 px-6 text-right text-red-600">
+                        <td className="py-4 px-6 text-right">
                            {payroll.penaltyAmount ? (
                              <>
-                               -{formatCurrency(payroll.penaltyAmount)}
-                               <div className="text-xs text-red-400 font-normal mt-0.5">
-                                 {payroll.penaltyDaysOff} ngày phạt
-                               </div>
+                               <p className="text-sm font-bold text-rose-500">-{formatCurrency(payroll.penaltyAmount)}</p>
+                               <p className="text-[10px] text-rose-400 font-medium">{payroll.penaltyDaysOff} ngày</p>
                              </>
                            ) : (
-                             <span className="text-slate-300">-</span>
+                             <span className="text-slate-200">—</span>
                            )}
                         </td>
-                        <td className="py-4 px-6 text-right font-bold text-emerald-600 bg-slate-50/50">
-                          {formatCurrency(payroll.totalSalary)} {/* Note: backend field is netSalary, frontend typically maps to totalSalary or similar. In local state it seems mapPayrollData uses totalSalary as alias or netSalary. Checking interface... actually backend sends netSalary. Need to verify mapPayrollData or simply use payroll.netSalary if available in type. Wait, the filteredPayrolls is type Payroll. Previous step used payroll.totalSalary. I will assume totalSalary is the frontend alias for netSalary. */}
+                        <td className="py-4 px-6 text-right bg-slate-50/30">
+                          <span className="text-sm font-bold text-emerald-600 group-hover:scale-105 transition-transform inline-block">
+                            {formatCurrency(payroll.totalSalary)}
+                          </span>
                         </td>
                         <td className="py-4 px-6 text-center">
                           {payroll.status === 'DRAFT' && (
-                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                              Nháp
+                            <Badge className="bg-amber-100/50 text-amber-700 border-amber-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                              <span className="h-1 w-1 rounded-full bg-amber-500 mr-1.5 animate-pulse" />
+                              BẢN NHÁP
                             </Badge>
                           )}
                           {payroll.status === 'APPROVED' && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Đã duyệt
+                            <Badge className="bg-indigo-100/50 text-indigo-700 border-indigo-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                              <span className="h-1 w-1 rounded-full bg-indigo-500 mr-1.5" />
+                              ĐÃ DUYỆT
                             </Badge>
                           )}
                           {payroll.status === 'PAID' && (
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                              Đã TT
+                            <Badge className="bg-emerald-100/50 text-emerald-700 border-emerald-200/50 text-[10px] font-bold rounded-full px-2.5 py-0.5 tracking-wide">
+                              <span className="h-1 w-1 rounded-full bg-emerald-500 mr-1.5" />
+                              ĐÃ TRẢ
                             </Badge>
                           )}
                         </td>
-                        <td className="py-4 px-6 text-center">
-                          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-                            <Link to={`/admin/salary/${payroll.id}`} title="Xem chi tiết">
-                              <Eye className="h-4 w-4 text-blue-600" />
+                        <td className="py-4 px-6 text-right">
+                          <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                            <Link to={`/admin/salary/${payroll.id}`}>
+                              <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
                         </td>
@@ -450,31 +544,63 @@ export default function SalaryPage() {
             )}
           </CardContent>
           {pagination.totalPages > 1 && (
-            <CardContent className="border-t p-4 bg-slate-50/50">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-600">
-                  Trang {pagination.page} / {pagination.totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-                    disabled={pagination.page === 1}
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                    disabled={pagination.page >= pagination.totalPages}
-                  >
-                    Tiếp
-                  </Button>
-                </div>
+            <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                Trang <span className="text-slate-900 font-bold">{pagination.page}</span> / {pagination.totalPages}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                  onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+                  disabled={pagination.page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
+                  if (
+                    page === 1 || 
+                    page === pagination.totalPages || 
+                    (page >= pagination.page - 1 && page <= pagination.page + 1)
+                  ) {
+                    return (
+                      <Button
+                        key={page}
+                        variant={pagination.page === page ? "default" : "ghost"}
+                        size="sm"
+                        className={`h-8 w-8 p-0 rounded-lg font-bold text-xs transition-colors ${
+                          pagination.page === page 
+                            ? "bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700" 
+                            : "text-slate-600 hover:bg-white hover:text-blue-600 border border-transparent hover:border-slate-200"
+                        }`}
+                        onClick={() => setPagination({ ...pagination, page: page })}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  }
+                  if (
+                    (page === 2 && pagination.page > 3) || 
+                    (page === pagination.totalPages - 1 && pagination.page < pagination.totalPages - 2)
+                  ) {
+                    return <span key={page} className="px-1 text-slate-400 font-bold text-[10px]">...</span>;
+                  }
+                  return null;
+                })}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                  onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-            </CardContent>
+            </div>
           )}
         </Card>
 

@@ -5,10 +5,12 @@ import {
   Search,
   Calendar,
   ChevronRight,
+  ChevronLeft,
   Activity,
   Filter,
   UserCheck,
   Bell,
+  Stethoscope,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +20,14 @@ import { Link } from "react-router-dom";
 import api from "@/lib/api";
 import { useAuth } from "@/auth/authContext";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 // --- Interfaces & Data ---
 interface MedicalAppointment {
@@ -107,9 +117,13 @@ export default function MedicalList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toLocaleDateString("en-CA") // YYYY-MM-DD in local time
   );
   const [showAllDates, setShowAllDates] = useState(false);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Check if user is doctor or receptionist
   // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
@@ -133,21 +147,22 @@ export default function MedicalList() {
   }, [user, authLoading]);
 
   // Fetch appointments from API
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Get current doctor's ID from auth context
       if (!user?.doctorId) {
-        setError("Không tìm thấy thông tin bác sĩ. Vui lòng đăng nhập lại.");
-        setLoading(false);
+        if (!silent) setError("Không tìm thấy thông tin bác sĩ. Vui lòng đăng nhập lại.");
+        if (!silent) setLoading(false);
         return;
       }
 
+
       const currentDoctorId = user.doctorId;
       const dateToFetch = showAllDates ? undefined : selectedDate;
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date().toLocaleDateString("en-CA");
 
       console.log(
         "MedicalList - Fetching data for doctor:",
@@ -249,14 +264,16 @@ export default function MedicalList() {
             doctorId: visit.doctorId,
             shiftId: appointment.shiftId,
             date: visit.checkInTime
-              ? new Date(visit.checkInTime).toISOString().split("T")[0]
+              ? new Date(visit.checkInTime).toLocaleDateString("en-CA")
               : today,
             slotNumber: appointment.slotNumber || 0,
             status:
               visit.status === "EXAMINING"
                 ? "IN_PROGRESS"
-                : visit.status === "COMPLETED"
+                : visit.status === "COMPLETED" || visit.status === "EXAMINED"
                 ? "COMPLETED"
+                : visit.status === "WAITING"
+                ? "CHECKED_IN"
                 : "WAITING",
             bookingType: appointment.bookingType || "OFFLINE",
             bookedBy: appointment.bookedBy || "PATIENT",
@@ -340,11 +357,11 @@ export default function MedicalList() {
         toast.error(`Error loading appointments: ${errorMessage}`);
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  // Fetch on mount and when user changes
+  // Fetch on mount and when user changes, and setup auto-refresh
   useEffect(() => {
     if (authLoading || !user) return;
 
@@ -352,7 +369,14 @@ export default function MedicalList() {
     if (user.roleId !== 1 && user.roleId !== 2 && user.roleId !== 4) return;
 
     fetchAppointments();
-  }, [user?.id, user?.doctorId, authLoading]);
+
+    // Auto-refresh every 30 seconds
+    const intervalId = setInterval(() => {
+        fetchAppointments(true);
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [user?.id, user?.doctorId, authLoading, selectedDate, showAllDates]);
 
   const filteredAppointments = appointments.filter((appointment) => {
     // Get patient name from nested user object
@@ -374,6 +398,18 @@ export default function MedicalList() {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const paginatedAppointments = filteredAppointments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, selectedDate, showAllDates]);
 
   const waitingCount = appointments.filter(
     (a) => a.status === "WAITING"
@@ -510,14 +546,19 @@ export default function MedicalList() {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Medical Appointments
-            </h1>
-            <p className="text-slate-600">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="p-2 bg-indigo-100 rounded-xl">
+                  <Stethoscope className="w-8 h-8 text-indigo-600" />
+               </div>
+               <h1 className="text-3xl font-bold text-slate-900">
+                 Medical Appointments
+               </h1>
+            </div>
+            <p className="text-slate-600 ml-1">
               {showAllDates
                 ? "All patient appointments and examinations"
                 : `Manage ${
-                    selectedDate === new Date().toISOString().split("T")[0]
+                    selectedDate === new Date().toLocaleDateString("en-CA")
                       ? "today's"
                       : selectedDate
                   } patient appointments and examinations`}
@@ -539,14 +580,11 @@ export default function MedicalList() {
               onClick={() => {
                 setShowAllDates(!showAllDates);
                 if (!showAllDates) {
-                  setSelectedDate(new Date().toISOString().split("T")[0]);
+                  setSelectedDate(new Date().toLocaleDateString("en-CA"));
                 }
               }}
             >
               {showAllDates ? "Show Today Only" : "Show All Dates"}
-            </Button>
-            <Button variant="outline" onClick={() => fetchAppointments()}>
-              Refresh
             </Button>
           </div>
         </div>
@@ -659,19 +697,7 @@ export default function MedicalList() {
                 >
                   Waiting
                 </Button>
-                <Button
-                  variant={
-                    filterStatus === "CHECKED_IN" ? "default" : "outline"
-                  }
-                  onClick={() => setFilterStatus("CHECKED_IN")}
-                  className={
-                    filterStatus === "CHECKED_IN"
-                      ? "bg-emerald-600 hover:bg-emerald-700"
-                      : ""
-                  }
-                >
-                  Checked In
-                </Button>
+
                 <Button
                   variant={
                     filterStatus === "IN_PROGRESS" ? "default" : "outline"
@@ -695,6 +721,19 @@ export default function MedicalList() {
                   }
                 >
                   Completed
+                </Button>
+                                <Button
+                  variant={
+                    filterStatus === "CANCELLED" ? "default" : "outline"
+                  }
+                  onClick={() => setFilterStatus("CANCELLED")}
+                  className={
+                    filterStatus === "CANCELLED"
+                      ? "bg-red-600 hover:bg-red-700"
+                      : ""
+                  }
+                >
+                  Cancelled
                 </Button>
               </div>
             </div>
@@ -743,7 +782,7 @@ export default function MedicalList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAppointments.length === 0 ? (
+                  {paginatedAppointments.length === 0 ? (
                     <tr>
                       <td
                         colSpan={5}
@@ -758,37 +797,10 @@ export default function MedicalList() {
                             ? "No appointments scheduled for today"
                             : "Try adjusting your search or filter criteria"}
                         </p>
-                        {import.meta.env.DEV && totalAppointments === 0 && (
-                          <div className="mt-4 p-4 bg-gray-50 rounded-lg text-left">
-                            <p className="text-xs font-mono text-gray-600 mb-2">
-                              Debug Info:
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Doctor ID: {user?.doctorId || "N/A"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Today: {new Date().toISOString().split("T")[0]}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Role: {user?.roleId || "N/A"}
-                            </p>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="mt-2"
-                              onClick={() => {
-                                console.log("ðŸ” Manual refresh triggered");
-                                fetchAppointments();
-                              }}
-                            >
-                              Refresh Data
-                            </Button>
-                          </div>
-                        )}
                       </td>
                     </tr>
                   ) : (
-                    filteredAppointments.map((appointment, index) => (
+                    paginatedAppointments.map((appointment, index) => (
                       <tr
                         key={appointment.id}
                         className={`border-b hover:bg-blue-50/30 transition-colors ${
@@ -939,6 +951,37 @@ export default function MedicalList() {
                 </tbody>
               </table>
             </div>
+
+            {/* Premium Pagination Controls */}
+             {filteredAppointments.length > 0 && (
+               <div className="px-6 py-4 border-t bg-white flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                     Hiển thị <span className="text-slate-900">{paginatedAppointments.length}</span> trên <span className="text-slate-900">{filteredAppointments.length}</span> lịch hẹn
+                  </div>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          href="#" 
+                          onClick={(e) => { e.preventDefault(); if(currentPage > 1) setCurrentPage(currentPage - 1) }}
+                          className={cn("rounded-xl border-0 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold", currentPage === 1 && "pointer-events-none opacity-50")}
+                        />
+                      </PaginationItem>
+                      <div className="flex items-center px-4 font-bold text-sm text-slate-700">
+                          Trang {currentPage} / {totalPages || 1}
+                      </div>
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#" 
+                          onClick={(e) => { e.preventDefault(); if(currentPage < totalPages) setCurrentPage(currentPage + 1) }}
+                          className={cn("rounded-xl border-0 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold", currentPage === totalPages && "pointer-events-none opacity-50")}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+               </div>
+            )}
+            
           </CardContent>
         </Card>
       </div>

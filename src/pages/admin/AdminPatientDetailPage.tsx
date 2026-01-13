@@ -74,6 +74,14 @@ export default function AdminPatientDetailPage() {
         setIsLoading(true)
         const data = await getPatientById(Number(id))
         setPatient(data)
+        
+        // Auto-load medical history to get vital signs
+        try {
+          const result = await getPatientMedicalHistory(Number(id), 1, 5)
+          setMedicalHistory(result.data)
+        } catch (err) {
+          console.error('Failed to load medical history:', err)
+        }
       } catch (error: any) {
         toast.error(
           error.response?.data?.message || "Không thể tải thông tin bệnh nhân"
@@ -242,162 +250,187 @@ export default function AdminPatientDetailPage() {
 
   return (
     <AdminSidebar>
-      <div className="space-y-6 p-8">
-        
-        {/* Back Button */}
-        <div>
-          <Button variant="ghost" className="mb-2 pl-0 hover:bg-transparent hover:text-blue-600" asChild>
-            <Link to="/admin/patients">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại danh sách bệnh nhân
-            </Link>
-          </Button>
+      <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
+        {/* Advanced Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/30 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
-        {/* Patient Header Card */}
-        <Card className="border-0 shadow-xl shadow-slate-900/5 mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <Avatar className="h-24 w-24 border-4 border-white/30">
-                    <AvatarImage
-                      src={
-                        patient.avatar
-                          ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${patient.avatar}`
-                          : undefined
-                      }
-                      alt={patient.fullName}
-                    />
-                    <AvatarFallback className="bg-white/20 text-white text-4xl font-bold">
-                      {getInitials(patient.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 bg-white/90 hover:bg-white rounded-full p-2 cursor-pointer transition-colors"
-                  >
-                    <Camera className="h-4 w-4 text-blue-600" />
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarUpload}
-                      disabled={isUploadingAvatar}
-                    />
-                  </label>
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold mb-2">{patient.fullName}</h1>
-                  <div className="flex items-center gap-4 text-blue-100">
-                    <div className="flex items-center gap-2">
-                      <IdCard className="h-4 w-4" />
-                      <span>{patient.patientCode}</span>
-                    </div>
-                    <span>•</span>
-                    <span>
-                      {age} tuổi • {patient.gender === "MALE" ? "Nam" : patient.gender === "FEMALE" ? "Nữ" : "Khác"}
-                    </span>
-                    <span>•</span>
-                    <Badge variant="outline" className={patient.isActive ? "bg-white/20 text-white border-white/30 hover:bg-white/30" : "bg-red-500/50 text-white border-red-300"}>
-                      {patient.isActive ? "Hoạt động" : "Vô hiệu hóa"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-blue-100">
-                    {(patient.phone || phoneProfile) && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        {patient.phone || phoneProfile?.value}
-                      </div>
-                    )}
-                    {(patient.email || emailProfile) && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {patient.email || emailProfile?.value}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className={patient.isActive 
-                    ? "bg-orange-500/20 border-orange-300 text-white hover:bg-orange-500/40" 
-                    : "bg-green-500/20 border-green-300 text-white hover:bg-green-500/40"
-                  }
-                  onClick={() => setStatusDialogOpen(true)}
-                >
-                  {patient.isActive ? (
-                    <><Ban className="h-4 w-4 mr-2" />Vô hiệu hóa</>
-                  ) : (
-                    <><UserCheck className="h-4 w-4 mr-2" />Kích hoạt</>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Chỉnh sửa
-                </Button>
-              </div>
+        <div className="relative p-6 lg:p-10">
+          <div className="max-w-[1700px] mx-auto space-y-6">
+            
+            {/* Back Button */}
+            <div>
+              <Button variant="ghost" className="pl-0 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 transition-colors" asChild>
+                <Link to="/admin/patients">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Quay lại danh sách bệnh nhân
+                </Link>
+              </Button>
             </div>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-4 divide-x bg-white">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <Droplet className="h-5 w-5 text-red-600" />
+            {/* Premium Patient Header Card */}
+            <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden">
+              {/* Header Section - Light Glassmorphic */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-teal-50/50 to-cyan-50/30 border-b-2 border-emerald-100/50">
+                {/* Subtle animated background */}
+                <div className="absolute inset-0 opacity-30">
+                  <div className="absolute top-[-20%] right-[-10%] w-[300px] h-[300px] bg-emerald-300/20 rounded-full blur-[80px] animate-pulse" />
+                  <div className="absolute bottom-[-10%] left-[-10%] w-[250px] h-[250px] bg-teal-300/15 rounded-full blur-[70px] animate-pulse" style={{ animationDelay: '1.5s' }} />
                 </div>
-                <div>
-                  <p className="text-xs text-slate-500">Nhóm máu</p>
-                  <p className="text-lg font-bold text-slate-900">{patient.bloodType || "N/A"}</p>
+
+                <div className="relative p-8">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-6">
+                      <div className="relative group">
+                        <div className="absolute inset-0 bg-emerald-400/20 blur-xl rounded-full scale-110 group-hover:scale-125 transition-transform duration-500" />
+                        <Avatar className="relative h-24 w-24 border-4 border-white shadow-2xl shadow-emerald-500/20 transition-all duration-300 group-hover:scale-105">
+                          <AvatarImage
+                            src={
+                              patient.avatar
+                                ? `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${patient.avatar}`
+                                : undefined
+                            }
+                            alt={patient.fullName}
+                          />
+                          <AvatarFallback className="bg-emerald-500 text-white text-2xl font-black">
+                            {getInitials(patient.fullName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <label
+                          htmlFor="avatar-upload"
+                          className="absolute bottom-0 right-0 bg-white hover:bg-emerald-50 rounded-full p-2.5 cursor-pointer transition-all shadow-lg hover:scale-110 border-2 border-emerald-100"
+                        >
+                          <Camera className="h-4 w-4 text-emerald-600" />
+                          <input
+                            id="avatar-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                            disabled={isUploadingAvatar}
+                          />
+                        </label>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h1 className="text-3xl font-black text-slate-900 tracking-tight">{patient.fullName}</h1>
+                          <Badge 
+                            variant="outline" 
+                            className={patient.isActive 
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold" 
+                              : "bg-red-50 text-red-700 border-red-200 font-bold"
+                            }
+                          >
+                            {patient.isActive ? "Hoạt động" : "Vô hiệu hóa"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-slate-600 text-sm font-medium mb-3">
+                          <div className="flex items-center gap-2">
+                            <IdCard className="h-4 w-4 text-emerald-500" />
+                            <span className="font-mono font-bold">{patient.patientCode}</span>
+                          </div>
+                          <span className="text-slate-300">•</span>
+                          <span>{age} tuổi</span>
+                          <span className="text-slate-300">•</span>
+                          <span>{patient.gender === "MALE" ? "Nam" : patient.gender === "FEMALE" ? "Nữ" : "Khác"}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          {(patient.phone || phoneProfile) && (
+                            <div className="flex items-center gap-2 text-slate-600">
+                              <Phone className="h-4 w-4 text-emerald-500" />
+                              <span className="font-medium">{patient.phone || phoneProfile?.value}</span>
+                            </div>
+                          )}
+                          {(patient.email || emailProfile) && (
+                            <div className="flex items-center gap-2 text-slate-600">
+                              <Mail className="h-4 w-4 text-emerald-500" />
+                              <span className="font-medium">{patient.email || emailProfile?.value}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className={patient.isActive 
+                          ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 font-bold" 
+                          : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
+                        }
+                        onClick={() => setStatusDialogOpen(true)}
+                      >
+                        {patient.isActive ? (
+                          <><Ban className="h-4 w-4 mr-2" />Vô hiệu hóa</>
+                        ) : (
+                          <><UserCheck className="h-4 w-4 mr-2" />Kích hoạt</>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-bold"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Chỉnh sửa
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Ruler className="h-5 w-5 text-blue-600" />
+
+              {/* Quick Stats - Compact Grid */}
+              <div className="grid grid-cols-4 divide-x border-b bg-white/80">
+                <div className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                      <Droplet className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Nhóm máu</p>
+                      <p className="text-lg font-black text-slate-900">{patient.bloodType || "N/A"}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-500">Chiều cao</p>
-                  <p className="text-lg font-bold text-slate-900">{patient.height ? `${patient.height} cm` : "N/A"}</p>
+                <div className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                      <Ruler className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Chiều cao</p>
+                      <p className="text-lg font-black text-slate-900">{patient.height ? `${patient.height} cm` : "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                      <Weight className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Cân nặng</p>
+                      <p className="text-lg font-black text-slate-900">{patient.weight ? `${patient.weight} kg` : "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-violet-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Lần khám cuối</p>
+                      <p className="text-sm font-black text-slate-900">
+                        {medicalHistory.length > 0 && medicalHistory[0].visitDate
+                          ? new Date(medicalHistory[0].visitDate).toLocaleDateString("vi-VN")
+                          : "Chưa có"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Weight className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Cân nặng</p>
-                  <p className="text-lg font-bold text-slate-900">{patient.weight ? `${patient.weight} kg` : "N/A"}</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-violet-500/10 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Lần khám cuối</p>
-                  <p className="text-lg font-bold text-slate-900">
-                    {medicalHistory.length > 0
-                      ? new Date(medicalHistory[0].visitDate).toLocaleDateString("vi-VN")
-                      : "Chưa có"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+            </Card>
 
         {/* Tabbed Content */}
         <Tabs defaultValue="overview" className="space-y-6">
@@ -425,7 +458,7 @@ export default function AdminPatientDetailPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Personal Information */}
               <Card className="border-0 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
@@ -463,38 +496,6 @@ export default function AdminPatientDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Emergency Contact */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-red-50/50 border-b">
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                    Liên hệ khẩn cấp
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Tên</p>
-                    <p className="text-sm font-medium text-slate-900">
-                      {patient.emergencyContactName || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Mối quan hệ</p>
-                    <p className="text-sm text-slate-900">
-                      {patient.emergencyContactRelationship || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Số điện thoại</p>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" />
-                      <p className="text-sm font-medium text-slate-900">
-                        {patient.emergencyContactPhone || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Vital Signs */}
               <Card className="border-0 shadow-lg">
@@ -507,19 +508,27 @@ export default function AdminPatientDetailPage() {
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-slate-500">Huyết áp</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {medicalHistory[0]?.vitalSigns?.bloodPressure || "N/A"}
+                    </p>
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-slate-500">Nhịp tim</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {medicalHistory[0]?.vitalSigns?.heartRate ? `${medicalHistory[0].vitalSigns.heartRate} bpm` : "N/A"}
+                    </p>
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-slate-500">Nhiệt độ</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {medicalHistory[0]?.vitalSigns?.temperature ? `${medicalHistory[0].vitalSigns.temperature}°C` : "N/A"}
+                    </p>
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-slate-500">Nhịp thở</p>
-                    <p className="text-sm font-medium text-slate-900">N/A</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {medicalHistory[0]?.vitalSigns?.respiratoryRate ? `${medicalHistory[0].vitalSigns.respiratoryRate} lần/phút` : "N/A"}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -590,52 +599,166 @@ export default function AdminPatientDetailPage() {
                     <p>Chưa có lịch sử khám bệnh</p>
                   </div>
                 ) : (
-                  <div className="divide-y">
+                  <div className="divide-y divide-slate-100">
                     {medicalHistory.map((visit) => (
-                      <div key={visit.id} className="p-6 hover:bg-purple-50/30 transition-colors">
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                            <FileText className="h-5 w-5 text-purple-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3 className="font-semibold text-slate-900">
-                                {visit.diagnosis || "Chưa có chẩn đoán"}
-                              </h3>
-                              <span className="text-sm text-slate-500">
-                                {new Date(visit.visitDate).toLocaleDateString("vi-VN")}
-                              </span>
+                      <div key={visit.id} className="p-6 hover:bg-gradient-to-r hover:from-purple-50/30 hover:to-blue-50/20 transition-all duration-300 group">
+                        <div className="flex items-start gap-5">
+                          {/* Icon */}
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-purple-400/20 rounded-full blur-md group-hover:blur-lg transition-all" />
+                            <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                              <FileText className="h-6 w-6 text-white" />
                             </div>
-                            {visit.symptoms && (
-                              <p className="text-sm text-slate-600 mb-2">
-                                <strong>Triệu chứng:</strong> {visit.symptoms}
-                              </p>
-                            )}
-                            {visit.notes && (
-                              <p className="text-sm text-slate-600 mb-2">
-                                <strong>Ghi chú:</strong> {visit.notes}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-4 mt-2">
-                              {visit.doctor && (
-                                <p className="text-xs text-slate-500">
-                                  Bác sĩ: {visit.doctor.fullName}
-                                </p>
-                              )}
+                          </div>
+
+                          {/* Main Content */}
+                          <div className="flex-1 space-y-3">
+                            {/* Header: Diagnosis + Date */}
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-slate-900 mb-1">
+                                  {visit.diagnosis || "Chưa có chẩn đoán"}
+                                </h3>
+                                <div className="flex items-center gap-3 text-sm">
+                                  <div className="flex items-center gap-1.5 text-slate-600">
+                                    <Calendar className="h-3.5 w-3.5 text-purple-500" />
+                                    <span className="font-medium">
+                                      {visit.visitDate || visit.checkInTime
+                                        ? new Date(visit.visitDate || visit.checkInTime).toLocaleString("vi-VN", {
+                                            year: "numeric",
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })
+                                        : "N/A"}
+                                    </span>
+                                  </div>
+                                  {visit.doctor && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <div className="flex items-center gap-1.5 text-slate-600">
+                                        <User className="h-3.5 w-3.5 text-blue-500" />
+                                        <span>
+                                          {(() => {
+                                            const name = visit.doctor.user?.fullName || visit.doctor.fullName || "N/A"
+                                            return name.startsWith("BS.") ? name : `BS. ${name}`
+                                          })()}
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                  {visit.doctor?.specialty && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                                        {visit.doctor.specialty.name}
+                                      </Badge>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                               <Badge
                                 variant="outline"
                                 className={
                                   visit.status === "COMPLETED"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-blue-50 text-blue-700 border-blue-200"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold px-3 py-1"
+                                    : visit.status === "EXAMINING"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200 font-semibold px-3 py-1"
+                                    : "bg-slate-50 text-slate-700 border-slate-200 font-semibold px-3 py-1"
                                 }
                               >
-                                {visit.status === "COMPLETED" ? "Hoàn thành" : visit.status}
+                                {visit.status === "COMPLETED" ? "Hoàn thành" : 
+                                 visit.status === "EXAMINING" ? "Đang khám" : visit.status}
                               </Badge>
                             </div>
-                            <div className="mt-2">
-                              <Button variant="outline" size="sm" asChild>
-                                <Link to={`/visits/${visit.id}`}>Xem chi tiết</Link>
+
+                            {/* Symptoms */}
+                            {visit.symptoms && (
+                              <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-3">
+                                <p className="text-sm text-slate-700">
+                                  <span className="font-semibold text-amber-800">Triệu chứng:</span>{" "}
+                                  <span className="text-slate-600">{visit.symptoms}</span>
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Vital Signs */}
+                            {visit.vitalSigns && Object.keys(visit.vitalSigns).length > 0 && (
+                              <div className="bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border border-emerald-100 rounded-xl p-4">
+                                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                  <Heart className="h-4 w-4" />
+                                  Sinh hiệu
+                                </h4>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {visit.vitalSigns.bloodPressure && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-emerald-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Huyết áp</p>
+                                      <p className="text-sm font-bold text-emerald-800">{visit.vitalSigns.bloodPressure}</p>
+                                    </div>
+                                  )}
+                                  {visit.vitalSigns.heartRate && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-red-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Nhịp tim</p>
+                                      <p className="text-sm font-bold text-red-700">{visit.vitalSigns.heartRate} bpm</p>
+                                    </div>
+                                  )}
+                                  {visit.vitalSigns.temperature && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-orange-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Nhiệt độ</p>
+                                      <p className="text-sm font-bold text-orange-700">{visit.vitalSigns.temperature}°C</p>
+                                    </div>
+                                  )}
+                                  {visit.vitalSigns.respiratoryRate && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-blue-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Nhịp thở</p>
+                                      <p className="text-sm font-bold text-blue-700">{visit.vitalSigns.respiratoryRate} l/ph</p>
+                                    </div>
+                                  )}
+                                  {visit.vitalSigns.weight && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-purple-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Cân nặng</p>
+                                      <p className="text-sm font-bold text-purple-700">{visit.vitalSigns.weight} kg</p>
+                                    </div>
+                                  )}
+                                  {visit.vitalSigns.height && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-indigo-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Chiều cao</p>
+                                      <p className="text-sm font-bold text-indigo-700">{visit.vitalSigns.height} cm</p>
+                                    </div>
+                                  )}
+                                  {visit.vitalSigns.spo2 && (
+                                    <div className="bg-white/60 rounded-lg p-2.5 border border-cyan-200/50">
+                                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-0.5">SpO2</p>
+                                      <p className="text-sm font-bold text-cyan-700">{visit.vitalSigns.spo2}%</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Note */}
+                            {visit.note && (
+                              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
+                                <p className="text-sm text-slate-700">
+                                  <span className="font-semibold text-blue-800">Ghi chú:</span>{" "}
+                                  <span className="text-slate-600">{visit.note}</span>
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Action Button */}
+                            <div className="pt-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                asChild
+                                className="bg-white hover:bg-purple-50 border-purple-200 text-purple-700 hover:text-purple-800 font-semibold shadow-sm hover:shadow transition-all"
+                              >
+                                <Link to={`/visits/${visit.id}`}>
+                                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                                  Xem chi tiết
+                                </Link>
                               </Button>
                             </div>
                           </div>
@@ -668,57 +791,119 @@ export default function AdminPatientDetailPage() {
                     <p>Chưa có đơn thuốc</p>
                   </div>
                 ) : (
-                  <div className="divide-y">
+                  <div className="divide-y divide-slate-100">
                     {prescriptions.map((prescription) => (
                       <div
                         key={prescription.id}
-                        className="p-6 hover:bg-cyan-50/30 transition-colors"
+                        className="p-6 hover:bg-gradient-to-r hover:from-cyan-50/30 hover:to-blue-50/20 transition-all duration-300 group"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-semibold text-slate-900">
-                                {prescription.prescriptionCode}
-                              </h3>
+                        <div className="flex items-start gap-5">
+                          {/* Icon */}
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-cyan-400/20 rounded-full blur-md group-hover:blur-lg transition-all" />
+                            <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                              <Pill className="h-6 w-6 text-white" />
+                            </div>
+                          </div>
+
+                          {/* Main Content */}
+                          <div className="flex-1 space-y-3">
+                            {/* Header: Code + Status */}
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-slate-900 mb-1">
+                                  {prescription.prescriptionCode}
+                                </h3>
+                                <div className="flex items-center gap-3 text-sm">
+                                  <div className="flex items-center gap-1.5 text-slate-600">
+                                    <Calendar className="h-3.5 w-3.5 text-cyan-500" />
+                                    <span className="font-medium">
+                                      {new Date(prescription.createdAt).toLocaleString("vi-VN", {
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  </div>
+                                  {prescription.doctor && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <div className="flex items-center gap-1.5 text-slate-600">
+                                        <User className="h-3.5 w-3.5 text-purple-500" />
+                                        <span>
+                                          {(() => {
+                                            const name = prescription.doctor.user?.fullName || prescription.doctor.fullName || "N/A"
+                                            return name.startsWith("BS.") ? name : `BS. ${name}`
+                                          })()}
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                               <Badge
                                 variant="outline"
                                 className={
-                                  prescription.status === "DISPENSED"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  prescription.status === "DISPENSED" || prescription.status === "LOCKED"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold px-3 py-1"
                                     : prescription.status === "CANCELLED"
-                                    ? "bg-red-50 text-red-700 border-red-200"
-                                    : "bg-blue-50 text-blue-700 border-blue-200"
+                                    ? "bg-red-50 text-red-700 border-red-200 font-semibold px-3 py-1"
+                                    : prescription.status === "DRAFT"
+                                    ? "bg-amber-50 text-amber-700 border-amber-200 font-semibold px-3 py-1"
+                                    : "bg-blue-50 text-blue-700 border-blue-200 font-semibold px-3 py-1"
                                 }
                               >
                                 {prescription.status === "DISPENSED"
                                   ? "Đã phát thuốc"
+                                  : prescription.status === "LOCKED"
+                                  ? "Đã khóa"
                                   : prescription.status === "CANCELLED"
                                   ? "Đã hủy"
                                   : prescription.status === "PENDING"
                                   ? "Chờ phát thuốc"
+                                  : prescription.status === "DRAFT"
+                                  ? "Nháp"
                                   : prescription.status}
                               </Badge>
                             </div>
-                            {prescription.doctor && (
-                              <p className="text-sm text-slate-600 mb-1">
-                                Bác sĩ: {prescription.doctor.fullName}
-                              </p>
-                            )}
+
+                            {/* Medicines Info */}
                             {prescription.medicines && prescription.medicines.length > 0 && (
-                              <p className="text-sm text-slate-600 mb-1">
-                                Số loại thuốc: {prescription.medicines.length}
-                              </p>
+                              <div className="bg-cyan-50/50 border border-cyan-100 rounded-xl p-3">
+                                <p className="text-sm text-slate-700">
+                                  <span className="font-semibold text-cyan-800">Số loại thuốc:</span>{" "}
+                                  <span className="text-slate-900 font-bold">{prescription.medicines.length}</span>
+                                </p>
+                              </div>
                             )}
-                            <p className="text-xs text-slate-500 mt-2">
-                              Ngày tạo:{" "}
-                              {new Date(prescription.createdAt).toLocaleDateString("vi-VN")}
-                            </p>
+
+                            {/* Note */}
+                            {prescription.note && (
+                              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
+                                <p className="text-sm text-slate-700">
+                                  <span className="font-semibold text-blue-800">Ghi chú:</span>{" "}
+                                  <span className="text-slate-600">{prescription.note}</span>
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Action Button */}
+                            <div className="pt-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                asChild
+                                className="bg-white hover:bg-cyan-50 border-cyan-200 text-cyan-700 hover:text-cyan-800 font-semibold shadow-sm hover:shadow transition-all"
+                              >
+                                <Link to={`/admin/prescriptions/${prescription.id}`}>
+                                  <Pill className="h-3.5 w-3.5 mr-1.5" />
+                                  Xem chi tiết
+                                </Link>
+                              </Button>
+                            </div>
                           </div>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link to={`/prescriptions/${prescription.id}`}>
-                              Xem chi tiết
-                            </Link>
-                          </Button>
                         </div>
                       </div>
                     ))}
@@ -879,6 +1064,8 @@ export default function AdminPatientDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </div>
+        </div>
       </div>
     </AdminSidebar>
   )

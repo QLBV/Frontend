@@ -20,23 +20,20 @@ export function Header() {
   const profileRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate();
 
-  // Lấy user & hàm logout từ AuthContext
   const { user, logout } = useAuth(); 
   
-  // Xác định tên hiển thị (ưu tiên fullName, nếu không có thì lấy email)
-  const patientName = user?.fullName || user?.email?.split('@')[0] || "Patient";
+  const patientName = user?.fullName || user?.email?.split('@')[0] || "Bệnh nhân";
 
   const handleLogout = async () => {
     try {
       await logout();
       setIsProfileOpen(false);
-      navigate("/login"); // Quay về trang login sau khi đăng xuất
+      navigate("/login"); 
     } catch (error) {
       logError("Failed to log out", error);
     }
   };
 
-  // Tự động đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -48,121 +45,132 @@ export function Header() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <svg className="h-6 w-6 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-200 transition-all group-hover:scale-105 group-hover:shadow-blue-300">
+               <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+               </svg>
             </div>
-            <span className="text-xl font-semibold">HealthCare</span>
+            <div className="flex flex-col">
+               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">HealthCare</span>
+               <span className="text-[10px] text-gray-500 font-medium tracking-widest uppercase -mt-1">Plus</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-6 md:flex">
-            <a href="#services" className="text-sm font-medium transition-colors hover:text-primary">Services</a>
-            <a href="#about" className="text-sm font-medium transition-colors hover:text-primary">About Us</a>
-            <a href="#providers" className="text-sm font-medium transition-colors hover:text-primary">Providers</a>
-            <a href="#contact" className="text-sm font-medium transition-colors hover:text-primary">Contact</a>
+          <nav className="hidden items-center gap-8 md:flex">
+            <a href="#services" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Dịch vụ</a>
+            <a href="#doctors" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Đội ngũ bác sĩ</a>
+            <a href="#process" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Quy trình</a>
+            <a href="#contact" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Tin tức</a>
           </nav>
 
           {/* Right Side Actions (Login / Profile) */}
           <div className="hidden items-center gap-3 md:flex">
             {user ? (
-              // === TRẠNG THÁI ĐÃ ĐĂNG NHẬP ===
+              // === LOGGED IN ===
               <div className="relative" ref={profileRef}>
                 <button 
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className={`flex items-center gap-3 rounded-full border border-border p-1 pl-4 pr-1 transition-all hover:bg-muted ${isProfileOpen ? 'ring-2 ring-primary/20' : ''}`}
+                  className={`flex items-center gap-3 rounded-full border border-gray-200 p-1 pl-4 pr-1 transition-all hover:bg-gray-50 hover:border-gray-300 ${isProfileOpen ? 'ring-2 ring-blue-100 border-blue-200' : ''}`}
                 >
-                  <span className="text-sm font-semibold text-foreground">{patientName}</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                  <span className="text-sm font-semibold text-gray-700 max-w-[150px] truncate">{patientName}</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-600 border border-blue-200 shadow-sm">
                     <User size={18} />
                   </div>
                 </button>
 
                 {/* Dropdown Menu */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-64 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="px-4 py-3 mb-1 border-b border-border/40">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">My Account</p>
-                      <p className="text-xs text-foreground truncate mt-1">{user.email}</p>
+                  <div className="absolute right-0 top-full mt-3 w-64 origin-top-right rounded-2xl border border-gray-100 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-3 mb-1 border-b border-gray-100">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Tài khoản của tôi</p>
+                      <p className="text-sm font-medium text-gray-900 truncate mt-1">{user.email}</p>
                     </div>
 
                     <div className="space-y-1 p-1">
                       <Link 
-                        to="/" 
+                        to="/patient/dashboard" 
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                        className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                       >
-                        <Home size={20} /> Home
+                        <Home size={18} /> Tổng quan
                       </Link>
                       <Link 
                         to="/patient/appointments" 
                         onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                        className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                       >
-                        <Calendar size={20} /> Appointments
+                        <Calendar size={18} /> Lịch hẹn
                       </Link>
                       
-                      <div className="my-1 h-px bg-border/50" />
+                      <div className="my-1 h-px bg-gray-100" />
 
                       <button 
                         onClick={handleLogout} 
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                       >
-                        <LogOut size={20} /> Sign Out
+                        <LogOut size={18} /> Đăng xuất
                       </button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              // === TRẠNG THÁI CHƯA ĐĂNG NHẬP ===
-              <Link to="/login">
-                <Button variant="ghost" size="sm">Login</Button>
-              </Link>
+              // === NOT LOGGED IN ===
+              <div className="flex items-center gap-3">
+                 <Link to="/login">
+                  <Button variant="ghost" className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 font-medium">Đăng nhập</Button>
+                </Link>
+                <Link to="/login">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200 rounded-lg px-6 font-medium">Đăng ký</Button>
+                </Link>
+              </div>
             )}
           </div>
           
           {/* Mobile Menu Button */}
-          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button className="md:hidden p-2 text-gray-600" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {/* Mobile Menu Content */}
         {mobileMenuOpen && (
-          <div className="border-t py-4 md:hidden animate-in slide-in-from-top-5">
+          <div className="border-t border-gray-100 py-4 md:hidden animate-in slide-in-from-top-5">
             <nav className="flex flex-col gap-4">
-              <a href="#services" className="text-sm font-medium">Services</a>
-              <a href="#about" className="text-sm font-medium">About Us</a>
-              <a href="#providers" className="text-sm font-medium">Providers</a>
-              <a href="#contact" className="text-sm font-medium">Contact</a>
+              <a href="#services" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Dịch vụ</a>
+              <a href="#doctors" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Đội ngũ bác sĩ</a>
+              <a href="#process" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Quy trình</a>
+              <a href="#new" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Tin tức</a>
               
-              <div className="border-t border-border/50 my-2"></div>
+              <div className="border-t border-gray-100 my-2"></div>
               
               {user ? (
                 <>
-                   <div className="px-2 py-2 text-sm text-muted-foreground">Signed in as <span className="font-bold text-foreground">{patientName}</span></div>
-                   <Link to="/dashboard" className="flex items-center gap-2 text-sm font-medium px-2 py-1">
-                      <Home size={16} /> Dashboard
+                   <div className="px-2 py-2 text-sm text-gray-500">Xin chào, <span className="font-bold text-gray-900">{patientName}</span></div>
+                   <Link to="/patient/dashboard" className="flex items-center gap-2 text-sm font-medium px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <Home size={18} /> Tổng quan
                    </Link>
-                   <Link to="/appointments" className="flex items-center gap-2 text-sm font-medium px-2 py-1">
-                      <Calendar size={16} /> Appointments
+                   <Link to="/patient/appointments" className="flex items-center gap-2 text-sm font-medium px-2 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">
+                      <Calendar size={18} /> Lịch hẹn
                    </Link>
-                   <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-medium text-destructive mt-2 px-2 py-1">
-                      <LogOut size={16} /> Sign Out
+                   <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-medium text-red-600 px-2 py-2 hover:bg-red-50 rounded-lg w-full text-left mt-2">
+                      <LogOut size={18} /> Đăng xuất
                    </button>
                 </>
               ) : (
-                <div className="flex flex-col gap-2 pt-2">
-                  <Link to="/login">
-                    <Button variant="ghost" size="sm" className="w-full justify-start">Login</Button>
+                <div className="flex flex-col gap-3 pt-2">
+                  <Link to="/login" className="w-full">
+                    <Button variant="outline" className="w-full justify-center">Đăng nhập</Button>
+                  </Link>
+                  <Link to="/login" className="w-full">
+                     <Button className="w-full justify-center bg-blue-600 hover:bg-blue-700">Đăng ký khám</Button>
                   </Link>
                 </div>
               )}

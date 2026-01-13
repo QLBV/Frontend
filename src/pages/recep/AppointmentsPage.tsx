@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Search,
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   UserCheck,
   Loader2,
@@ -35,11 +35,17 @@ import {
   Plus,
   SlidersHorizontal,
   X,
+  CheckCircle2,
+  MoreVertical,
+  CalendarDays,
+  User,
+  Activity
 } from "lucide-react"
 import { toast } from "sonner"
 import {
   getAppointments,
   markNoShow,
+  cancelAppointment,
   type Appointment,
 } from "@/services/appointment.service"
 import { checkInAppointment } from "@/services/visit.service"
@@ -95,19 +101,6 @@ export default function ReceptionistAppointmentsPage() {
       if (filterStatus !== "all") params.status = filterStatus
 
       const data = await getAppointments(params)
-      // Debug: Log first appointment structure
-      if (data.length > 0) {
-        const first = data[0]
-        console.log("🔍 Frontend - First appointment:", {
-          id: first.id,
-          doctorId: first.doctorId,
-          hasDoctor: !!first.doctor,
-          doctorUserId: (first as any).doctor?.userId,
-          hasDoctorUser: !!(first as any).doctor?.user,
-          doctorUserName: (first as any).doctor?.user?.fullName,
-          doctorData: first.doctor,
-        })
-      }
       setAppointments(data)
     } catch (error: any) {
       toast.error(
@@ -131,16 +124,9 @@ export default function ReceptionistAppointmentsPage() {
       toast.success("Check-in thành công!")
       setIsCheckInDialogOpen(false)
       setSelectedAppointment(null)
-      // Refresh appointments
-      const data = await getAppointments({
-        date: filterDate,
-        status: filterStatus !== "all" ? filterStatus : undefined,
-      })
-      setAppointments(data)
+      fetchAppointments()
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Không thể check-in"
-      toast.error(errorMessage)
+      toast.error(error.response?.data?.message || "Không thể check-in")
     } finally {
       setIsCheckingIn(null)
     }
@@ -152,21 +138,24 @@ export default function ReceptionistAppointmentsPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; className: string }> = {
-      WAITING: { label: "Chờ khám", className: "bg-blue-50 text-blue-700 border-blue-200" },
-      IN_PROGRESS: { label: "Đang khám", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-      COMPLETED: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-      CANCELLED: { label: "Đã hủy", className: "bg-red-50 text-red-700 border-red-200" },
-      NO_SHOW: { label: "Không đến", className: "bg-gray-50 text-gray-700 border-gray-200" },
+    const statusMap: Record<string, { label: string; className: string; icon: any }> = {
+      WAITING: { label: "Chờ khám", className: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
+      IN_PROGRESS: { label: "Đang khám", className: "bg-amber-50 text-amber-700 border-amber-200", icon: Activity },
+      COMPLETED: { label: "Đã khám", className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
+      CANCELLED: { label: "Đã hủy", className: "bg-rose-50 text-rose-700 border-rose-200", icon: XCircle },
+      NO_SHOW: { label: "Không đến", className: "bg-slate-50 text-slate-700 border-slate-200", icon: User },
     }
 
     const statusInfo = statusMap[status] || {
       label: status,
-      className: "bg-gray-50 text-gray-700 border-gray-200",
+      className: "bg-slate-50 text-slate-700 border-slate-200",
+      icon: Clock
     }
 
+    const Icon = statusInfo.icon
     return (
-      <Badge variant="outline" className={statusInfo.className}>
+      <Badge variant="outline" className={`py-1 px-2.5 flex items-center gap-1.5 font-bold rounded-lg ${statusInfo.className}`}>
+        <Icon className="w-3.5 h-3.5" />
         {statusInfo.label}
       </Badge>
     )
@@ -175,28 +164,15 @@ export default function ReceptionistAppointmentsPage() {
   const handleAdvancedSearch = async () => {
     try {
       setIsSearching(true)
-      const filters: any = {
-        page: 1,
-        limit: 100,
-      }
-
+      const filters: any = { page: 1, limit: 100 }
       if (advancedFilters.keyword) filters.keyword = advancedFilters.keyword
-      if (advancedFilters.status && advancedFilters.status !== "all") {
-        filters.status = advancedFilters.status
-      }
-      if (advancedFilters.bookingType && advancedFilters.bookingType !== "all") {
-        filters.bookingType = advancedFilters.bookingType
-      }
-      if (advancedFilters.bookedBy && advancedFilters.bookedBy !== "all") {
-        filters.bookedBy = advancedFilters.bookedBy
-      }
+      if (advancedFilters.status && advancedFilters.status !== "all") filters.status = advancedFilters.status
+      if (advancedFilters.bookingType && advancedFilters.bookingType !== "all") filters.bookingType = advancedFilters.bookingType
+      if (advancedFilters.bookedBy && advancedFilters.bookedBy !== "all") filters.bookedBy = advancedFilters.bookedBy
       if (advancedFilters.doctorId) filters.doctorId = parseInt(advancedFilters.doctorId)
       if (advancedFilters.patientId) filters.patientId = parseInt(advancedFilters.patientId)
-      if (advancedFilters.shiftId) filters.shiftId = parseInt(advancedFilters.shiftId)
       if (advancedFilters.dateFrom) filters.dateFrom = advancedFilters.dateFrom
       if (advancedFilters.dateTo) filters.dateTo = advancedFilters.dateTo
-      if (advancedFilters.createdFrom) filters.createdFrom = advancedFilters.createdFrom
-      if (advancedFilters.createdTo) filters.createdTo = advancedFilters.createdTo
 
       const response = await SearchService.searchAppointments(filters)
       setAppointments(response.data || [])
@@ -211,12 +187,7 @@ export default function ReceptionistAppointmentsPage() {
 
   const handleQuickSearch = async () => {
     if (!searchQuery.trim()) {
-      // Reset to default fetch
-      const data = await getAppointments({
-        date: filterDate,
-        status: filterStatus !== "all" ? filterStatus : undefined,
-      })
-      setAppointments(data)
+      fetchAppointments()
       return
     }
 
@@ -253,7 +224,6 @@ export default function ReceptionistAppointmentsPage() {
       createdFrom: "",
       createdTo: "",
     })
-    // Reset to default fetch
     fetchAppointments()
   }
 
@@ -265,33 +235,32 @@ export default function ReceptionistAppointmentsPage() {
     return matchesSearch
   })
 
-  const canCheckIn = (appointment: Appointment) => {
-    return appointment.status === "WAITING"
-  }
+  const canCheckIn = (appointment: Appointment) => appointment.status === "WAITING"
+  const canMarkNoShow = (appointment: Appointment) => appointment.status === "WAITING" || appointment.status === "IN_PROGRESS"
+  const canCancel = (appointment: Appointment) => appointment.status === "WAITING"
 
-  const canMarkNoShow = (appointment: Appointment) => {
-    return appointment.status === "WAITING" || appointment.status === "IN_PROGRESS"
+  const handleCancelAppointment = async (id: number) => {
+    if (!window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này?")) return
+    try {
+      await cancelAppointment(id)
+      toast.success("Đã hủy lịch hẹn thành công")
+      fetchAppointments()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Không thể hủy lịch hẹn")
+    }
   }
 
   const handleMarkNoShow = async () => {
     if (!appointmentToMarkNoShow) return
-
     setIsMarkingNoShow(appointmentToMarkNoShow.id)
     try {
       await markNoShow(appointmentToMarkNoShow.id)
       toast.success("Đã đánh dấu không đến!")
       setIsNoShowDialogOpen(false)
       setAppointmentToMarkNoShow(null)
-      // Refresh appointments
-      const data = await getAppointments({
-        date: filterDate,
-        status: filterStatus !== "all" ? filterStatus : undefined,
-      })
-      setAppointments(data)
+      fetchAppointments()
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Không thể đánh dấu không đến"
-      toast.error(errorMessage)
+      toast.error(error.response?.data?.message || "Không thể đánh dấu không đến")
     } finally {
       setIsMarkingNoShow(null)
     }
@@ -302,96 +271,88 @@ export default function ReceptionistAppointmentsPage() {
     setIsNoShowDialogOpen(true)
   }
 
-  if (!user) {
-    return null
-  }
-
+  if (!user) return null
   const role = String(user.roleId || user.role || "").toLowerCase()
 
   const content = (
-    <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">
-                Quản lý lịch hẹn
-              </h1>
-              <p className="text-slate-600">
-                Xem và quản lý lịch hẹn của bệnh nhân
-              </p>
+    <div className="min-h-screen bg-slate-50/50 pb-12">
+      <div className="container mx-auto px-6 py-8 max-w-[1600px]">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <CalendarDays className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Quản lý lịch hẹn</h1>
             </div>
-          <Button asChild>
+            <p className="text-slate-500 text-lg ml-15 font-medium opacity-80">Theo dõi và điều phối lịch khám bệnh nhân trong ngày</p>
+          </div>
+          
+          <Button className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100 rounded-xl h-12 px-6 font-bold transition-all" asChild>
             <Link to="/recep/appointments/offline">
-              <Plus className="h-4 w-4 mr-2" />
-              Đặt lịch offline
+              <Plus className="h-5 w-5 mr-2" />
+              Đặt lịch trực tiếp
             </Link>
           </Button>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="relative md:col-span-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        {/* Unified Filter Bar */}
+        <Card className="border-0 shadow-sm bg-white rounded-2xl ring-1 ring-slate-200 mb-8 overflow-hidden">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-5 relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <Input
-                  placeholder="Tìm kiếm bệnh nhân, mã bệnh nhân..."
+                  className="pl-12 h-12 bg-slate-50 border-0 ring-1 ring-slate-200 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl text-base transition-all"
+                  placeholder="Tìm tên BN, mã BN, tên bác sĩ..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleQuickSearch()
-                    }
-                  }}
-                  className="pl-10"
+                  onKeyDown={(e) => e.key === "Enter" && handleQuickSearch()}
                 />
               </div>
 
-              <div>
+              <div className="lg:col-span-3">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-0 ring-1 ring-slate-200 font-medium">
                     <SelectValue placeholder="Trạng thái" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     <SelectItem value="WAITING">Chờ khám</SelectItem>
                     <SelectItem value="IN_PROGRESS">Đang khám</SelectItem>
-                    <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
+                    <SelectItem value="COMPLETED">Đã khám</SelectItem>
                     <SelectItem value="CANCELLED">Đã hủy</SelectItem>
                     <SelectItem value="NO_SHOW">Không đến</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
+              <div className="lg:col-span-2">
                 <Input
                   type="date"
+                  className="h-12 rounded-xl bg-slate-50 border-0 ring-1 ring-slate-200 font-medium"
                   value={filterDate}
                   onChange={(e) => setFilterDate(e.target.value)}
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="lg:col-span-2 flex gap-2">
                 <Button
                   variant="outline"
+                  className="h-12 w-12 rounded-xl border-slate-200 text-slate-600 hover:text-indigo-600 p-0"
                   onClick={() => setIsAdvancedSearchOpen(true)}
-                  className="flex-1"
+                  title="Tìm kiếm nâng cao"
                 >
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Advanced
+                  <SlidersHorizontal className="h-5 w-5" />
                 </Button>
                 <Button
+                  className="h-12 flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold shadow-lg shadow-indigo-100"
                   onClick={handleQuickSearch}
                   disabled={isSearching}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {isSearching ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
+                  {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                  <span className="ml-2 hidden xl:inline">Tìm kiếm</span>
                 </Button>
               </div>
             </div>
@@ -399,140 +360,123 @@ export default function ReceptionistAppointmentsPage() {
         </Card>
 
         {/* Appointments List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Danh sách lịch hẹn ({filteredAppointments.length})</CardTitle>
+        <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-slate-50/50 to-white px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-extrabold text-slate-800">Danh sách lịch hẹn</CardTitle>
+              <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-bold">Ngày: {format(new Date(filterDate), "dd/MM/yyyy")}</p>
+            </div>
+            {!isLoading && <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50 border-indigo-100 font-bold">{filteredAppointments.length} lịch</Badge>}
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-500">
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+                <p className="font-medium">Đang tải lịch hẹn...</p>
               </div>
             ) : filteredAppointments.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Không có lịch hẹn</p>
+              <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+                   <CalendarIcon className="h-10 w-10 text-slate-300" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">Không có lịch hẹn nào</h3>
+                  <p className="text-slate-400 max-w-xs mx-auto">Không tìm thấy lịch hẹn cho ngày và bộ lọc đã chọn.</p>
+                </div>
+                <Button variant="outline" onClick={() => { setFilterDate(format(new Date(), "yyyy-MM-dd")); setFilterStatus("all"); }} className="mt-2 rounded-xl">Quay về hôm nay</Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="bg-slate-50 border-b">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
-                        Bệnh nhân
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
-                        Bác sĩ
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
-                        Ngày
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
-                        Ca trực
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
-                        Trạng thái
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
-                        Thao tác
-                      </th>
+                    <tr className="bg-slate-50/80 border-b border-slate-100">
+                      <th className="py-5 px-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Bệnh nhân</th>
+                      <th className="py-5 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Bác sĩ phụ trách</th>
+                      <th className="py-5 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Khung giờ</th>
+                      <th className="py-5 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Trạng thái</th>
+                      <th className="py-5 px-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">Xử lý</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-50">
                     {filteredAppointments.map((appointment) => (
-                      <tr
-                        key={appointment.id}
-                        className="border-b hover:bg-blue-50/30 transition-colors"
-                      >
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                      <tr key={appointment.id} className="group hover:bg-slate-50/50 transition-all duration-200">
+                        <td className="py-5 px-8">
+                          <div className="flex items-center gap-4">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-100">
                               {appointment.patient?.fullName?.charAt(0) || "?"}
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">
-                                {appointment.patient?.fullName || "N/A"}
-                              </p>
-                              {appointment.patient?.patientCode && (
-                                <p className="text-xs text-gray-500">
-                                  {appointment.patient.patientCode}
-                                </p>
-                              )}
+                              <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase text-sm tracking-tight">{appointment.patient?.fullName || "N/A"}</div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {appointment.patient?.patientCode || "#---"}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
-                          <p className="text-sm">{appointment.doctor?.user?.fullName || "N/A"}</p>
+                        <td className="py-5 px-6">
+                           <div className="text-slate-600 font-bold text-sm">BS. {appointment.doctor?.user?.fullName || "N/A"}</div>
+                           <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Chuyên khoa: {appointment.doctor?.specialty?.name || "BS Đa khoa"}</div>
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">
-                              {new Date(appointment.date).toLocaleDateString("vi-VN")}
-                            </span>
-                          </div>
+                        <td className="py-5 px-6">
+                           {appointment.shift ? (
+                             <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-600 gap-1.5 py-1 px-3 rounded-lg font-bold">
+                               <Clock className="w-3.5 h-3.5 text-slate-400" />
+                               {appointment.shift.startTime} - {appointment.shift.endTime}
+                             </Badge>
+                           ) : (
+                             <span className="text-xs text-slate-400 font-bold italic">Chưa phân ca</span>
+                           )}
                         </td>
-                        <td className="py-4 px-6">
-                          {appointment.shift ? (
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm">
-                                {appointment.shift.name} ({appointment.shift.startTime} - {appointment.shift.endTime})
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400">N/A</span>
-                          )}
+                        <td className="py-5 px-6">
+                           {getStatusBadge(appointment.status)}
                         </td>
-                        <td className="py-4 px-6">
-                          {getStatusBadge(appointment.status)}
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            {canCheckIn(appointment) && (
-                              <Button
-                                size="sm"
-                                onClick={() => openCheckInDialog(appointment)}
-                                disabled={isCheckingIn === appointment.id}
-                              >
-                                {isCheckingIn === appointment.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <UserCheck className="h-4 w-4 mr-1" />
-                                    Check-in
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                            {canMarkNoShow(appointment) && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openNoShowDialog(appointment)}
-                                disabled={isMarkingNoShow === appointment.id}
-                                className="text-orange-600 hover:text-orange-700"
-                              >
-                                {isMarkingNoShow === appointment.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <>
-                                    <XCircle className="h-4 w-4 mr-1" />
-                                    Không đến
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              asChild
-                            >
-                              <Link to={`/appointments/${appointment.id}`}>
-                                <Eye className="h-4 w-4 mr-1" />
-                                Xem
-                              </Link>
-                            </Button>
+                        <td className="py-5 px-8">
+                          <div className="flex items-center justify-center gap-2">
+                             {canCheckIn(appointment) && (
+                               <Button
+                                 size="sm"
+                                 className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm"
+                                 onClick={() => openCheckInDialog(appointment)}
+                                 disabled={isCheckingIn === appointment.id}
+                               >
+                                 {isCheckingIn === appointment.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="w-4 h-4 mr-1.5" />}
+                                 Xác nhận
+                               </Button>
+                             )}
+                             <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white hover:shadow-md border border-transparent hover:border-slate-200" asChild>
+                               <Link to={`/appointments/${appointment.id}`}>
+                                 <Eye className="h-4 w-4 text-indigo-600" />
+                               </Link>
+                             </Button>
+                             {(canMarkNoShow(appointment) || canCancel(appointment)) && (
+                               <div className="group/dropdown relative">
+                                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white hover:border-slate-200 border border-transparent">
+                                     <MoreVertical className="w-4 h-4 text-slate-400" />
+                                  </Button>
+                                  <div className="hidden group-hover/dropdown:block absolute right-0 top-full mt-1 bg-white ring-1 ring-slate-200 shadow-xl rounded-xl p-1.5 z-50 min-w-[160px]">
+                                     {canMarkNoShow(appointment) && (
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className="w-full justify-start text-xs font-bold text-amber-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg h-9"
+                                         onClick={() => openNoShowDialog(appointment)}
+                                       >
+                                         <XCircle className="w-4 h-4 mr-2" />
+                                         Báo vắng mặt
+                                       </Button>
+                                     )}
+                                     {canCancel(appointment) && (
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className="w-full justify-start text-xs font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-lg h-9"
+                                         onClick={() => handleCancelAppointment(appointment.id)}
+                                       >
+                                         <XCircle className="w-4 h-4 mr-2" />
+                                         Hủy lịch khám
+                                       </Button>
+                                     )}
+                                  </div>
+                               </div>
+                             )}
                           </div>
                         </td>
                       </tr>
@@ -545,279 +489,181 @@ export default function ReceptionistAppointmentsPage() {
         </Card>
       </div>
 
-      {/* Check-in Dialog */}
+      {/* Confirmation Dialogs - Refined Design */}
       <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận check-in</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn check-in cho bệnh nhân này?
-            </DialogDescription>
-          </DialogHeader>
-          {selectedAppointment && (
-            <div className="space-y-2 py-4">
-              <p className="text-sm">
-                <strong>Bệnh nhân:</strong> {selectedAppointment.patient?.fullName}
-              </p>
-              <p className="text-sm">
-                <strong>Bác sĩ:</strong> {selectedAppointment.doctor?.user?.fullName}
-              </p>
-              <p className="text-sm">
-                <strong>Ngày:</strong>{" "}
-                {new Date(selectedAppointment.date).toLocaleDateString("vi-VN")}
-              </p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCheckInDialogOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handleCheckIn}
-              disabled={isCheckingIn !== null}
-            >
-              {isCheckingIn !== null ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                "Xác nhận check-in"
-              )}
-            </Button>
-          </DialogFooter>
+        <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+           <div className="bg-indigo-600 p-8 text-white">
+             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-sm">
+                <UserCheck className="w-8 h-8" />
+             </div>
+             <DialogTitle className="text-2xl font-extrabold uppercase tracking-tight">Xác nhận Check-in</DialogTitle>
+             <DialogDescription className="text-indigo-100 font-medium">Làm thủ tục tiếp đón cho bệnh nhân này?</DialogDescription>
+           </div>
+           <div className="p-8 space-y-4">
+             {selectedAppointment && (
+               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Bệnh nhân</span>
+                     <span className="text-sm font-extrabold text-slate-900">{selectedAppointment.patient?.fullName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Bác sĩ</span>
+                     <span className="text-sm font-bold text-indigo-600">{selectedAppointment.doctor?.user?.fullName}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Khung giờ</span>
+                     <span className="text-xs font-bold text-slate-600">{selectedAppointment.shift?.startTime} - {selectedAppointment.shift?.endTime}</span>
+                  </div>
+               </div>
+             )}
+             <div className="flex gap-3 pt-2">
+                <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500 hover:bg-slate-100" onClick={() => setIsCheckInDialogOpen(false)}>Hủy bỏ</Button>
+                <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100 rounded-xl h-12 font-bold" onClick={handleCheckIn} disabled={isCheckingIn !== null}>
+                   {isCheckingIn !== null ? <Loader2 className="animate-spin h-5 w-5" /> : "Vào khám ngay"}
+                </Button>
+             </div>
+           </div>
         </DialogContent>
       </Dialog>
 
-      {/* No-Show Dialog */}
+      {/* No-Show Dialog - Destructive Style */}
       <Dialog open={isNoShowDialogOpen} onOpenChange={setIsNoShowDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Đánh dấu không đến</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn đánh dấu bệnh nhân này là không đến?
-            </DialogDescription>
-          </DialogHeader>
-          {appointmentToMarkNoShow && (
-            <div className="space-y-2 py-4">
-              <p className="text-sm">
-                <strong>Bệnh nhân:</strong> {appointmentToMarkNoShow.patient?.fullName}
-              </p>
-              <p className="text-sm">
-                <strong>Bác sĩ:</strong> {appointmentToMarkNoShow.doctor?.user?.fullName}
-              </p>
-              <p className="text-sm">
-                <strong>Ngày:</strong>{" "}
-                {new Date(appointmentToMarkNoShow.date).toLocaleDateString("vi-VN")}
-              </p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsNoShowDialogOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handleMarkNoShow}
-              disabled={isMarkingNoShow !== null}
-              variant="destructive"
-            >
-              {isMarkingNoShow !== null ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                "Xác nhận"
-              )}
-            </Button>
-          </DialogFooter>
+        <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+           <div className="bg-amber-500 p-8 text-white">
+             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-sm">
+                <XCircle className="w-8 h-8" />
+             </div>
+             <DialogTitle className="text-2xl font-extrabold uppercase tracking-tight">Xác nhận vắng mặt</DialogTitle>
+             <DialogDescription className="text-amber-50 font-medium opacity-90">Bệnh nhân đã không đến sau thời gian chờ?</DialogDescription>
+           </div>
+           <div className="p-8 space-y-4">
+              <p className="text-slate-600 text-sm">Hành động này sẽ đánh dấu lịch hẹn là <strong>Vắng mặt (No-Show)</strong> và không thể hoàn tác.</p>
+              <div className="flex gap-3 pt-4">
+                <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500 hover:bg-slate-100" onClick={() => setIsNoShowDialogOpen(false)}>Bỏ qua</Button>
+                <Button className="flex-1 bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-100 rounded-xl h-12 font-bold" onClick={handleMarkNoShow} disabled={isMarkingNoShow !== null}>
+                   {isMarkingNoShow !== null ? <Loader2 className="animate-spin h-5 w-5" /> : "Xác nhận vắng"}
+                </Button>
+             </div>
+           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Advanced Search Dialog */}
+      {/* Advanced Search Modal */}
       <Dialog open={isAdvancedSearchOpen} onOpenChange={setIsAdvancedSearchOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Advanced Search</DialogTitle>
-            <DialogDescription>
-              Tìm kiếm lịch hẹn với các bộ lọc chi tiết
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="keyword">Keyword</Label>
-                <Input
-                  id="keyword"
-                  placeholder="Patient name, code..."
-                  value={advancedFilters.keyword}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, keyword: e.target.value })}
-                />
+          <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+            <div className="bg-indigo-600 px-8 py-6 text-white">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-extrabold tracking-tight uppercase tracking-widest">Bộ lọc lịch hẹn</DialogTitle>
+                <DialogDescription className="text-indigo-100 opacity-90 font-medium">
+                  Tìm kiếm lịch hẹn theo tiêu chí chi tiết để quản lý dễ dàng hơn.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Từ khóa bệnh nhân</Label>
+                  <Input
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11"
+                    placeholder="Tên, mã sổ, SĐT..."
+                    value={advancedFilters.keyword}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, keyword: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái khám</Label>
+                  <Select
+                    value={advancedFilters.status}
+                    onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, status: value as any })}
+                  >
+                    <SelectTrigger className="rounded-xl border-slate-200 bg-slate-50 h-11">
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="WAITING">Chờ khám</SelectItem>
+                      <SelectItem value="IN_PROGRESS">Đang khám</SelectItem>
+                      <SelectItem value="COMPLETED">Đã khám</SelectItem>
+                      <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                      <SelectItem value="NO_SHOW">Không đến</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={advancedFilters.status}
-                  onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, status: value as typeof advancedFilters.status })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="WAITING">Waiting</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                    <SelectItem value="NO_SHOW">No Show</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Booking Type</Label>
+                  <Select
+                    value={advancedFilters.bookingType}
+                    onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, bookingType: value as any })}
+                  >
+                    <SelectTrigger className="rounded-xl border-slate-200 bg-slate-50 h-11 font-medium">
+                      <SelectValue placeholder="Chọn loại đặt lịch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="ONLINE">Trực tuyến (Online)</SelectItem>
+                      <SelectItem value="OFFLINE">Tại quầy (Offline)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã bác sĩ khám</Label>
+                  <Input
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11 uppercase"
+                    placeholder="VD: DOC-45"
+                    value={advancedFilters.doctorId}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, doctorId: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 border-t border-slate-100 pt-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Từ ngày</Label>
+                  <Input
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11 font-medium"
+                    type="date"
+                    value={advancedFilters.dateFrom}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, dateFrom: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Đến ngày</Label>
+                  <Input
+                    className="rounded-xl border-slate-200 bg-slate-50 h-11 font-medium"
+                    type="date"
+                    value={advancedFilters.dateTo}
+                    onChange={(e) => setAdvancedFilters({ ...advancedFilters, dateTo: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="bookingType">Booking Type</Label>
-                <Select
-                  value={advancedFilters.bookingType}
-                  onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, bookingType: value as any })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="ONLINE">Online</SelectItem>
-                    <SelectItem value="OFFLINE">Offline</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="bookedBy">Booked By</Label>
-                <Select
-                  value={advancedFilters.bookedBy}
-                  onValueChange={(value) => setAdvancedFilters({ ...advancedFilters, bookedBy: value as any })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="PATIENT">Patient</SelectItem>
-                    <SelectItem value="RECEPTIONIST">Receptionist</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="doctorId">Doctor ID</Label>
-                <Input
-                  id="doctorId"
-                  type="number"
-                  placeholder="Doctor ID"
-                  value={advancedFilters.doctorId}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, doctorId: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="patientId">Patient ID</Label>
-                <Input
-                  id="patientId"
-                  type="number"
-                  placeholder="Patient ID"
-                  value={advancedFilters.patientId}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, patientId: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="shiftId">Shift ID</Label>
-                <Input
-                  id="shiftId"
-                  type="number"
-                  placeholder="Shift ID"
-                  value={advancedFilters.shiftId}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, shiftId: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="dateFrom">Date From</Label>
-                <Input
-                  id="dateFrom"
-                  type="date"
-                  value={advancedFilters.dateFrom}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, dateFrom: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="dateTo">Date To</Label>
-                <Input
-                  id="dateTo"
-                  type="date"
-                  value={advancedFilters.dateTo}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, dateTo: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="createdFrom">Created From</Label>
-                <Input
-                  id="createdFrom"
-                  type="date"
-                  value={advancedFilters.createdFrom}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, createdFrom: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="createdTo">Created To</Label>
-                <Input
-                  id="createdTo"
-                  type="date"
-                  value={advancedFilters.createdTo}
-                  onChange={(e) => setAdvancedFilters({ ...advancedFilters, createdTo: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={clearAdvancedSearch}>
-              <X className="h-4 w-4 mr-2" />
-              Clear
-            </Button>
-            <Button onClick={handleAdvancedSearch} disabled={isSearching}>
-              {isSearching ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      </div>
+            <DialogFooter className="bg-slate-50/80 px-8 py-5 flex items-center justify-between border-t border-slate-100">
+              <Button 
+                variant="ghost" 
+                onClick={clearAdvancedSearch}
+                className="rounded-xl font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Thiết lập lại
+              </Button>
+              <Button 
+                onClick={handleAdvancedSearch} 
+                disabled={isSearching}
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-8 font-bold shadow-lg shadow-indigo-100"
+              >
+                {isSearching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+                Xác nhận tìm kiếm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
-  if (role === "admin" || role === "1") {
-    return <AdminSidebar>{content}</AdminSidebar>
-  } else if (role === "receptionist" || role === "2") {
-    return <ReceptionistSidebar>{content}</ReceptionistSidebar>
-  }
-
+  if (role === "admin" || role === "1") return <AdminSidebar>{content}</AdminSidebar>
+  if (role === "receptionist" || role === "2") return <ReceptionistSidebar>{content}</ReceptionistSidebar>
   return null
 }

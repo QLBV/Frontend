@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   Search,
   Plus,
@@ -13,7 +13,7 @@ import {
   Users,
   Briefcase,
   ChevronRight,
-  MoreHorizontal
+  ChevronLeft
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,14 +35,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -66,6 +58,8 @@ export default function ShiftsPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [activeTab, setActiveTab] = useState("list")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 8
 
   // Form states
   const [formData, setFormData] = useState({
@@ -74,6 +68,24 @@ export default function ShiftsPage() {
     endTime: "",
     description: "",
   })
+
+  // Schedule filtering
+  const [scheduleSearchQuery, setScheduleSearchQuery] = useState("")
+
+  const filteredSchedule = useMemo(() => {
+    if (!scheduleSearchQuery.trim()) return shiftSchedule
+    
+    return shiftSchedule.map(day => ({
+      ...day,
+      shifts: day.shifts.map(shiftItem => ({
+        ...shiftItem,
+        doctors: shiftItem.doctors.filter(d => 
+          d.fullName.toLowerCase().includes(scheduleSearchQuery.toLowerCase()) ||
+          d.doctorCode.toLowerCase().includes(scheduleSearchQuery.toLowerCase())
+        )
+      })).filter(shiftItem => shiftItem.doctors.length > 0)
+    })).filter(day => day.shifts.length > 0)
+  }, [shiftSchedule, scheduleSearchQuery])
 
   useEffect(() => {
     fetchShifts()
@@ -238,6 +250,16 @@ export default function ShiftsPage() {
     (shift.description || "").toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const totalPages = Math.ceil(filteredShifts.length / itemsPerPage)
+  const paginatedShifts = filteredShifts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery])
+
   const formatTime = (time: string) => {
     try {
       const [hours, minutes] = time.split(":")
@@ -253,26 +275,35 @@ export default function ShiftsPage() {
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
           
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Quản lý Ca Trực</h1>
-              <p className="text-slate-500 mt-1">Thiết lập thời gian làm việc và xem lịch phân công</p>
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-indigo-100/50">
+            <div className="flex items-start gap-4">
+              <div className="hidden lg:flex p-3 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl shadow-lg shadow-indigo-500/30 text-white">
+                <Clock className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 via-violet-600 to-blue-600">
+                  Quản lý Ca Trực
+                </h1>
+                <p className="text-slate-500 font-medium text-sm flex items-center gap-2 mt-1">
+                  Thiết lập thời gian làm việc và xem lịch phân công
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
-                className="bg-white hover:bg-slate-50 border-slate-200"
+                className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium shadow-sm"
                 onClick={() => {
                   setActiveTab("schedule")
                   fetchShiftSchedule()
                 }}
               >
-                <CalendarIcon className="h-4 w-4 mr-2" />
+                <CalendarIcon className="h-4 w-4 mr-2 text-indigo-600" />
                 Xem lịch trực
               </Button>
               <Button 
                 onClick={handleCreate}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
+                className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-lg shadow-indigo-200 border-0 font-bold"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm ca trực
@@ -282,35 +313,37 @@ export default function ShiftsPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-sm bg-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Briefcase className="w-16 h-16 text-indigo-600" />
+            <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-xl overflow-hidden relative group hover:shadow-md transition-all duration-300">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-violet-600"></div>
+              <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+                <Briefcase className="w-24 h-24 text-indigo-900" />
               </div>
-              <CardContent className="p-6">
+              <CardContent className="p-6 pl-8">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-50 rounded-xl">
-                    <Briefcase className="w-6 h-6 text-indigo-600" />
+                  <div className="p-3.5 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                    <Briefcase className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Tổng ca trực</p>
-                    <h3 className="text-2xl font-bold text-slate-900">{shifts.length}</h3>
+                    <p className="text-sm font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">Tổng ca trực</p>
+                    <h3 className="text-3xl font-black text-slate-900 mt-1">{shifts.length}</h3>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Users className="w-16 h-16 text-blue-600" />
+            <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-xl overflow-hidden relative group hover:shadow-md transition-all duration-300">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-cyan-500"></div>
+              <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+                <Users className="w-24 h-24 text-blue-900" />
               </div>
-              <CardContent className="p-6">
+              <CardContent className="p-6 pl-8">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 rounded-xl">
-                    <Users className="w-6 h-6 text-blue-600" />
+                  <div className="p-3.5 bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                    <Users className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Nhân sự phân công</p>
-                    <h3 className="text-2xl font-bold text-slate-900">
+                    <p className="text-sm font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">Nhân sự phân công</p>
+                    <h3 className="text-3xl font-black text-slate-900 mt-1">
                       {shiftSchedule.reduce((acc, curr) => 
                         acc + curr.shifts.reduce((sAcc, s) => sAcc + s.doctors.length, 0)
                       , 0)}
@@ -320,20 +353,20 @@ export default function ShiftsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Clock className="w-16 h-16 text-emerald-600" />
+            <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-xl overflow-hidden relative group hover:shadow-md transition-all duration-300">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-teal-500"></div>
+              <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+                <Clock className="w-24 h-24 text-emerald-900" />
               </div>
-              <CardContent className="p-6">
+              <CardContent className="p-6 pl-8">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-50 rounded-xl">
-                    <Clock className="w-6 h-6 text-emerald-600" />
+                  <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                    <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Ca đang hoạt động</p>
-                    <h3 className="text-2xl font-bold text-slate-900">
-                      {/* Placeholder value as specific active shift logic depends on current time vs array */}
-                      --
+                    <p className="text-sm font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Ca đang hoạt động</p>
+                    <h3 className="text-3xl font-black text-slate-900 mt-1">
+                       --
                     </h3>
                   </div>
                 </div>
@@ -343,17 +376,17 @@ export default function ShiftsPage() {
 
           {/* Main Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
-              <TabsList className="bg-transparent p-0 -mb-[1px]">
+            <div className="flex items-center justify-between mb-4">
+              <TabsList className="bg-white/50 backdrop-blur border border-indigo-100 p-1 rounded-xl shadow-sm h-auto">
                 <TabsTrigger 
                   value="list"
-                  className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 bg-transparent text-slate-500 hover:text-slate-700 transition-colors"
+                  className="rounded-lg px-6 py-2.5 font-bold text-sm data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg shadow-indigo-500/30 text-slate-600 hover:text-indigo-600 transition-all"
                 >
                   Danh sách ca trực
                 </TabsTrigger>
                 <TabsTrigger 
                   value="schedule"
-                  className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 bg-transparent text-slate-500 hover:text-slate-700 transition-colors"
+                  className="rounded-lg px-6 py-2.5 font-bold text-sm data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg shadow-indigo-500/30 text-slate-600 hover:text-indigo-600 transition-all"
                 >
                   Lịch trực
                 </TabsTrigger>
@@ -390,59 +423,59 @@ export default function ShiftsPage() {
                     </div>
                   ) : (
                     <Table>
-                      <TableHeader className="bg-slate-50/50">
+                      <TableHeader className="bg-indigo-50/30 border-y border-indigo-100/50">
                         <TableRow>
-                          <TableHead className="w-[100px] pl-6">ID</TableHead>
-                          <TableHead>Tên ca trực</TableHead>
-                          <TableHead>Thời gian</TableHead>
-                          <TableHead>Mô tả</TableHead>
-                          <TableHead className="text-right pr-6">Thao tác</TableHead>
+                          <TableHead className="w-[100px] pl-6 font-bold uppercase text-[11px] tracking-widest text-indigo-900/50">ID</TableHead>
+                          <TableHead className="font-bold uppercase text-[11px] tracking-widest text-indigo-900/50">Tên ca trực</TableHead>
+                          <TableHead className="font-bold uppercase text-[11px] tracking-widest text-indigo-900/50">Thời gian</TableHead>
+                          <TableHead className="font-bold uppercase text-[11px] tracking-widest text-indigo-900/50">Mô tả</TableHead>
+                          <TableHead className="text-right pr-6 font-bold uppercase text-[11px] tracking-widest text-indigo-900/50">Thao tác</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredShifts.map((shift) => (
-                          <TableRow key={shift.id} className="group hover:bg-slate-50/50 transition-colors">
-                            <TableCell className="pl-6 font-mono text-xs text-slate-500">#{shift.id}</TableCell>
+                        {paginatedShifts.map((shift) => (
+                          <TableRow key={shift.id} className="group hover:bg-indigo-50/30 transition-colors border-indigo-50">
+                            <TableCell className="pl-6 font-mono text-xs text-slate-400 font-bold">#{shift.id}</TableCell>
                             <TableCell>
-                              <div className="font-medium text-slate-900">{shift.name}</div>
+                              <div className="font-bold text-slate-900">{shift.name}</div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 font-medium font-mono">
+                                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 font-bold font-mono text-[10px]">
                                   {formatTime(shift.startTime)}
                                 </Badge>
                                 <span className="text-slate-300">→</span>
-                                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 font-medium font-mono">
+                                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 font-bold font-mono text-[10px]">
                                   {formatTime(shift.endTime)}
                                 </Badge>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="text-slate-600 text-sm line-clamp-1">
-                                {shift.description || <span className="text-slate-400 italic">Không có mô tả</span>}
+                              <span className="text-slate-600 text-sm font-medium line-clamp-1">
+                                {shift.description || <span className="text-slate-300 italic text-xs">Không có mô tả</span>}
                               </span>
                             </TableCell>
                             <TableCell className="text-right pr-6">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => handleEdit(shift)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    <span>Chỉnh sửa</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleDelete(shift)} className="text-red-600 focus:text-red-600">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    <span>Xóa ca trực</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                  onClick={() => handleEdit(shift)}
+                                  title="Chỉnh sửa"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                  onClick={() => handleDelete(shift)}
+                                  title="Xóa ca trực"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -450,16 +483,89 @@ export default function ShiftsPage() {
                     </Table>
                   )}
                 </CardContent>
+
+                {/* Pagination Component */}
+                {filteredShifts.length > 0 && (
+                  <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                        Trang <span className="text-slate-900 font-bold">{currentPage}</span> / {totalPages}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 || 
+                          page === totalPages || 
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "ghost"}
+                              size="sm"
+                              className={`h-8 w-8 p-0 rounded-lg font-bold text-xs transition-colors ${
+                                currentPage === page 
+                                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 hover:bg-indigo-700" 
+                                  : "text-slate-600 hover:bg-white hover:text-indigo-600 border border-transparent hover:border-slate-200"
+                              }`}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        }
+                        if (
+                          (page === 2 && currentPage > 3) || 
+                          (page === totalPages - 1 && currentPage < totalPages - 2)
+                        ) {
+                          return <span key={page} className="px-1 text-slate-400 font-bold text-[10px]">...</span>;
+                        }
+                        return null;
+                      })}
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-lg hover:bg-white disabled:opacity-30 shadow-sm border border-transparent hover:border-slate-200"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </Card>
             </TabsContent>
 
             <TabsContent value="schedule" className="m-0 focus-visible:ring-0 focus-visible:outline-none">
               <div className="grid gap-6">
                 <Card className="border-0 shadow-sm bg-white">
-                  <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6">
                     <div>
                       <CardTitle className="text-lg font-semibold text-slate-900">Lịch trực trong tuần</CardTitle>
                       <CardDescription>Xem danh sách bác sĩ được phân công theo ca</CardDescription>
+                    </div>
+                    <div className="relative w-full md:w-72">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input 
+                        placeholder="Tìm kiếm bác sĩ..." 
+                        value={scheduleSearchQuery}
+                        onChange={(e) => setScheduleSearchQuery(e.target.value)}
+                        className="pl-10 bg-slate-50 border-slate-200 focus:bg-white"
+                      />
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -467,7 +573,7 @@ export default function ShiftsPage() {
                       <div className="flex items-center justify-center py-20">
                         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
                       </div>
-                    ) : shiftSchedule.length === 0 ? (
+                    ) : filteredSchedule.length === 0 ? (
                       <div className="text-center py-20 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                         <CalendarIcon className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-slate-900">Chưa có lịch trực</h3>
@@ -475,7 +581,7 @@ export default function ShiftsPage() {
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        {shiftSchedule.map((schedule) => (
+                        {filteredSchedule.map((schedule) => (
                           <div key={schedule.date} className="group">
                             <div className="flex items-center gap-4 mb-4">
                               <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">
