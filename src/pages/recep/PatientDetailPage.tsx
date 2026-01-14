@@ -130,13 +130,8 @@ export default function RecepPatientDetail() {
       toast.error("Vui lòng chọn file hình ảnh")
       return
     }
-<<<<<<< HEAD
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 5MB")
-=======
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 10MB")
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
       return
     }
     setIsUploadingAvatar(true)

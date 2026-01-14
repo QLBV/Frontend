@@ -163,12 +163,6 @@ const ContactForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* First Name */}
               <div className="space-y-2">
-<<<<<<< HEAD
-                <label className="text-sm font-semibold text-gray-700">Họ</label>
-                <input 
-                  type="text" 
-                  placeholder="Nguyễn"
-=======
                 <label className="text-sm font-semibold text-gray-700">Họ <span className="text-red-500">*</span></label>
                 <input 
                   type="text"
@@ -177,19 +171,12 @@ const ContactForm = () => {
                   onChange={handleChange}
                   placeholder="Nguyễn"
                   required
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
               
               {/* Last Name */}
               <div className="space-y-2">
-<<<<<<< HEAD
-                <label className="text-sm font-semibold text-gray-700">Tên</label>
-                <input 
-                  type="text" 
-                  placeholder="Văn An"
-=======
                 <label className="text-sm font-semibold text-gray-700">Tên <span className="text-red-500">*</span></label>
                 <input 
                   type="text" 
@@ -198,7 +185,6 @@ const ContactForm = () => {
                   onChange={handleChange}
                   placeholder="Văn An"
                   required
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
@@ -206,12 +192,6 @@ const ContactForm = () => {
 
             {/* Email */}
             <div className="space-y-2">
-<<<<<<< HEAD
-              <label className="text-sm font-semibold text-gray-700">Email</label>
-              <input 
-                type="email" 
-                placeholder="example@gmail.com"
-=======
               <label className="text-sm font-semibold text-gray-700">Email <span className="text-red-500">*</span></label>
               <input 
                 type="email" 
@@ -220,7 +200,6 @@ const ContactForm = () => {
                 onChange={handleChange}
                 placeholder="example@gmail.com"
                 required
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
               />
             </div>
@@ -230,12 +209,9 @@ const ContactForm = () => {
               <label className="text-sm font-semibold text-gray-700">Số điện thoại</label>
               <input 
                 type="tel" 
-<<<<<<< HEAD
-=======
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 placeholder="(090) 000-0000"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
               />
@@ -245,14 +221,6 @@ const ContactForm = () => {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">Phòng ban liên hệ</label>
               <div className="relative">
-<<<<<<< HEAD
-                <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none appearance-none text-gray-700 cursor-pointer">
-                  <option>Tư vấn chung</option>
-                  <option>Khoa Tim mạch</option>
-                  <option>Khoa Nhi</option>
-                  <option>Cấp cứu</option>
-                  <option>Đặt lịch hẹn</option>
-=======
                 <select 
                   name="department"
                   value={formData.department}
@@ -264,7 +232,6 @@ const ContactForm = () => {
                   <option value="Khoa Nhi">Khoa Nhi</option>
                   <option value="Cấp cứu">Cấp cứu</option>
                   <option value="Đặt lịch hẹn">Đặt lịch hẹn</option>
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 </select>
                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -274,12 +241,6 @@ const ContactForm = () => {
 
             {/* Message */}
             <div className="space-y-2">
-<<<<<<< HEAD
-              <label className="text-sm font-semibold text-gray-700">Lời nhắn</label>
-              <textarea 
-                rows={4}
-                placeholder="Nội dung cần hỗ trợ..."
-=======
               <label className="text-sm font-semibold text-gray-700">Lời nhắn <span className="text-red-500">*</span></label>
               <textarea 
                 rows={4}
@@ -288,7 +249,6 @@ const ContactForm = () => {
                 onChange={handleChange}
                 placeholder="Nội dung cần hỗ trợ..."
                 required
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none resize-none"
               ></textarea>
             </div>
@@ -303,12 +263,6 @@ const ContactForm = () => {
             {/* Submit Button */}
             <button 
               type="submit" 
-<<<<<<< HEAD
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 mt-4 active:scale-[0.99] flex items-center justify-center gap-2"
-            >
-              <Send className="w-5 h-5" />
-              Gửi Tin Nhắn
-=======
               disabled={loading}
               className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 mt-4 active:scale-[0.99] flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
@@ -326,7 +280,6 @@ const ContactForm = () => {
                   Gửi Tin Nhắn
                 </>
               )}
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
             </button>
           </form>
         </div>

@@ -1,9 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
-<<<<<<< HEAD
-import { ArrowRight, HeartPulse, Baby, Stethoscope, Microscope, Activity } from "lucide-react"
-=======
 import { HeartPulse, Baby, Stethoscope, Microscope, Activity } from "lucide-react"
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
 import { useEffect, useState } from "react"
 import { SpecialtyService, type Specialty } from "@/services/specialty.service"
 import { toast } from "sonner"
@@ -16,17 +12,10 @@ export function Services() {
     const fetchSpecialties = async () => {
       try {
         const response = await SpecialtyService.getSpecialties({ active: true })
-<<<<<<< HEAD
-        setSpecialties(response.specialties.slice(0, 4)) // Limit to 4 for the homepage display
-      } catch (error) {
-        console.error("Failed to fetch specialties:", error)
-        // toast.error("Không thể tải danh sách chuyên khoa")
-=======
         setSpecialties(response.specialties)
       } catch (error) {
         console.error("Failed to fetch specialties:", error)
         toast.error("Không thể tải danh sách chuyên khoa")
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
       } finally {
         setLoading(false)
       }
@@ -44,11 +33,7 @@ export function Services() {
     return Activity
   }
 
-<<<<<<< HEAD
-  const getSpecialtyColor = (index: number) => {
-=======
   const getSpecialtyColor = () => {
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
      // Cycle through some nice colors if needed, or stick to one
      return "text-blue-600"
   }
@@ -70,28 +55,6 @@ export function Services() {
               ))}
            </div>
         ) : (
-<<<<<<< HEAD
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {specialties.map((service, index) => {
-              const Icon = getSpecialtyIcon(service.name)
-              const colorClass = getSpecialtyColor(index)
-              
-              return (
-                <Card key={service.id} className="group overflow-hidden border-0 shadow-sm bg-gray-50/50 hover:bg-white hover:shadow-xl transition-all duration-300 rounded-2xl">
-                  <CardContent className="p-8">
-                    <div className={`mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 group-hover:bg-blue-600 transition-colors duration-300`}>
-                      <Icon className={`h-6 w-6 ${colorClass} group-hover:text-white transition-colors duration-300`} />
-                    </div>
-                    
-                    <h3 className="mb-3 text-lg font-bold text-gray-900 line-clamp-1" title={service.name}>{service.name}</h3>
-                    <p className="mb-6 text-gray-500 leading-relaxed text-sm h-20 line-clamp-3">
-                      {service.description || `Chuyên khoa ${service.name} hàng đầu với đội ngũ bác sĩ giàu kinh nghiệm.`}
-                    </p>
-                  </CardContent>
-                </Card>
-              )
-            })}
-=======
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {specialties.length === 0 ? (
                <div className="col-span-full text-center py-10 text-gray-500 bg-gray-50 rounded-2xl border border-gray-100">
@@ -118,7 +81,6 @@ export function Services() {
                 )
               })
             )}
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
           </div>
         )}
       </div>

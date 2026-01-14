@@ -18,7 +18,7 @@ import {
   Tags,
   Calendar,
   Truck,
-  FileId
+  FileText
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -350,7 +350,7 @@ export default function PharmacyImportPage() {
                       {/* Batch Number */}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                          <FileId className="h-3.5 w-3.5" />
+                          <FileText className="h-3.5 w-3.5" />
                           Số lô SX *
                         </Label>
                         <Input

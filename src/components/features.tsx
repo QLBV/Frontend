@@ -56,20 +56,12 @@ export function Features() {
               <Card key={index} className="group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white rounded-2xl">
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                   <img
-<<<<<<< HEAD
-                    src={doctor.user?.avatar || "https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"}
-                    alt={doctor.user?.fullName}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
-=======
                     src={doctor.user?.avatar ? `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${doctor.user.avatar}` : "https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"}
                     alt={doctor.user?.fullName}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                     }}
                   />
                 </div>

@@ -152,18 +152,6 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminSidebar>
-<<<<<<< HEAD
-      <div className="container mx-auto px-6 py-8 bg-slate-50/50 min-h-screen">
-        {/* Header Section - Modern Greeting with Glassmorphism */}
-        <header className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-          <div className="space-y-3">
-
-            <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none">
-              Chào ngày mới, <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary via-blue-600 to-indigo-600 drop-shadow-sm">Admin</span>
-            </h1>
-            <div className="flex items-center gap-3 pl-1">
-              <p className="text-slate-500 flex items-center gap-2 font-bold text-base">
-=======
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8 bg-slate-50/50 min-h-screen">
         {/* Header Section - Modern Greeting with Glassmorphism */}
         <header className="flex flex-col lg:flex-row lg:items-end justify-between mb-6 md:mb-8 lg:mb-10 gap-4 md:gap-6">
@@ -174,7 +162,6 @@ export default function AdminDashboardPage() {
             </h1>
             <div className="flex items-center gap-3 pl-1">
               <p className="text-slate-500 flex items-center gap-2 font-bold text-sm md:text-base">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 <CalendarIcon className="h-4 w-4 text-primary/60" />
                 {format(new Date(), "eeee, 'ngày' dd 'tháng' MM 'năm' yyyy", { locale: vi })}
               </p>
@@ -187,11 +174,7 @@ export default function AdminDashboardPage() {
         </header>
 
         {/* Premium Top Level Stats - Full Width */}
-<<<<<<< HEAD
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-=======
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
           {[
             { 
               label: "Doanh thu hôm nay", 
@@ -257,17 +240,10 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Full Width Operational Alerts - Top Level Prominence */}
-<<<<<<< HEAD
-        <Card className="border-0 shadow-2xl shadow-rose-200/20 bg-white overflow-hidden rounded-[28px] border border-white/60 mb-8">
-            <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-50">
-                {/* Header Section */}
-                <div className="p-6 lg:w-1/4 bg-slate-50/30 flex flex-col justify-center">
-=======
         <Card className="border-0 shadow-2xl shadow-rose-200/20 bg-white overflow-hidden rounded-2xl md:rounded-[28px] border border-white/60 mb-6 md:mb-8">
             <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-50">
                 {/* Header Section */}
                 <div className="p-4 md:p-6 lg:w-1/4 bg-slate-50/30 flex flex-col justify-center">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                     <div className="flex items-center gap-4 mb-3">
                         <div className="h-11 w-11 rounded-2xl bg-rose-50 flex items-center justify-center border border-rose-100 shadow-sm shadow-rose-200/40 shrink-0">
                             <AlertTriangle className="h-5 w-5 text-rose-500" />
@@ -283,22 +259,14 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Content Sections */}
-<<<<<<< HEAD
-                <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-=======
                 <div className="flex-1 p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                     {/* Low Stock Horizontal */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-3 border-rose-500 pl-3">Sắp hết hàng</p>
                             <Link to="/pharmacy" className="text-[9px] font-black text-primary hover:underline uppercase tracking-tight">Xem tất cả</Link>
                         </div>
-<<<<<<< HEAD
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-=======
                         <div className="grid grid-cols-1 gap-2">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                             {lowStockMedicines.length === 0 ? (
                                 <p className="text-[11px] text-slate-300 font-bold py-2 italic text-center col-span-2">Không có cảnh báo tồn kho</p>
                             ) : lowStockMedicines.slice(0, 4).map(m => (
@@ -339,27 +307,16 @@ export default function AdminDashboardPage() {
         <div className="space-y-8">
 
             {/* Performance Chart Section - High Fidelity */}
-<<<<<<< HEAD
-            <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-[24px] border border-white/40 group/chart">
-              <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 py-6 px-8 bg-slate-50/10">
-=======
             <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-2xl md:rounded-[24px] border border-white/40 group/chart">
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-50 py-4 md:py-6 px-4 md:px-8 bg-slate-50/10 gap-3 md:gap-0">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 <div className="space-y-1">
                   <div className="flex items-center gap-3 mb-0.5">
                     <div className="p-1.5 bg-blue-50 rounded-lg">
                       <DollarSign className="h-3.5 w-3.5 text-primary" />
                     </div>
-<<<<<<< HEAD
-                    <CardTitle className="text-xl font-black text-slate-900 tracking-tight">Xu hướng doanh thu</CardTitle>
-                  </div>
-                  <CardDescription className="text-slate-500 font-bold pl-9 text-xs">Thống kê thanh toán {chartRange} ngày gần nhất</CardDescription>
-=======
                     <CardTitle className="text-lg md:text-xl font-black text-slate-900 tracking-tight">Xu hướng doanh thu</CardTitle>
                   </div>
                   <CardDescription className="text-slate-500 font-bold pl-0 sm:pl-9 text-xs">Thống kê thanh toán {chartRange} ngày gần nhất</CardDescription>
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="bg-slate-100/80 p-1 rounded-xl flex gap-1">
@@ -388,11 +345,7 @@ export default function AdminDashboardPage() {
                   </Button>
                 </div>
               </CardHeader>
-<<<<<<< HEAD
-              <CardContent className="pt-8 pb-6 px-6 h-[320px] relative">
-=======
               <CardContent className="pt-6 md:pt-8 pb-4 md:pb-6 px-3 md:px-6 h-[250px] md:h-[300px] lg:h-[320px] relative">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 {isChartLoading && (
                   <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-20 flex items-center justify-center animate-in fade-in duration-300">
                     <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
@@ -450,15 +403,9 @@ export default function AdminDashboardPage() {
             </Card>
 
             {/* Doctors & Attendance Hub - Harmonized */}
-<<<<<<< HEAD
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Appointment Status Distribution - Compact Premium */}
-                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-[24px] border border-white/40">
-=======
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {/* Appointment Status Distribution - Compact Premium */}
                 <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-2xl md:rounded-[24px] border border-white/40">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   <CardHeader className="pb-2 px-6 pt-6 border-b border-slate-50/50 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-black flex items-center gap-2.5">
                       <div className="bg-blue-50 p-2 rounded-xl">
@@ -536,11 +483,7 @@ export default function AdminDashboardPage() {
                 </Card>
 
                 {/* Doctors Tag Feed - Compact Premium */}
-<<<<<<< HEAD
-                <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-[24px] border border-white/40">
-=======
                 <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-2xl md:rounded-[24px] border border-white/40">
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   <CardHeader className="pb-3 px-6 pt-6 border-b border-slate-50/50">
                     <CardTitle className="text-sm font-black flex items-center gap-2.5">
                       <div className="bg-emerald-50 p-2 rounded-xl">
@@ -601,13 +544,8 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Real-time Activity Hub - Floating Widget with Expand/Collapse */}
-<<<<<<< HEAD
-      <div className={`fixed bottom-6 right-6 z-50 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isExpanded ? 'w-[340px]' : 'w-14 h-14'}`}>
-        <Card className={`border-0 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl overflow-hidden border border-white/40 ring-1 ring-slate-200/50 transition-all duration-500 ${!isExpanded ? 'rounded-full h-14' : 'rounded-[28px] h-[520px]'}`}>
-=======
       <div className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isExpanded ? 'w-[calc(100vw-2rem)] max-w-[340px] md:w-[340px]' : 'w-12 h-12 md:w-14 md:h-14'}`}>
         <Card className={`border-0 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl overflow-hidden border border-white/40 ring-1 ring-slate-200/50 transition-all duration-500 ${!isExpanded ? 'rounded-full h-12 md:h-14' : 'rounded-2xl md:rounded-[28px] h-[90vh] max-h-[520px]'}`}>
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
             <div 
                 className={`flex items-center cursor-pointer transition-all duration-300 ${isExpanded ? 'p-5 justify-between border-b border-slate-100/50 bg-slate-50/30' : 'h-full w-full justify-center hover:scale-110 active:scale-90'}`}
                 onClick={() => setIsExpanded(!isExpanded)}
