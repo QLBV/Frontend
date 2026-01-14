@@ -2,6 +2,59 @@ import React from 'react';
 import { MapPin, Phone, Mail, Map as MapIcon, Send } from 'lucide-react';
 
 const ContactForm = () => {
+  const [formData, setFormData] = React.useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    department: 'Tư vấn chung',
+    message: ''
+  });
+  const [loading, setLoading] = React.useState(false);
+  const [status, setStatus] = React.useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus(null);
+
+    // Simple validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.message) {
+      setStatus({ type: 'error', message: 'Vui lòng điền đầy đủ các trường bắt buộc (*)' });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Import dynamically to avoid circular dependencies if any, or just direct import
+      const { PublicService } = await import('../services/public.service');
+      const result = await PublicService.sendContactMessage(formData);
+      
+      if (result.success) {
+        setStatus({ type: 'success', message: 'Gửi tin nhắn thành công! Chúng tôi sẽ liên hệ lại sớm.' });
+        setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            department: 'Tư vấn chung',
+            message: ''
+        });
+      } else {
+        setStatus({ type: 'error', message: result.message || 'Có lỗi xảy ra.' });
+      }
+    } catch (error) {
+      setStatus({ type: 'error', message: 'Có lỗi xảy ra khi kết nối server.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div id="contact" className="w-full max-w-7xl mx-auto p-4 md:p-6 font-sans py-20">
       <div className="mb-12 text-center">
@@ -106,24 +159,46 @@ const ContactForm = () => {
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Gửi tin nhắn</h3>
           <p className="text-gray-500 mb-8">Chúng tôi sẽ phản hồi trong thời gian sớm nhất.</p>
           
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* First Name */}
               <div className="space-y-2">
+<<<<<<< HEAD
                 <label className="text-sm font-semibold text-gray-700">Họ</label>
                 <input 
                   type="text" 
                   placeholder="Nguyễn"
+=======
+                <label className="text-sm font-semibold text-gray-700">Họ <span className="text-red-500">*</span></label>
+                <input 
+                  type="text"
+                  name="lastName" 
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Nguyễn"
+                  required
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
               
               {/* Last Name */}
               <div className="space-y-2">
+<<<<<<< HEAD
                 <label className="text-sm font-semibold text-gray-700">Tên</label>
                 <input 
                   type="text" 
                   placeholder="Văn An"
+=======
+                <label className="text-sm font-semibold text-gray-700">Tên <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Văn An"
+                  required
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
@@ -131,10 +206,21 @@ const ContactForm = () => {
 
             {/* Email */}
             <div className="space-y-2">
+<<<<<<< HEAD
               <label className="text-sm font-semibold text-gray-700">Email</label>
               <input 
                 type="email" 
                 placeholder="example@gmail.com"
+=======
+              <label className="text-sm font-semibold text-gray-700">Email <span className="text-red-500">*</span></label>
+              <input 
+                type="email" 
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="example@gmail.com"
+                required
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
               />
             </div>
@@ -144,6 +230,12 @@ const ContactForm = () => {
               <label className="text-sm font-semibold text-gray-700">Số điện thoại</label>
               <input 
                 type="tel" 
+<<<<<<< HEAD
+=======
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 placeholder="(090) 000-0000"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none"
               />
@@ -153,12 +245,26 @@ const ContactForm = () => {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">Phòng ban liên hệ</label>
               <div className="relative">
+<<<<<<< HEAD
                 <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none appearance-none text-gray-700 cursor-pointer">
                   <option>Tư vấn chung</option>
                   <option>Khoa Tim mạch</option>
                   <option>Khoa Nhi</option>
                   <option>Cấp cứu</option>
                   <option>Đặt lịch hẹn</option>
+=======
+                <select 
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none appearance-none text-gray-700 cursor-pointer"
+                >
+                  <option value="Tư vấn chung">Tư vấn chung</option>
+                  <option value="Khoa Tim mạch">Khoa Tim mạch</option>
+                  <option value="Khoa Nhi">Khoa Nhi</option>
+                  <option value="Cấp cứu">Cấp cứu</option>
+                  <option value="Đặt lịch hẹn">Đặt lịch hẹn</option>
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 </select>
                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -168,21 +274,59 @@ const ContactForm = () => {
 
             {/* Message */}
             <div className="space-y-2">
+<<<<<<< HEAD
               <label className="text-sm font-semibold text-gray-700">Lời nhắn</label>
               <textarea 
                 rows={4}
                 placeholder="Nội dung cần hỗ trợ..."
+=======
+              <label className="text-sm font-semibold text-gray-700">Lời nhắn <span className="text-red-500">*</span></label>
+              <textarea 
+                rows={4}
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                placeholder="Nội dung cần hỗ trợ..."
+                required
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none resize-none"
               ></textarea>
             </div>
 
+            {/* Status Message */}
+            {status && (
+              <div className={`p-4 rounded-xl ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {status.message}
+              </div>
+            )}
+
             {/* Submit Button */}
             <button 
               type="submit" 
+<<<<<<< HEAD
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 mt-4 active:scale-[0.99] flex items-center justify-center gap-2"
             >
               <Send className="w-5 h-5" />
               Gửi Tin Nhắn
+=======
+              disabled={loading}
+              className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200 mt-4 active:scale-[0.99] flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang gửi...
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  Gửi Tin Nhắn
+                </>
+              )}
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
             </button>
           </form>
         </div>

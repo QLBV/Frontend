@@ -74,7 +74,11 @@ export default function SpecialtiesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalSpecialties, setTotalSpecialties] = useState(0)
+<<<<<<< HEAD
   const itemsPerPage = 8
+=======
+  const itemsPerPage = 10
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
 
   // Form states
   const [formData, setFormData] = useState({

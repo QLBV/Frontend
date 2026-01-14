@@ -10,6 +10,28 @@ export interface LandingStats {
 
 export class PublicService {
   /**
+   * Send contact message
+   */
+  static async sendContactMessage(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    department: string;
+    message: string;
+  }): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await api.post('/contact', data);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Có lỗi xảy ra khi gửi tin nhắn',
+      };
+    }
+  }
+
+  /**
    * Get stats for landing page
    */
   static async getLandingStats(): Promise<LandingStats> {

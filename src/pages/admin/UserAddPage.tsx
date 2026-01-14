@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
 import AdminSidebar from '@/components/sidebar/admin'
 import { 
   ArrowLeft,
@@ -28,14 +28,28 @@ import { UserService, type CreateUserData } from "@/services/user.service"
 
 export default function UserAddPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [isSaving, setIsSaving] = useState(false)
+  
+  // Get role from query param
+  const queryParams = new URLSearchParams(location.search)
+  const initialRole = queryParams.get('role') as any || "patient"
+
   const [formData, setFormData] = useState<CreateUserData>({
     fullName: "",
     email: "",
     password: "",
     phone: "",
-    role: "patient",
+    role: initialRole,
   })
+
+  // Update role if query param changes
+  useEffect(() => {
+    const role = queryParams.get('role') as any
+    if (role && ['admin', 'doctor', 'receptionist', 'patient'].includes(role)) {
+       setFormData(prev => ({ ...prev, role: role }))
+    }
+  }, [location.search])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()

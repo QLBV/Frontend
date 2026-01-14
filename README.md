@@ -122,8 +122,13 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 
 1. **Clone the repository**
    ```bash
+<<<<<<< HEAD
    git clone https://github.com/your-org/healos-frontend.git
    cd healos-frontend
+=======
+   git clone https://github.com/QLBV/Frontend.git
+   cd Frontend
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
    ```
 
 2. **Install dependencies**
@@ -137,7 +142,11 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
    
    Create a `.env` file in the root directory:
    ```env
+<<<<<<< HEAD
    VITE_API_URL=http://localhost:3000/api
+=======
+   VITE_API_URL=http://localhost:5000/api
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
    VITE_FIREBASE_API_KEY=your_firebase_api_key
    VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
    VITE_FIREBASE_PROJECT_ID=your_project_id

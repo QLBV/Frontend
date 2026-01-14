@@ -5,7 +5,6 @@ import {
   Settings,
   Building2,
   Clock,
-  Mail,
   Save,
   Loader2,
 } from "lucide-react"
@@ -44,14 +43,6 @@ interface SystemSettings {
     currency: string
     timezone: string
   }
-  emailSettings: {
-    smtpHost?: string
-    smtpPort?: number
-    smtpUser?: string
-    smtpPassword?: string
-    fromEmail?: string
-    fromName?: string
-  }
 }
 
 const defaultSettings: SystemSettings = {
@@ -77,14 +68,6 @@ const defaultSettings: SystemSettings = {
     appointmentDuration: 30,
     currency: "VND",
     timezone: "Asia/Ho_Chi_Minh",
-  },
-  emailSettings: {
-    smtpHost: "",
-    smtpPort: 587,
-    smtpUser: "",
-    smtpPassword: "",
-    fromEmail: "",
-    fromName: "",
   },
 }
 
@@ -195,16 +178,6 @@ export default function SystemSettingsPage() {
     }))
   }
 
-  const updateEmailSetting = (field: keyof SystemSettings["emailSettings"], value: string | number) => {
-    setSettings((prev) => ({
-      ...prev,
-      emailSettings: {
-        ...prev.emailSettings,
-        [field]: value,
-      },
-    }))
-  }
-
   if (isLoading) {
     return (
       <AdminSidebar>
@@ -220,46 +193,30 @@ export default function SystemSettingsPage() {
 
   return (
     <AdminSidebar>
-      <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">Cài đặt Hệ thống</h1>
-              <p className="text-slate-600">Quản lý cấu hình hệ thống và thông tin phòng khám</p>
-            </div>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Lưu tất cả
-                </>
-              )}
-            </Button>
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
+        <div className="mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-1 md:mb-2">Cài đặt Hệ thống</h1>
+            <p className="text-sm md:text-base text-slate-600">Quản lý cấu hình hệ thống và thông tin phòng khám</p>
           </div>
         </div>
 
-        <Tabs defaultValue="clinic" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="clinic">
+        <Tabs defaultValue="clinic" className="space-y-4 md:space-y-6">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+            <TabsTrigger value="clinic" className="flex-shrink-0">
               <Building2 className="h-4 w-4 mr-2" />
-              Thông tin phòng khám
+              <span className="hidden sm:inline">Thông tin phòng khám</span>
+              <span className="sm:hidden">Phòng khám</span>
             </TabsTrigger>
-            <TabsTrigger value="hours">
+            <TabsTrigger value="hours" className="flex-shrink-0">
               <Clock className="h-4 w-4 mr-2" />
-              Giờ làm việc
+              <span className="hidden sm:inline">Giờ làm việc</span>
+              <span className="sm:hidden">Giờ</span>
             </TabsTrigger>
-            <TabsTrigger value="system">
+            <TabsTrigger value="system" className="flex-shrink-0">
               <Settings className="h-4 w-4 mr-2" />
-              Cài đặt hệ thống
-            </TabsTrigger>
-            <TabsTrigger value="email">
-              <Mail className="h-4 w-4 mr-2" />
-              Cài đặt Email
+              <span className="hidden sm:inline">Cài đặt hệ thống</span>
+              <span className="sm:hidden">Hệ thống</span>
             </TabsTrigger>
           </TabsList>
 
@@ -295,7 +252,7 @@ export default function SystemSettingsPage() {
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="clinicPhone">Số điện thoại *</Label>
                     <Input
@@ -346,11 +303,11 @@ export default function SystemSettingsPage() {
                 {daysOfWeek.map((day) => {
                   const daySettings = settings.businessHours[day.key]
                   return (
-                    <div key={day.key} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="w-24">
-                        <Label className="font-medium">{day.label}</Label>
+                    <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 md:p-4 border rounded-lg">
+                      <div className="w-20 sm:w-24">
+                        <Label className="font-medium text-sm md:text-base">{day.label}</Label>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 flex-1">
                         <Switch
                           checked={!daySettings.closed}
                           onCheckedChange={(checked) =>
@@ -364,7 +321,7 @@ export default function SystemSettingsPage() {
                       {!daySettings.closed && (
                         <>
                           <div className="flex items-center gap-2">
-                            <Label htmlFor={`${day.key}-open`} className="text-sm">
+                            <Label htmlFor={`${day.key}-open`} className="text-sm whitespace-nowrap">
                               Từ:
                             </Label>
                             <Input
@@ -374,11 +331,11 @@ export default function SystemSettingsPage() {
                               onChange={(e) =>
                                 updateBusinessHours(day.key, "open", e.target.value)
                               }
-                              className="w-32"
+                              className="w-32 sm:w-36"
                             />
                           </div>
                           <div className="flex items-center gap-2">
-                            <Label htmlFor={`${day.key}-close`} className="text-sm">
+                            <Label htmlFor={`${day.key}-close`} className="text-sm whitespace-nowrap">
                               Đến:
                             </Label>
                             <Input
@@ -388,7 +345,7 @@ export default function SystemSettingsPage() {
                               onChange={(e) =>
                                 updateBusinessHours(day.key, "close", e.target.value)
                               }
-                              className="w-32"
+                              className="w-32 sm:w-36"
                             />
                           </div>
                         </>
@@ -474,7 +431,7 @@ export default function SystemSettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="maxAppointmentsPerDay">
                         Số lịch hẹn tối đa mỗi ngày
@@ -516,7 +473,7 @@ export default function SystemSettingsPage() {
                 <div className="space-y-4">
                   <h3 className="font-semibold text-slate-900">Cài đặt khác</h3>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="currency">Đơn vị tiền tệ</Label>
                       <Input
@@ -540,89 +497,38 @@ export default function SystemSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* Email Settings Tab */}
-          <TabsContent value="email">
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  Cài đặt Email
-                </CardTitle>
-                <CardDescription>
-                  Cấu hình SMTP để gửi email từ hệ thống
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="smtpHost">SMTP Host</Label>
-                    <Input
-                      id="smtpHost"
-                      value={settings.emailSettings.smtpHost || ""}
-                      onChange={(e) => updateEmailSetting("smtpHost", e.target.value)}
-                      placeholder="smtp.gmail.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtpPort">SMTP Port</Label>
-                    <Input
-                      id="smtpPort"
-                      type="number"
-                      value={settings.emailSettings.smtpPort || ""}
-                      onChange={(e) =>
-                        updateEmailSetting("smtpPort", parseInt(e.target.value) || 587)
-                      }
-                      placeholder="587"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="smtpUser">SMTP Username</Label>
-                    <Input
-                      id="smtpUser"
-                      value={settings.emailSettings.smtpUser || ""}
-                      onChange={(e) => updateEmailSetting("smtpUser", e.target.value)}
-                      placeholder="your-email@gmail.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtpPassword">SMTP Password</Label>
-                    <Input
-                      id="smtpPassword"
-                      type="password"
-                      value={settings.emailSettings.smtpPassword || ""}
-                      onChange={(e) => updateEmailSetting("smtpPassword", e.target.value)}
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fromEmail">Email gửi đi</Label>
-                    <Input
-                      id="fromEmail"
-                      type="email"
-                      value={settings.emailSettings.fromEmail || ""}
-                      onChange={(e) => updateEmailSetting("fromEmail", e.target.value)}
-                      placeholder="noreply@clinic.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="fromName">Tên người gửi</Label>
-                    <Input
-                      id="fromName"
-                      value={settings.emailSettings.fromName || ""}
-                      onChange={(e) => updateEmailSetting("fromName", e.target.value)}
-                      placeholder="Phòng khám ABC"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
+
+        {/* Sticky Save Button at Bottom */}
+        <div className="sticky bottom-0 left-0 right-0 mt-6 md:mt-8 p-4 md:p-6 bg-white border-t border-slate-200 rounded-t-2xl shadow-lg z-10">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => fetchSettings()} 
+              disabled={isSaving}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
+              Khôi phục mặc định
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Lưu tất cả thay đổi
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </AdminSidebar>
   )

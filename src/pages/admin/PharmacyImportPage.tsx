@@ -4,11 +4,31 @@ import type React from "react"
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Activity, ArrowLeft, Plus, Trash2, Save } from "lucide-react"
+import { 
+  Activity, 
+  ArrowLeft, 
+  Plus, 
+  Trash2, 
+  Save,
+  Package,
+  ShoppingCart,
+  DollarSign,
+  TrendingUp,
+  Box,
+  Tags,
+  Calendar,
+  Truck,
+  FileId
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { useAuth } from "@/auth/authContext"
+import SidebarLayout from "@/components/SidebarLayout"
+import AdminSidebar from "@/components/sidebar/admin"
+import ReceptionistSidebar from "@/components/sidebar/recep"
+import DoctorSidebar from "@/components/sidebar/doctor"
 
 interface ImportItem {
   id: string
@@ -26,6 +46,7 @@ interface ImportItem {
 
 export default function PharmacyImportPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [importItems, setImportItems] = useState<ImportItem[]>([
     {
       id: "1",
@@ -90,257 +111,334 @@ export default function PharmacyImportPage() {
     // Here you would typically send the data to your backend
     console.log("Importing medications:", importItems)
     alert("Nhập thuốc thành công!")
-    navigate("/admin/inventory")
+    navigate("/pharmacy")
   }
 
   const totalCost = importItems.reduce((sum, item) => sum + item.costPrice * item.quantity, 0)
   const totalValue = importItems.reduce((sum, item) => sum + item.sellingPrice * item.quantity, 0)
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/admin/inventory" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Activity className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-                HealthCare Plus
-              </span>
-            </Link>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/inventory">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại
+  const getSidebar = () => {
+    if (!user) return null
+    const role = String(user.roleId || user.role || "").toLowerCase()
+    if (role === "admin" || role === "1") {
+      return <AdminSidebar />
+    }
+    if (role === "doctor" || role === "4") {
+      return <DoctorSidebar />
+    }
+    if (role === "receptionist" || role === "2") {
+      return <ReceptionistSidebar />
+    }
+    return null
+  }
+
+  const sidebar = getSidebar()
+  
+  const pageContent = (
+    <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-200/30 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <div className="relative p-4 md:p-6 lg:p-8">
+        <div className="max-w-[1700px] mx-auto space-y-6">
+          
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <Link to="/pharmacy" className="inline-flex items-center text-slate-500 hover:text-cyan-600 mb-2 transition-colors">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Quay lại kho thuốc
               </Link>
-            </Button>
+              <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-900 to-teal-900">
+                Nhập kho thuốc
+              </h1>
+              <p className="text-slate-500 font-medium mt-1">
+                Tạo phiếu nhập kho mới và cập nhật số lượng
+              </p>
+            </div>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Nhập kho thuốc</h1>
-          <p className="text-slate-600">Thêm thuốc mới vào kho (Chỉ Admin)</p>
-        </div>
+          <form onSubmit={handleSubmit}>
+            {/* Summary Card */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card className="border-0 shadow-lg shadow-cyan-500/5 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-cyan-100/50 flex items-center justify-center text-cyan-600">
+                    <Package className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Số mặt hàng</p>
+                    <p className="text-2xl font-black text-slate-900">{importItems.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-        <form onSubmit={handleSubmit}>
-          {/* Summary Card */}
-          <Card className="border-0 shadow-xl shadow-slate-900/5 mb-6">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <Label className="text-slate-600">Số lượng mặt hàng</Label>
-                  <div className="text-3xl font-bold text-slate-900 mt-1">{importItems.length}</div>
-                </div>
-                <div>
-                  <Label className="text-slate-600">Tổng giá vốn</Label>
-                  <div className="text-3xl font-bold text-slate-900 mt-1">{totalCost.toLocaleString()} đ</div>
-                </div>
-                <div>
-                  <Label className="text-slate-600">Tổng giá trị bán</Label>
-                  <div className="text-3xl font-bold text-emerald-600 mt-1">{totalValue.toLocaleString()} đ</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <Card className="border-0 shadow-lg shadow-blue-500/5 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-blue-100/50 flex items-center justify-center text-blue-600">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tổng giá vốn</p>
+                    <p className="text-2xl font-black text-slate-900">{totalCost.toLocaleString()} đ</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Import Items */}
-          <div className="space-y-6">
-            {importItems.map((item, index) => (
-              <Card key={item.id} className="border-0 shadow-xl shadow-slate-900/5">
-                <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl text-slate-900">Mặt hàng #{index + 1}</CardTitle>
+              <Card className="border-0 shadow-lg shadow-emerald-500/5 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-100/50 flex items-center justify-center text-emerald-600">
+                    <TrendingUp className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Giá trị bán ra</p>
+                    <p className="text-2xl font-black text-emerald-600">{totalValue.toLocaleString()} đ</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Import Items */}
+            <div className="space-y-6">
+              {importItems.map((item, index) => (
+                <Card key={item.id} className="border-0 shadow-xl shadow-slate-200/40 bg-white/90 backdrop-blur overflow-hidden group hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-300">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-cyan-400 to-teal-400" />
+                  <CardHeader className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-500">
+                        {index + 1}
+                      </div>
+                      <CardTitle className="text-lg font-bold text-slate-800">
+                        {item.name || "Thuốc mới chưa nhập tên"}
+                      </CardTitle>
+                    </div>
                     {importItems.length > 1 && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => removeImportItem(item.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-5 w-5" />
                       </Button>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Medication Name */}
-                    <div>
-                      <Label htmlFor={`name-${item.id}`}>Tên thuốc *</Label>
-                      <Input
-                        id={`name-${item.id}`}
-                        value={item.name}
-                        onChange={(e) => updateImportItem(item.id, "name", e.target.value)}
-                        placeholder="Vd: Paracetamol 500mg"
-                        required
-                      />
-                    </div>
-
-                    {/* Group */}
-                    <div>
-                      <Label htmlFor={`group-${item.id}`}>Nhóm thuốc *</Label>
-                      <select
-                        id={`group-${item.id}`}
-                        value={item.group}
-                        onChange={(e) => updateImportItem(item.id, "group", e.target.value)}
-                        className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        <option value="">Chọn nhóm thuốc</option>
-                        <option value="Giảm đau - Hạ sốt">Giảm đau - Hạ sốt</option>
-                        <option value="Kháng sinh">Kháng sinh</option>
-                        <option value="Vitamin & Khoáng chất">Vitamin & Khoáng chất</option>
-                        <option value="Tiêu hóa">Tiêu hóa</option>
-                        <option value="Tim mạch">Tim mạch</option>
-                        <option value="Hô hấp">Hô hấp</option>
-                      </select>
-                    </div>
-
-                    {/* Quantity */}
-                    <div>
-                      <Label htmlFor={`quantity-${item.id}`}>Số lượng *</Label>
-                      <div className="flex gap-2">
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Name */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <Package className="h-3.5 w-3.5" />
+                          Tên thuốc *
+                        </Label>
                         <Input
-                          id={`quantity-${item.id}`}
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => updateImportItem(item.id, "quantity", Number(e.target.value))}
-                          placeholder="0"
-                          min="1"
+                          value={item.name}
+                          onChange={(e) => updateImportItem(item.id, "name", e.target.value)}
+                          placeholder="Vd: Paracetamol 500mg"
+                          className="font-semibold"
                           required
                         />
+                      </div>
+
+                      {/* Group */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <Tags className="h-3.5 w-3.5" />
+                          Nhóm thuốc *
+                        </Label>
                         <select
-                          value={item.unit}
-                          onChange={(e) => updateImportItem(item.id, "unit", e.target.value)}
-                          className="w-24 h-10 px-3 rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={item.group}
+                          onChange={(e) => updateImportItem(item.id, "group", e.target.value)}
+                          className="w-full h-10 px-3 rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-shadow"
+                          required
                         >
-                          <option value="viên">viên</option>
-                          <option value="vỉ">vỉ</option>
-                          <option value="hộp">hộp</option>
-                          <option value="chai">chai</option>
-                          <option value="gói">gói</option>
+                          <option value="">Chọn nhóm thuốc</option>
+                          <option value="Giảm đau - Hạ sốt">Giảm đau - Hạ sốt</option>
+                          <option value="Kháng sinh">Kháng sinh</option>
+                          <option value="Vitamin & Khoáng chất">Vitamin & Khoáng chất</option>
+                          <option value="Tiêu hóa">Tiêu hóa</option>
+                          <option value="Tim mạch">Tim mạch</option>
+                          <option value="Hô hấp">Hô hấp</option>
                         </select>
                       </div>
+
+                      {/* Quantity & Unit */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <Box className="h-3.5 w-3.5" />
+                          Số lượng & Đơn vị *
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateImportItem(item.id, "quantity", Number(e.target.value))}
+                            placeholder="0"
+                            min="1"
+                            className="font-semibold"
+                            required
+                          />
+                          <select
+                            value={item.unit}
+                            onChange={(e) => updateImportItem(item.id, "unit", e.target.value)}
+                            className="w-28 h-10 px-3 rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-shadow"
+                          >
+                            <option value="viên">viên</option>
+                            <option value="vỉ">vỉ</option>
+                            <option value="hộp">hộp</option>
+                            <option value="chai">chai</option>
+                            <option value="gói">gói</option>
+                            <option value="tuýp">tuýp</option>
+                            <option value="ml">ml</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Cost Price */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <DollarSign className="h-3.5 w-3.5" />
+                          Giá vốn (VND) *
+                        </Label>
+                        <Input
+                          type="number"
+                          value={item.costPrice}
+                          onChange={(e) => updateImportItem(item.id, "costPrice", Number(e.target.value))}
+                          placeholder="0"
+                          min="0"
+                          className="font-mono font-bold text-slate-700"
+                          required
+                        />
+                      </div>
+
+                      {/* Profit Margin */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <TrendingUp className="h-3.5 w-3.5" />
+                          Lãi suất (%) *
+                        </Label>
+                        <Input
+                          type="number"
+                          value={item.profitMargin}
+                          onChange={(e) => updateImportItem(item.id, "profitMargin", Number(e.target.value))}
+                          placeholder="30"
+                          min="0"
+                          step="0.01"
+                          className="font-bold text-emerald-600"
+                          required
+                        />
+                      </div>
+
+                      {/* Selling Price */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <ShoppingCart className="h-3.5 w-3.5" />
+                          Giá bán dự kiến
+                        </Label>
+                        <Input
+                          type="number"
+                          value={item.sellingPrice}
+                          readOnly
+                          className="bg-slate-50 font-mono font-black text-cyan-700 border-dashed border-cyan-200"
+                        />
+                      </div>
+
+                      {/* Batch Number */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <FileId className="h-3.5 w-3.5" />
+                          Số lô SX *
+                        </Label>
+                        <Input
+                          value={item.batchNumber}
+                          onChange={(e) => updateImportItem(item.id, "batchNumber", e.target.value)}
+                          placeholder="Vd: LOT2024001"
+                          className="font-mono font-medium uppercase"
+                          required
+                        />
+                      </div>
+
+                      {/* Expiry Date */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <Calendar className="h-3.5 w-3.5" />
+                          Hạn sử dụng *
+                        </Label>
+                        <Input
+                          type="date"
+                          value={item.expiryDate}
+                          onChange={(e) => updateImportItem(item.id, "expiryDate", e.target.value)}
+                          className="font-medium"
+                          required
+                        />
+                      </div>
+
+                      {/* Supplier */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <Truck className="h-3.5 w-3.5" />
+                          Nhà cung cấp *
+                        </Label>
+                        <Input
+                          value={item.supplier}
+                          onChange={(e) => updateImportItem(item.id, "supplier", e.target.value)}
+                          placeholder="Vd: Dược Hậu Giang"
+                          className="font-medium"
+                          required
+                        />
+                      </div>
                     </div>
-
-                    {/* Cost Price */}
-                    <div>
-                      <Label htmlFor={`costPrice-${item.id}`}>Giá vốn (đ) *</Label>
-                      <Input
-                        id={`costPrice-${item.id}`}
-                        type="number"
-                        value={item.costPrice}
-                        onChange={(e) => updateImportItem(item.id, "costPrice", Number(e.target.value))}
-                        placeholder="0"
-                        min="0"
-                        required
-                      />
-                    </div>
-
-                    {/* Profit Margin */}
-                    <div>
-                      <Label htmlFor={`profitMargin-${item.id}`}>Lãi suất (%) *</Label>
-                      <Input
-                        id={`profitMargin-${item.id}`}
-                        type="number"
-                        value={item.profitMargin}
-                        onChange={(e) => updateImportItem(item.id, "profitMargin", Number(e.target.value))}
-                        placeholder="30"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-
-                    {/* Selling Price (Auto-calculated) */}
-                    <div>
-                      <Label htmlFor={`sellingPrice-${item.id}`}>Giá bán (đ)</Label>
-                      <Input
-                        id={`sellingPrice-${item.id}`}
-                        type="number"
-                        value={item.sellingPrice}
-                        readOnly
-                        className="bg-slate-50"
-                      />
-                    </div>
-
-                    {/* Batch Number */}
-                    <div>
-                      <Label htmlFor={`batchNumber-${item.id}`}>Số lô *</Label>
-                      <Input
-                        id={`batchNumber-${item.id}`}
-                        value={item.batchNumber}
-                        onChange={(e) => updateImportItem(item.id, "batchNumber", e.target.value)}
-                        placeholder="Vd: LOT001"
-                        required
-                      />
-                    </div>
-
-                    {/* Expiry Date */}
-                    <div>
-                      <Label htmlFor={`expiryDate-${item.id}`}>Hạn dùng *</Label>
-                      <Input
-                        id={`expiryDate-${item.id}`}
-                        type="date"
-                        value={item.expiryDate}
-                        onChange={(e) => updateImportItem(item.id, "expiryDate", e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    {/* Supplier */}
-                    <div>
-                      <Label htmlFor={`supplier-${item.id}`}>Nhà cung cấp *</Label>
-                      <Input
-                        id={`supplier-${item.id}`}
-                        value={item.supplier}
-                        onChange={(e) => updateImportItem(item.id, "supplier", e.target.value)}
-                        placeholder="Vd: Công ty Dược phẩm ABC"
-                        required
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="mt-8 flex items-center justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={addImportItem}
-              className="border-blue-200 text-blue-600 hover:bg-blue-50 bg-transparent"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Thêm mặt hàng
-            </Button>
-
-            <div className="flex gap-4">
-              <Button type="button" variant="outline" size="lg" asChild>
-                <Link to="/admin/inventory">Hủy</Link>
-              </Button>
-              <Button
-                type="submit"
-                size="lg"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
-              >
-                <Save className="h-5 w-5 mr-2" />
-                Lưu phiếu nhập
-              </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </div>
-        </form>
+
+            {/* Action Buttons */}
+            <div className="mt-8 flex items-center justify-between sticky bottom-6 bg-white/80 p-4 rounded-2xl shadow-2xl backdrop-blur-md border border-white/50 z-10">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={addImportItem}
+                className="border-dashed border-2 border-slate-300 text-slate-600 hover:border-cyan-500 hover:text-cyan-600 hover:bg-cyan-50 h-12 px-6 rounded-xl font-bold"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Thêm dòng
+              </Button>
+
+              <div className="flex gap-4">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="lg" 
+                  onClick={() => navigate("/pharmacy")}
+                  className="text-slate-500 hover:text-slate-800 h-12 px-6 rounded-xl font-bold"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 shadow-lg shadow-cyan-500/30 text-white h-12 px-8 rounded-xl font-black text-lg"
+                >
+                  <Save className="h-5 w-5 mr-2" />
+                  NHẬP KHO
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
+  )
+
+  return (
+    <SidebarLayout userName={user?.fullName || user?.email} pageContent={pageContent}>
+      {sidebar}
+    </SidebarLayout>
   )
 }

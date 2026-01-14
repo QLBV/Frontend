@@ -95,7 +95,11 @@ export default function ShiftTemplatesPage() {
   const [filterActive, setFilterActive] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid")
   const [currentPage, setCurrentPage] = useState(1)
+<<<<<<< HEAD
   const itemsPerPage = 8
+=======
+  const itemsPerPage = 10
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
 
   // Dialog states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)

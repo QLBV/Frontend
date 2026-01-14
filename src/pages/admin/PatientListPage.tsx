@@ -190,18 +190,30 @@ export default function PatientListPage() {
           <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
+<<<<<<< HEAD
         <div className="relative p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-8">
             
             {/* Premium Compact Header */}
             <div className="relative overflow-hidden rounded-[32px] bg-white/40 backdrop-blur-3xl p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
+=======
+        <div className="relative p-4 md:p-6 lg:p-10">
+          <div className="max-w-[1700px] mx-auto space-y-8">
+            
+            {/* Premium Compact Header */}
+            <div className="relative overflow-hidden rounded-2xl md:rounded-[32px] bg-white/40 backdrop-blur-3xl p-4 md:p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
               {/* Animated Background Gradients */}
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-emerald-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
                 <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-teal-400/5 rounded-full blur-[50px] -translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '3s' }} />
               </div>
 
+<<<<<<< HEAD
               <div className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+=======
+              <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 <div className="flex items-center gap-5">
                   <div className="relative">
                     <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full scale-110 group-hover:scale-125 transition-transform duration-500" />
@@ -220,7 +232,11 @@ export default function PatientListPage() {
                         Live
                       </div>
                     </div>
+<<<<<<< HEAD
                     <h1 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight mb-3 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600">
+=======
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight mb-2 md:mb-3 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                       Quản lý Bệnh nhân
                     </h1>
                     <p className="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
@@ -230,7 +246,11 @@ export default function PatientListPage() {
                 </div>
 
                 {/* Quick Stats & Actions */}
+<<<<<<< HEAD
                 <div className="flex flex-wrap items-center gap-3">
+=======
+                <div className="flex flex-wrap items-center gap-2 md:gap-3">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   <div className="bg-white/60 backdrop-blur-xl rounded-[20px] px-5 py-2.5 border border-white/60 shadow-sm group/stat hover:bg-emerald-50/50 transition-all duration-500">
                     <p className="text-emerald-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 leading-none">
                       <Users className="w-2.5 h-2.5" /> Tổng bệnh nhân 
@@ -241,7 +261,11 @@ export default function PatientListPage() {
                   </div>
                   <Button 
                     onClick={() => navigate("/admin/users/add?role=patient")}
+<<<<<<< HEAD
                     className="bg-slate-900 hover:bg-slate-800 text-white h-12 px-6 rounded-2xl font-black shadow-lg shadow-slate-200 transition-all hover:scale-105 active:scale-95"
+=======
+                    className="bg-slate-900 hover:bg-slate-800 text-white h-10 md:h-12 px-4 md:px-6 rounded-xl md:rounded-2xl font-black shadow-lg shadow-slate-200 transition-all hover:scale-105 active:scale-95 text-sm md:text-base"
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   >
                     <Plus className="h-4 w-4 mr-2 stroke-[3]" />
                     Thêm bệnh nhân
@@ -251,10 +275,17 @@ export default function PatientListPage() {
             </div>
 
             {/* Premium Filter Bar */}
+<<<<<<< HEAD
             <div className="bg-white/60 backdrop-blur-xl p-3 rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
               <div className="flex flex-wrap items-center gap-3">
                 {/* Search */}
                 <div className="relative flex-1 min-w-[300px]">
+=======
+            <div className="bg-white/60 backdrop-blur-xl p-2 md:p-3 rounded-2xl md:rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-full md:min-w-[300px]">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-slate-400" />
                   </div>
@@ -276,10 +307,17 @@ export default function PatientListPage() {
             </div>
 
             {/* Compact Patient Table */}
+<<<<<<< HEAD
             <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
+=======
+            <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-2xl md:rounded-[40px] overflow-hidden border border-white/80">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto -mx-px">
+                  <table className="w-full min-w-[640px]">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                     <thead>
                       <tr className="border-b-2 border-slate-100 bg-slate-50/50">
                         <th className="text-left py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Bệnh nhân</th>
@@ -393,14 +431,22 @@ export default function PatientListPage() {
 
         {/* Pagination */}
         {patients.length > 0 && (
+<<<<<<< HEAD
           <div className="flex items-center justify-between mt-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+=======
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 md:mt-8 bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm gap-3">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
             <div className="flex items-center gap-2">
               <p className="text-sm text-slate-500 font-medium whitespace-nowrap">
                 Hiển thị trang <span className="text-slate-900 font-bold">{currentPage}</span> / <span className="text-slate-900 font-bold">{totalPages}</span>
               </p>
             </div>
             
+<<<<<<< HEAD
             <div className="flex items-center gap-1">
+=======
+            <div className="flex flex-wrap items-center gap-1 justify-center sm:justify-end">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
               <Button
                 variant="ghost"
                 size="sm"

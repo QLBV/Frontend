@@ -56,11 +56,12 @@ export interface UpdateUserData {
 }
 
 export interface NotificationSettings {
-  emailNotifications: boolean
-  smsNotifications: boolean
-  appointmentReminders: boolean
-  prescriptionReady: boolean
-  invoicePaid: boolean
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  pushEnabled: boolean;
+  inAppEnabled: boolean;
+  appointmentReminders: boolean;
+  prescriptionReminders: boolean;
 }
 
 export interface UserListResponse {

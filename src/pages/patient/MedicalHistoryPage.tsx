@@ -67,6 +67,13 @@ interface CurrentPrescriptionItem {
   doctorName?: string
 }
 
+const getAvatarUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url;
+  const baseUrl = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace("/api", "");
+  return `${baseUrl}${url}`;
+};
+
 export default function MedicalHistoryPage() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
@@ -444,15 +451,15 @@ export default function MedicalHistoryPage() {
               ) : patient ? (
                 <div className="flex items-start gap-6">
                   {/* Avatar */}
-                  <div className="relative">
-                    <div className="h-32 w-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
+                  <div className="relative h-32 w-32">
+                    <div className="absolute inset-0 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
                       {patient.fullName.charAt(0).toUpperCase()}
                     </div>
                     {patient.avatar && (
                       <img 
-                        src={patient.avatar} 
+                        src={getAvatarUrl(patient.avatar)} 
                         alt={patient.fullName}
-                        className="h-32 w-32 rounded-full object-cover"
+                        className="absolute inset-0 h-32 w-32 rounded-full object-cover"
                       />
                     )}
                   </div>

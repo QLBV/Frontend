@@ -140,8 +140,8 @@ export default function UserDetailPage() {
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 5MB")
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 10MB")
       return
     }
 

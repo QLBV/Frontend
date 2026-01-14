@@ -4,23 +4,25 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "@/auth/authContext"
 import {
-  Activity,
   Search,
-  Filter,
   AlertTriangle,
   Clock,
   Package,
   Plus,
   ChevronRight,
+  ChevronLeft,
   TrendingDown,
   Calendar,
   XCircle,
   Trash2,
   Loader2,
+  Sparkles,
+  Pill,
+  Eye,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -30,6 +32,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { toast } from "sonner"
 import SidebarLayout from "@/components/SidebarLayout"
 import AdminSidebar from "@/components/sidebar/admin"
@@ -76,11 +85,13 @@ export default function PharmacyPage() {
   const [medicines, setMedicines] = useState<Medicine[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedGroup, setSelectedGroup] = useState("Tất cả")
+  const [selectedGroup, setSelectedGroup] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [medicineToDelete, setMedicineToDelete] = useState<Medicine | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchMedicines()
@@ -91,7 +102,7 @@ export default function PharmacyPage() {
       setIsLoading(true)
       const response = await MedicineService.getMedicines({
         page: 1,
-        limit: 1000, // Get all for now
+        limit: 1000,
       })
       if (response.medicines) {
         setMedicines(response.medicines)
@@ -131,72 +142,82 @@ export default function PharmacyPage() {
       "in-stock": {
         label: "Còn hàng",
         icon: Package,
-        className: "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200",
+        className: "bg-emerald-100 text-emerald-700 border-emerald-200",
       },
       "low-stock": {
         label: "Sắp hết",
         icon: TrendingDown,
-        className: "bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200",
+        className: "bg-amber-100 text-amber-700 border-amber-200",
       },
       "near-expiry": {
         label: "Sắp hết hạn",
         icon: Clock,
-        className: "bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-200",
+        className: "bg-orange-100 text-orange-700 border-orange-200",
       },
       expired: {
         label: "Hết hạn",
         icon: XCircle,
-        className: "bg-red-500/10 text-red-700 hover:bg-red-500/20 border-red-200",
+        className: "bg-red-100 text-red-700 border-red-200",
       },
     }
 
     const config = statusConfig[status]
     const Icon = config.icon
     return (
-      <Badge variant="outline" className={config.className}>
+      <Badge variant="outline" className={`text-[10px] font-bold ${config.className}`}>
         <Icon className="h-3 w-3 mr-1" />
         {config.label}
       </Badge>
     )
   }
 
-  const medicationGroups = ["Tất cả", ...Array.from(new Set(medicines.map(m => m.group)))]
+  const medicationGroups = ["all", ...Array.from(new Set(medicines.map(m => m.group)))]
 
   const filteredMedications = medicines.filter((med) => {
     const status = getMedicineStatus(med)
     const matchesSearch =
       med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       med.medicineCode.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesGroup = selectedGroup === "Tất cả" || med.group === selectedGroup
+    const matchesGroup = selectedGroup === "all" || med.group === selectedGroup
     const matchesStatus = selectedStatus === "all" || status === selectedStatus
     return matchesSearch && matchesGroup && matchesStatus
   })
 
+  // Pagination
+  const totalPages = Math.ceil(filteredMedications.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedMedications = filteredMedications.slice(startIndex, startIndex + itemsPerPage)
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, selectedGroup, selectedStatus])
+
   const lowStockCount = medicines.filter((m) => getMedicineStatus(m) === "low-stock").length
   const nearExpiryCount = medicines.filter((m) => getMedicineStatus(m) === "near-expiry").length
   const expiredCount = medicines.filter((m) => getMedicineStatus(m) === "expired").length
+  const inStockCount = medicines.filter((m) => getMedicineStatus(m) === "in-stock").length
 
   const isAdmin = user?.roleId === 1 || String(user?.role || "").toLowerCase() === "admin"
 
-  const getSidebar = () => {
+  const getLayoutComponent = () => {
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
     if (role === "admin" || role === "1") {
-      return <AdminSidebar />
+      return AdminSidebar
     }
     if (role === "doctor" || role === "4") {
-      return <DoctorSidebar />
+      return DoctorSidebar
     }
     if (role === "receptionist" || role === "2") {
-      return <ReceptionistSidebar />
+      return ReceptionistSidebar
     }
     return null
   }
 
-  const sidebar = getSidebar()
+  const LayoutComponent = getLayoutComponent()
 
-  if (!sidebar) {
+  if (!LayoutComponent) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -204,299 +225,363 @@ export default function PharmacyPage() {
     )
   }
 
-  return (
-    <SidebarLayout userName={user?.fullName || user?.email}>
-      {sidebar}
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Kho thuốc</h1>
-            <p className="text-slate-600">Quản lý thuốc và vật tư y tế</p>
-          </div>
-          {isAdmin && (
-            <div className="flex gap-3">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                asChild
-              >
-                <Link to="/admin/medicines/create">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Tạo thuốc mới
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
-                asChild
-              >
-                <Link to="/admin/pharmacy/import">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Nhập thuốc
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
+  const pageContent = (
+    <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-200/30 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
 
-        {/* Warning Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-0 shadow-lg shadow-amber-500/5 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 bg-gradient-to-br from-white to-amber-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Thuốc sắp hết</CardTitle>
-              <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                <TrendingDown className="h-5 w-5 text-amber-600" />
+      <div className="relative p-4 md:p-6 lg:p-8">
+        <div className="max-w-[1700px] mx-auto space-y-6">
+            
+            {/* Premium Header */}
+            <div className="relative overflow-hidden rounded-2xl md:rounded-[32px] bg-white/40 backdrop-blur-3xl p-4 md:p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-cyan-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-teal-400/5 rounded-full blur-[50px] -translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '3s' }} />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-slate-900 mb-1">{lowStockCount}</div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 p-0 h-auto"
+
+              <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+                <div className="flex items-center gap-5">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full scale-110 group-hover:scale-125 transition-transform duration-500" />
+                    <div className="relative h-14 w-14 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-cyan-500/40 transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
+                      <Pill className="h-7 w-7 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Badge className="bg-cyan-500/10 text-cyan-600 border-0 font-black uppercase tracking-[0.2em] text-[9px] px-2.5 py-0.5 rounded-full">
+                        <Sparkles className="w-3 h-3 mr-1 text-cyan-500" />
+                        Pharmacy
+                      </Badge>
+                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-200/50">
+                        <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-500 animate-ping" />
+                        Live
+                      </div>
+                    </div>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600">
+                      Kho thuốc
+                    </h1>
+                    <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+                      Quản lý thuốc và vật tư y tế
+                    </p>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                    <Button
+                      variant="outline"
+                      className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 h-10 md:h-12 px-4 md:px-6 rounded-xl md:rounded-2xl font-bold"
+                      asChild
+                    >
+                      <Link to="/admin/medicines/create">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tạo thuốc mới
+                      </Link>
+                    </Button>
+                    <Button 
+                      className="bg-slate-900 hover:bg-slate-800 text-white h-10 md:h-12 px-4 md:px-6 rounded-xl md:rounded-2xl font-black shadow-lg"
+                      asChild
+                    >
+                      <Link to="/admin/pharmacy/import">
+                        <Plus className="h-4 w-4 mr-2 stroke-[3]" />
+                        Nhập thuốc
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div 
+                className="bg-white/60 backdrop-blur-xl rounded-2xl p-4 border border-white/60 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+                onClick={() => setSelectedStatus("in-stock")}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Package className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <p className="text-2xl font-black text-slate-900">{inStockCount}</p>
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Còn hàng</p>
+              </div>
+
+              <div 
+                className="bg-white/60 backdrop-blur-xl rounded-2xl p-4 border border-amber-200/50 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
                 onClick={() => setSelectedStatus("low-stock")}
               >
-                Xem chi tiết
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg shadow-orange-500/5 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 bg-gradient-to-br from-white to-orange-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Sắp hết hạn</CardTitle>
-              <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-orange-600" />
+                <div className="flex items-center justify-between mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <TrendingDown className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <p className="text-2xl font-black text-slate-900">{lowStockCount}</p>
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Sắp hết</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-slate-900 mb-1">{nearExpiryCount}</div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-0 h-auto"
+
+              <div 
+                className="bg-white/60 backdrop-blur-xl rounded-2xl p-4 border border-orange-200/50 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
                 onClick={() => setSelectedStatus("near-expiry")}
               >
-                Xem chi tiết
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg shadow-red-500/5 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 bg-gradient-to-br from-white to-red-50/30">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Đã hết hạn</CardTitle>
-              <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <div className="flex items-center justify-between mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Clock className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <p className="text-2xl font-black text-slate-900">{nearExpiryCount}</p>
+                <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Sắp hết hạn</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-slate-900 mb-1">{expiredCount}</div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 p-0 h-auto"
+
+              <div 
+                className="bg-white/60 backdrop-blur-xl rounded-2xl p-4 border border-red-200/50 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
                 onClick={() => setSelectedStatus("expired")}
               >
-                Xem chi tiết
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Search */}
-        <Card className="border-0 shadow-xl shadow-slate-900/5 mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <Input
-                    placeholder="Tìm kiếm theo tên thuốc hoặc số lô..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-11"
-                  />
+                <div className="flex items-center justify-between mb-2">
+                  <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
                 </div>
-              </div>
-
-              {/* Group Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-slate-400" />
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="h-11 px-4 rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {medicationGroups.map((group) => (
-                    <option key={group} value={group}>
-                      {group}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex gap-2">
-                <Button
-                  variant={selectedStatus === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedStatus("all")}
-                  className={selectedStatus === "all" ? "bg-blue-600 hover:bg-blue-700" : ""}
-                >
-                  Tất cả
-                </Button>
-                <Button
-                  variant={selectedStatus === "low-stock" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedStatus("low-stock")}
-                  className={selectedStatus === "low-stock" ? "bg-amber-600 hover:bg-amber-700" : ""}
-                >
-                  Sắp hết
-                </Button>
-                <Button
-                  variant={selectedStatus === "near-expiry" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedStatus("near-expiry")}
-                  className={selectedStatus === "near-expiry" ? "bg-orange-600 hover:bg-orange-700" : ""}
-                >
-                  Gần hết hạn
-                </Button>
+                <p className="text-2xl font-black text-slate-900">{expiredCount}</p>
+                <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest">Hết hạn</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Medication Table */}
-        <Card className="border-0 shadow-xl shadow-slate-900/5 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
-            <CardTitle className="text-2xl text-slate-900">Danh sách thuốc</CardTitle>
-            <p className="text-sm text-slate-600 mt-1">
-              Hiển thị {filteredMedications.length} / {medicines.length} thuốc
-            </p>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            {/* Filter Bar */}
+            <div className="bg-white/60 backdrop-blur-xl p-2 md:p-3 rounded-2xl md:rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-full md:min-w-[300px]">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <Input
+                    placeholder="Tìm kiếm thuốc (Tên, Mã thuốc)..."
+                    className="w-full h-12 pl-11 pr-4 bg-white border border-slate-100 focus:bg-white focus:border-cyan-500/50 rounded-2xl transition-all text-sm font-medium shadow-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                {/* Group Filter */}
+                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                  <SelectTrigger className="w-full md:w-[180px] h-12 bg-white border border-slate-100 rounded-2xl font-medium shadow-sm">
+                    <SelectValue placeholder="Nhóm thuốc" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả nhóm</SelectItem>
+                    {medicationGroups.filter(g => g !== "all").map((group) => (
+                      <SelectItem key={group} value={group}>{group}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Status Filter */}
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-full md:w-[160px] h-12 bg-white border border-slate-100 rounded-2xl font-medium shadow-sm">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="in-stock">Còn hàng</SelectItem>
+                    <SelectItem value="low-stock">Sắp hết</SelectItem>
+                    <SelectItem value="near-expiry">Sắp hết hạn</SelectItem>
+                    <SelectItem value="expired">Hết hạn</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50 border-b">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Mã thuốc</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Tên thuốc</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Nhóm thuốc</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Số lượng</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Giá bán</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Lãi suất</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Hạn dùng</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Trạng thái</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMedications.map((medication, index) => {
-                      const status = getMedicineStatus(medication)
-                      const profitMargin = medication.importPrice > 0
-                        ? ((medication.salePrice - medication.importPrice) / medication.importPrice) * 100
-                        : 0
-                      
-                      return (
-                        <tr
-                          key={medication.id}
-                          className={`border-b hover:bg-blue-50/30 transition-colors ${
-                            index % 2 === 0 ? "bg-white" : "bg-slate-50/30"
-                          }`}
-                        >
-                          <td className="py-4 px-6">
-                            <Badge variant="outline" className="font-mono">
-                              {medication.medicineCode}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div>
-                              <div className="font-medium text-slate-900">{medication.name}</div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 text-slate-700">{medication.group}</td>
-                          <td className="py-4 px-6">
-                            <span
-                              className={`font-medium ${
-                                medication.quantity <= medication.minStockLevel ? "text-amber-600" : "text-slate-900"
-                              }`}
-                            >
-                              {medication.quantity} {getUnitLabel(medication.unit)}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div>
-                              <div className="font-medium text-slate-900">
-                                {medication.salePrice.toLocaleString("vi-VN")} VND
-                              </div>
-                              <div className="text-xs text-slate-500">
-                                Giá vốn: {medication.importPrice.toLocaleString("vi-VN")} VND
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className="text-emerald-600 font-medium">+{profitMargin.toFixed(2)}%</span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-2 text-slate-700">
-                              <Calendar className="h-4 w-4 text-slate-400" />
-                              {format(new Date(medication.expiryDate), "dd/MM/yyyy")}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">{getStatusBadge(status)}</td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                asChild
-                              >
-                                <Link to={`/pharmacy/${medication.id}`}>
-                                  Chi tiết
-                                  <ChevronRight className="h-4 w-4 ml-1" />
-                                </Link>
-                              </Button>
-                              {isAdmin && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => handleDeleteClick(medication)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
+            </div>
+
+            {/* Results Count */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500 font-medium">
+                Hiển thị <span className="text-slate-900 font-bold">{paginatedMedications.length}</span> / <span className="text-slate-900 font-bold">{filteredMedications.length}</span> thuốc
+              </span>
+            </div>
+
+            {/* Medicine Table */}
+            <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-2xl md:rounded-[40px] overflow-hidden border border-white/80">
+              <CardContent className="p-0">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[900px]">
+                      <thead>
+                        <tr className="border-b-2 border-slate-100 bg-slate-50/50">
+                          <th className="text-left py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Mã thuốc</th>
+                          <th className="text-left py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Tên thuốc</th>
+                          <th className="text-left py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Nhóm</th>
+                          <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Số lượng</th>
+                          <th className="text-right py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Giá bán</th>
+                          <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Hạn dùng</th>
+                          <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Trạng thái</th>
+                          <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Thao tác</th>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {paginatedMedications.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="py-16 text-center text-slate-500 text-sm">
+                              Không tìm thấy thuốc
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedMedications.map((medication) => {
+                            const status = getMedicineStatus(medication)
+                            
+                            return (
+                              <tr
+                                key={medication.id}
+                                className="border-b border-slate-100 hover:bg-cyan-50/20 transition-colors group"
+                              >
+                                <td className="py-3 px-4">
+                                  <span className="font-mono text-[11px] bg-slate-100 px-2 py-1 rounded-md font-bold text-slate-700">
+                                    {medication.medicineCode}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="font-bold text-slate-900 text-xs">{medication.name}</div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className="text-[11px] text-slate-600">{medication.group}</span>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <span className={`font-bold text-xs ${medication.quantity <= medication.minStockLevel ? "text-amber-600" : "text-slate-900"}`}>
+                                    {medication.quantity} {getUnitLabel(medication.unit)}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <div className="font-bold text-xs text-slate-900">
+                                    {medication.salePrice.toLocaleString("vi-VN")}đ
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <div className="flex items-center justify-center gap-1 text-[11px] text-slate-600">
+                                    <Calendar className="h-3 w-3 text-slate-400" />
+                                    {format(new Date(medication.expiryDate), "dd/MM/yyyy")}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-center">{getStatusBadge(status)}</td>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-cyan-600 hover:text-cyan-800 hover:bg-cyan-50 rounded-lg transition-all"
+                                      asChild
+                                    >
+                                      <Link to={`/pharmacy/${medication.id}`}>
+                                        <Eye className="h-3.5 w-3.5" />
+                                      </Link>
+                                    </Button>
+                                    {isAdmin && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                        onClick={() => handleDeleteClick(medication)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm gap-3">
+                <p className="text-sm text-slate-500 font-medium">
+                  Trang <span className="text-slate-900 font-bold">{currentPage}</span> / <span className="text-slate-900 font-bold">{totalPages}</span>
+                </p>
+                
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          className={`h-9 w-9 p-0 rounded-lg font-bold text-sm ${
+                            currentPage === page 
+                              ? "bg-cyan-600 text-white shadow-md hover:bg-cyan-700" 
+                              : "text-slate-600 hover:bg-slate-100"
+                          }`}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    }
+                    if (
+                      (page === 2 && currentPage > 3) || 
+                      (page === totalPages - 1 && currentPage < totalPages - 2)
+                    ) {
+                      return <span key={page} className="px-1 text-slate-400 font-bold">...</span>;
+                    }
+                    return null;
+                  })}
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Xác nhận xóa thuốc</DialogTitle>
               <DialogDescription>
                 Bạn có chắc chắn muốn xóa thuốc <strong>{medicineToDelete?.name}</strong>? 
-                Hành động này không thể hoàn tác.
+                <span className="block mt-2 text-amber-600">
+                  Hành động này không thể hoàn tác.
+                </span>
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -531,6 +616,12 @@ export default function PharmacyPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </SidebarLayout>
+    </div>
+  )
+
+  return (
+    <LayoutComponent userName={user?.fullName || user?.email}>
+      {pageContent}
+    </LayoutComponent>
   )
 }

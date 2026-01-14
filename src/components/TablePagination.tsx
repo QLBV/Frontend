@@ -30,8 +30,13 @@ export function TablePagination({
   if (totalCount === 0) return null
 
   return (
+<<<<<<< HEAD
     <div className={cn("px-6 py-4 border-t bg-white flex flex-col md:flex-row items-center justify-between gap-6", className)}>
       <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+=======
+    <div className={cn("px-4 md:px-6 py-3 md:py-4 border-t bg-white flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-6", className)}>
+      <div className="text-xs md:text-xs font-bold text-slate-400 uppercase tracking-widest text-center sm:text-left">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
         Hiển thị <span className="text-slate-900">{showingCount}</span> trên <span className="text-slate-900">{totalCount}</span> {resourceName}
       </div>
       <Pagination>

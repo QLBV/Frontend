@@ -97,6 +97,7 @@ const Topbar = ({ onMenuClick, userName, userRole, patientCode }: TopbarProps) =
 
   return (
     <>
+<<<<<<< HEAD
       <div className="bg-white rounded-[20px] px-6 py-4 flex items-center justify-between shadow-sm mb-6 border border-gray-100">
         {/* Left: Hamburger Menu Button */}
         <button
@@ -109,14 +110,35 @@ const Topbar = ({ onMenuClick, userName, userRole, patientCode }: TopbarProps) =
 
         {/* Center: Search Bar */}
         <div className="flex-1 max-w-md mx-8">
+=======
+      <div className="bg-white rounded-lg md:rounded-[20px] px-3 md:px-6 py-3 md:py-4 flex items-center justify-between shadow-sm mb-4 md:mb-6 border border-gray-100">
+        {/* Left: Hamburger Menu Button */}
+        <button
+          onClick={onMenuClick}
+          className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+        </button>
+
+        {/* Center: Search Bar - Hidden on mobile */}
+        <div className="hidden md:flex flex-1 max-w-md mx-4 lg:mx-8">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
           <SearchBar />
         </div>
 
         {/* Right: Role, Notification, User Info */}
+<<<<<<< HEAD
         <div className="flex items-center gap-4">
           {/* Role Indicator */}
           {displayRole && (
             <span className="text-sm font-medium text-gray-600 px-3 py-1 bg-gray-100 rounded-full">
+=======
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Role Indicator - Hidden on small mobile */}
+          {displayRole && (
+            <span className="hidden sm:inline-block text-xs md:text-sm font-medium text-gray-600 px-2 md:px-3 py-1 bg-gray-100 rounded-full">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
               {displayRole}
             </span>
           )}
@@ -128,9 +150,16 @@ const Topbar = ({ onMenuClick, userName, userRole, patientCode }: TopbarProps) =
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+<<<<<<< HEAD
               className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors"
             >
               <div className="text-right">
+=======
+              className="flex items-center gap-2 md:gap-3 hover:bg-gray-50 rounded-lg p-1.5 md:p-2 transition-colors"
+            >
+              {/* User name - Hidden on mobile */}
+              <div className="hidden md:block text-right">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 <div className="text-sm font-semibold text-gray-900">{displayName}</div>
                 {displayCode && (
                   <div className="text-xs text-gray-500">{displayCode}</div>
@@ -138,7 +167,11 @@ const Topbar = ({ onMenuClick, userName, userRole, patientCode }: TopbarProps) =
               </div>
               {/* Avatar */}
               <div
+<<<<<<< HEAD
                 className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold overflow-hidden"
+=======
+                className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold overflow-hidden shrink-0"
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                 title="Mở menu tài khoản"
               >
                 {user?.avatarUrl ? (

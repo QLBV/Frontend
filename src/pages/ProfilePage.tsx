@@ -175,9 +175,9 @@ export default function ProfilePage() {
       return
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 5MB")
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 10MB")
       return
     }
 
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                         disabled={isLoadingAvatar}
                       />
                       <p className="text-sm text-gray-500">
-                        JPG, PNG hoặc GIF. Tối đa 5MB
+                        JPG, PNG hoặc GIF. Tối đa 10MB
                       </p>
                     </div>
                   </div>

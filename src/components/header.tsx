@@ -67,7 +67,11 @@ export function Header() {
             <a href="#services" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Dịch vụ</a>
             <a href="#doctors" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Đội ngũ bác sĩ</a>
             <a href="#process" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Quy trình</a>
+<<<<<<< HEAD
             <a href="#contact" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Tin tức</a>
+=======
+            <a href="#contact" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Liên hệ</a>
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
           </nav>
 
           {/* Right Side Actions (Login / Profile) */}
@@ -127,7 +131,11 @@ export function Header() {
                  <Link to="/login">
                   <Button variant="ghost" className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 font-medium">Đăng nhập</Button>
                 </Link>
+<<<<<<< HEAD
                 <Link to="/login">
+=======
+                <Link to="/register">
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
                   <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200 rounded-lg px-6 font-medium">Đăng ký</Button>
                 </Link>
               </div>
@@ -147,7 +155,11 @@ export function Header() {
               <a href="#services" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Dịch vụ</a>
               <a href="#doctors" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Đội ngũ bác sĩ</a>
               <a href="#process" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Quy trình</a>
+<<<<<<< HEAD
               <a href="#new" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Tin tức</a>
+=======
+              <a href="#contact" className="text-base font-medium text-gray-700 px-2" onClick={() => setMobileMenuOpen(false)}>Liên hệ</a>
+>>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
               
               <div className="border-t border-gray-100 my-2"></div>
               
