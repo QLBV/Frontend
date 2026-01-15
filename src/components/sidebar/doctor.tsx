@@ -20,37 +20,39 @@ const DoctorSidebar = ({ children, userName }: DoctorSidebarProps) => {
 
   const doctorMenu = [
     {
-      title: "Dashboard",
+      title: "Hệ thống",
       items: [
-        { label: "Dashboard", href: "/doctor/dashboard", icon: <LayoutDashboard size={24} strokeWidth={2.5} /> }
+        { label: "Bảng điều khiển", href: "/doctor/dashboard", icon: <LayoutDashboard size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    
+    {
+      title: "Lịch",
+      items: [
+        { label: "Lịch của tôi", href: "/doctor/shift", icon: <Calendar size={24} strokeWidth={2.5} /> }
+      ]
+    },
+    
+    {
+      title: "Khám bệnh",
+      items: [
+        { label: "Danh sách bệnh nhân", href: "/doctor/medicalList", icon: <ClipboardList size={24} strokeWidth={2.5} /> }
       ]
     },
     {
-      title: "Schedule",
+      title: "Thuốc",
       items: [
-        { label: "My Shifts", href: "/doctor/shift", icon: <Calendar size={24} strokeWidth={2.5} /> }
+        { label: "Danh sách thuốc", href: "/doctor/prescriptions", icon: <Pill size={24} strokeWidth={2.5} /> }
       ]
     },
     {
-      title: "Examination",
-      items: [
-        { label: "Patient List", href: "/doctor/medicalList", icon: <ClipboardList size={24} strokeWidth={2.5} /> }
-      ]
-    },
-    {
-      title: "Prescription",
-      items: [
-        { label: "Prescription", href: "/doctor/prescriptions", icon: <Pill size={24} strokeWidth={2.5} /> }
-      ]
-    },
-    {
-      title: "Attendance",
+      title: "Chấm công",
       items: [
         { label: "Chấm công", href: "/attendance", icon: <UserCheck size={24} strokeWidth={2.5} /> }
       ]
     },
     {
-      title: "Payroll",
+      title: "Lương",
       items: [
         { label: "Lương của tôi", href: "/my-payrolls", icon: <FileText size={24} strokeWidth={2.5} /> }
       ]

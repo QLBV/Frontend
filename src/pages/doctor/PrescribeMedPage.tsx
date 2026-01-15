@@ -82,7 +82,7 @@ export default function PrescribeMed() {
   const [updatingAppointment, setUpdatingAppointment] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State cho danh sách thuốc Ä‘Æ°á»£c khám
+  // State cho danh sach thuoc duoc kham
   const [medications, setMedications] = useState<Medication[]>([
     {
       id: "1",
@@ -98,10 +98,10 @@ export default function PrescribeMed() {
     },
   ]);
 
-  // State cho ghi chÃƒÂº thÃƒÂªm
+  // State cho ghi chu them
   const [additionalNotes, setAdditionalNotes] = useState("");
 
-  // State cho tÃƒÂ¬m kiÃ¡ÂºÂ¿m thuÃ¡Â»â€˜c
+  // State cho tim kiem thuoc
   const [searchTerms, setSearchTerms] = useState<{ [key: string]: string }>({});
   const [showSuggestions, setShowSuggestions] = useState<{
     [key: string]: boolean;
@@ -154,12 +154,7 @@ export default function PrescribeMed() {
                   visit.note ||
                   appointment.symptomInitial ||
                   "No symptoms reported",
-                vitalSigns: {
-                  bloodPressure: "120/80",
-                  heartRate: "72",
-                  temperature: "36.5",
-                  weight: "70",
-                },
+                vitalSigns: parseVitalSigns(visit.note || ""),
               });
               setError(null);
               return;
@@ -177,7 +172,7 @@ export default function PrescribeMed() {
           const patient = appointment.patient || appointment.Patient;
           const patientUser = patient?.user || patient?.User || {};
 
-            if (patient) {
+          if (patient) {
             console.log("Appointment data:", appointment);
             const visit = appointment.visit || appointment.Visit;
             console.log("Visit data:", visit);
@@ -198,13 +193,11 @@ export default function PrescribeMed() {
             // Use diagnosis from visit if available
             setDiagnosisData({
               primaryDiagnosis: visit?.diagnosis || "Pending diagnosis",
-              note: visit?.note || appointment.symptomInitial || "No symptoms reported",
-              vitalSigns: {
-                bloodPressure: "120/80",
-                heartRate: "72",
-                temperature: "36.5",
-                weight: "70",
-              },
+              note:
+                visit?.note ||
+                appointment.symptomInitial ||
+                "No symptoms reported",
+              vitalSigns: parseVitalSigns(visit?.note || ""),
             });
             setError(null);
             return;
@@ -212,9 +205,7 @@ export default function PrescribeMed() {
         }
 
         // Neither visit nor appointment found
-        toast.error(
-          "Không tìm thấy lá»‹ch háº¹n hoáº·c thÃ´ng tin khÃ¡m bá»‡nh"
-        );
+        toast.error("Không tìm thấy lịch hẹn thông tin khám bệnh");
         setError("Appointment not found");
       } catch (err: any) {
         console.error("Error fetching data:", err);
@@ -244,7 +235,64 @@ export default function PrescribeMed() {
     return age;
   };
 
-  // Láº¥y danh sÃ¡ch thuá»‘c theo tá»« khÃ³a tÃ¬m kiáº¿m
+  // Parse vital signs from visit note text
+  const parseVitalSigns = (noteText: string) => {
+    const vitalSigns = {
+      bloodPressure: "120/80",
+      heartRate: "72",
+      temperature: "36.5",
+      weight: "70",
+    };
+
+    if (!noteText) return vitalSigns;
+
+    // Extract blood pressure: "Huyet ap: 120/81 mmHg"
+    const bpMatch = noteText.match(/Huy[eếệ]t áp:\s*(\d+\/\d+)/i);
+    if (bpMatch) vitalSigns.bloodPressure = bpMatch[1];
+
+    // Extract heart rate: "Nhip tim: 70 bpm"
+    const hrMatch = noteText.match(/Nh[iịĩ]p tim:\s*(\d+)/i);
+    if (hrMatch) vitalSigns.heartRate = hrMatch[1];
+
+    // Extract temperature: "Nhiet do: 40 °C"
+    const tempMatch = noteText.match(/Nhi[eệ]t đ[oộ]:\s*(\d+(?:\.\d+)?)/i);
+    if (tempMatch) vitalSigns.temperature = tempMatch[1];
+
+    // Extract weight: "Can nang: 70 kg"
+    const weightMatch = noteText.match(/C[aâ]n n[ặa]ng:\s*(\d+(?:\.\d+)?)/i);
+    if (weightMatch) vitalSigns.weight = weightMatch[1];
+
+    return vitalSigns;
+  };
+
+  // Remove vital signs text from note to display only symptoms and notes
+  const cleanNoteText = (noteText: string) => {
+    if (!noteText) return "";
+
+    let cleanedText = noteText;
+
+    // Remove vital signs section (usually starts with "CLINICAL OBSERVATIONS:" or "VITAL SIGNS:")
+    cleanedText = cleanedText.replace(/CLINICAL OBSERVATIONS:.*?ADDITIONAL NOTES:/is, "");
+    cleanedText = cleanedText.replace(/VITAL SIGNS:.*?(?=\n\n|$)/is, "");
+    
+    // Remove individual vital sign lines
+    cleanedText = cleanedText.replace(/Huy[eếệ]t áp:\s*\d+\/\d+\s*mmHg\s*•?\s*/gi, "");
+    cleanedText = cleanedText.replace(/Nh[iịĩ]p tim:\s*\d+\s*bpm\s*•?\s*/gi, "");
+    cleanedText = cleanedText.replace(/Nhi[eệ]t đ[oộ]:\s*\d+(?:\.\d+)?\s*°C\s*•?\s*/gi, "");
+    cleanedText = cleanedText.replace(/SpO2:\s*\d+\s*%\s*•?\s*/gi, "");
+    cleanedText = cleanedText.replace(/C[aâ]n n[ặa]ng:\s*\d+(?:\.\d+)?\s*kg\s*•?\s*/gi, "");
+
+    // Remove "Examination completed on:" line
+    cleanedText = cleanedText.replace(/Examination completed on:.*$/im, "");
+
+    // Clean up extra whitespace and bullet points
+    cleanedText = cleanedText.replace(/•\s*/g, "");
+    cleanedText = cleanedText.trim();
+
+    return cleanedText || "Không có ghi chú về triệu chứng";
+  };
+
+  // Lay danh sach thuoc theo tu khoa tim kiem
   const getFilteredMedicines = (searchTerm: string) => {
     if (!searchTerm) return [];
     return medicines
@@ -253,10 +301,10 @@ export default function PrescribeMed() {
           medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           medicine.category?.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .slice(0, 5); // Chá»‰ hiá»ƒn thá»‹ 5 káº¿t quáº£ Ä‘áº§u tiÃªn
+      .slice(0, 5); // Chi hien thi 5 ket qua dau tien
   };
 
-  // Chá»n thuá»‘c tá»« danh sÃ¡ch gá»£i Ã½
+  // Chon thuoc tu danh sach goi y
   const selectMedicine = (medicationId: string, medicine: Medicine) => {
     updateMedication(medicationId, "name", medicine.name);
     updateMedication(medicationId, "medicineId", medicine.id);
@@ -264,7 +312,7 @@ export default function PrescribeMed() {
     setSearchTerms((prev) => ({ ...prev, [medicationId]: medicine.name }));
   };
 
-  // Add Medicine má»›i
+  // Add Medicine moi
   const addMedication = () => {
     const newMedication: Medication = {
       id: Date.now().toString(),
@@ -281,14 +329,14 @@ export default function PrescribeMed() {
     setMedications([...medications, newMedication]);
   };
 
-  // XÃ³a thuá»‘c
+  // Xoa thuoc
   const removeMedication = (id: string) => {
     if (medications.length > 1) {
       setMedications(medications.filter((med) => med.id !== id));
     }
   };
 
-  // Cáº­p nháº­t thÃ´ng tin thuá»‘c
+  // Cap nhat thong tin thuoc
   const updateMedication = (
     id: string,
     field: keyof Medication,
@@ -307,13 +355,20 @@ export default function PrescribeMed() {
             field === "dosageEvening" ||
             field === "days"
           ) {
-            const morning = field === "dosageMorning" ? (value as number) : med.dosageMorning;
-            const noon = field === "dosageNoon" ? (value as number) : med.dosageNoon;
-            const afternoon = field === "dosageAfternoon" ? (value as number) : med.dosageAfternoon;
-            const evening = field === "dosageEvening" ? (value as number) : med.dosageEvening;
+            const morning =
+              field === "dosageMorning" ? (value as number) : med.dosageMorning;
+            const noon =
+              field === "dosageNoon" ? (value as number) : med.dosageNoon;
+            const afternoon =
+              field === "dosageAfternoon"
+                ? (value as number)
+                : med.dosageAfternoon;
+            const evening =
+              field === "dosageEvening" ? (value as number) : med.dosageEvening;
             const days = field === "days" ? (value as number) : med.days;
-            
-            updatedMed.quantity = (morning + noon + afternoon + evening) * (days || 1);
+
+            updatedMed.quantity =
+              (morning + noon + afternoon + evening) * (days || 1);
           }
 
           return updatedMed;
@@ -322,13 +377,13 @@ export default function PrescribeMed() {
       })
     );
 
-    // CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t search term khi thay Ã„â€˜Ã¡Â»â€¢i tÃƒÂªn thuÃ¡Â»â€˜c
+    // Cap nhat search term khi thay doi ten thuoc
     if (field === "name") {
       setSearchTerms((prev) => ({ ...prev, [id]: value as string }));
     }
   };
 
-  // XÃ¡Â»Â­ lÃƒÂ½ thay Ã„â€˜Ã¡Â»â€¢i input tÃƒÂ¬m kiÃ¡ÂºÂ¿m thuÃ¡Â»â€˜c
+  // Xu ly thay doi input tim kiem thuoc
   const handleMedicineSearch = (medicationId: string, value: string) => {
     setSearchTerms((prev) => ({ ...prev, [medicationId]: value }));
     setShowSuggestions((prev) => ({
@@ -339,7 +394,7 @@ export default function PrescribeMed() {
     updateMedication(medicationId, "medicineId", null); // Reset medicine ID when typing
   };
 
-  // LÃ†Â°u Ã„â€˜Ã†Â¡n thuÃ¡Â»â€˜c
+  // Luu don thuoc
   const handleSavePrescription = async () => {
     if (!patientData || !diagnosisData) return;
 
@@ -354,10 +409,10 @@ export default function PrescribeMed() {
 
       if (validMedications.length === 0) {
         toast.error(
-          "Vui lÃƒÂ²ng thÃƒÂªm ÃƒÂ­t nhÃ¡ÂºÂ¥t mÃ¡Â»â„¢t loÃ¡ÂºÂ¡i thuÃ¡Â»â€˜c vÃƒÂ o Ã„â€˜Ã†Â¡n"
+          "Vui long them it nhat mot loai thuoc vao don"
         );
         setError(
-          "Vui lÃƒÂ²ng thÃƒÂªm ÃƒÂ­t nhÃ¡ÂºÂ¥t mÃ¡Â»â„¢t loÃ¡ÂºÂ¡i thuÃ¡Â»â€˜c vÃƒÂ o Ã„â€˜Ã†Â¡n"
+          "Vui long them it nhat mot loai thuoc vao don"
         );
         return;
       }
@@ -373,24 +428,24 @@ export default function PrescribeMed() {
 
         if (totalDosage <= 0) {
           toast.error(
-            `ThuÃ¡Â»â€˜c "${
-              med.name || "thÃ¡Â»Â© " + (i + 1)
-            }" phÃ¡ÂºÂ£i cÃƒÂ³ ÃƒÂ­t nhÃ¡ÂºÂ¥t mÃ¡Â»â„¢t liÃ¡Â»Âu dÃƒÂ¹ng lÃ¡Â»â€ºn hÃ†Â¡n 0`
+            `Thuoc "${
+              med.name || "thu " + (i + 1)
+            }" phai co it nhat mot lieu dung lon hon 0`
           );
           setError(
-            `ThuÃ¡Â»â€˜c "${
-              med.name || "thÃ¡Â»Â© " + (i + 1)
-            }" phÃ¡ÂºÂ£i cÃƒÂ³ ÃƒÂ­t nhÃ¡ÂºÂ¥t mÃ¡Â»â„¢t liÃ¡Â»Âu dÃƒÂ¹ng lÃ¡Â»â€ºn hÃ†Â¡n 0`
+            `Thuoc "${
+              med.name || "thu " + (i + 1)
+            }" phai co it nhat mot lieu dung lon hon 0`
           );
           return;
         }
 
         if (!med.medicineId) {
           toast.error(
-            `Vui lÃƒÂ²ng chÃ¡Â»Ân thuÃ¡Â»â€˜c cho dÃƒÂ²ng thÃ¡Â»Â© ${i + 1}`
+            `Vui long chon thuoc cho dong thu ${i + 1}`
           );
           setError(
-            `Vui lÃƒÂ²ng chÃ¡Â»Ân thuÃ¡Â»â€˜c cho dÃƒÂ²ng thÃ¡Â»Â© ${i + 1}`
+            `Vui long chon thuoc cho dong thu ${i + 1}`
           );
           return;
         }
@@ -408,11 +463,11 @@ export default function PrescribeMed() {
           const visit = await checkInAppointment(patientData.appointmentId);
           visitId = visit.id;
           console.log("Visit created successfully:", visitId);
-          toast.success("Ã„ÂÃƒÂ£ tÃ¡ÂºÂ¡o visit cho bÃ¡Â»â€¡nh nhÃƒÂ¢n");
+          toast.success("Da tao visit cho benh nhan");
         } catch (checkInError: any) {
           const errorMessage =
             checkInError.response?.data?.message ||
-            "KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o visit";
+            "Khong the tao visit";
           console.error("Check-in error:", errorMessage);
           toast.error(errorMessage);
           setError(errorMessage);
@@ -422,9 +477,9 @@ export default function PrescribeMed() {
 
       if (!visitId) {
         toast.error(
-          "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y visit ID vÃƒÂ  khÃƒÂ´ng cÃƒÂ³ appointment ID."
+          "Khong tim thay visit ID va khong co appointment ID."
         );
-        setError("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y visit ID");
+        setError("Khong tim thay visit ID");
         return;
       }
 
@@ -439,14 +494,14 @@ export default function PrescribeMed() {
         console.log("Visit completed successfully");
       } catch (visitError: any) {
         // If visit already completed, that's OK, continue
-        const msg = visitError.response?.data?.message || visitError.message || "";
+        const msg =
+          visitError.response?.data?.message || visitError.message || "";
         if (
           !msg.includes("already completed") &&
           !msg.includes("CANNOT_MODIFY_COMPLETED_VISIT")
         ) {
           const errorMessage =
-            visitError.response?.data?.message ||
-            "Không thể hoàn thành visit";
+            visitError.response?.data?.message || "Không thể hoàn thành visit";
           console.error("Visit completion error:", errorMessage);
           toast.error(errorMessage);
           setError(errorMessage);
@@ -469,7 +524,7 @@ export default function PrescribeMed() {
           days: med.days || 1,
           instruction:
             med.instruction ||
-            "UÃ¡Â»â€˜ng theo chÃ¡Â»â€° dÃ¡ÂºÂ«n cÃ¡Â»Â§a bÃƒÂ¡c sÃ„Â©",
+            "Uong theo chi dan cua bac si",
         })),
         note: additionalNotes,
       };
@@ -509,7 +564,7 @@ export default function PrescribeMed() {
     }
   };
 
-  // HoÃƒÂ n tÃƒÂ¡c khÃƒÂ¡m (quay lÃ¡ÂºÂ¡i form khÃƒÂ¡m)
+  // Hoan tac kham (quay lai form kham)
   const handleBackToExamination = async () => {
     if (!patientData?.appointmentId) {
       navigate(`/doctor/patients/${id}/examination`);
@@ -519,13 +574,13 @@ export default function PrescribeMed() {
     try {
       setUpdatingAppointment(true);
 
-      // 1. LÃ†Â°u prescription trÃ†Â°Ã¡Â»â€ºc (nÃ¡ÂºÂ¿u cÃƒÂ³ thuÃ¡Â»â€˜c Ã„â€˜Ã†Â°Ã¡Â»Â£c kÃƒÂª)
+      // 1. Luu prescription truoc (neu co thuoc duoc ke)
       const validMedications = medications.filter(
         (med) => med.medicineId && med.quantity > 0
       );
 
       if (validMedications.length > 0) {
-        // Get or create visitId (allow saving even after â€œhoÃ n tÃ¡c khÃ¡mâ€)
+        // Get or create visitId (allow saving even after hoan tac kham)
         let visitId = patientData.visitId;
 
         if (!visitId && patientData.appointmentId) {
@@ -548,7 +603,7 @@ export default function PrescribeMed() {
 
         if (!visitId) {
           console.log("No visitId available, skipping prescription save");
-          toast.info("ChÆ°a cÃ³ visit, khÃ´ng thá»ƒ lÆ°u Ä‘Æ¡n thuá»‘c");
+          toast.info("Chua co visit, khong the luu don thuoc");
           navigate(`/doctor/patients/${id}/examination`);
           return;
         }
@@ -564,7 +619,7 @@ export default function PrescribeMed() {
             dosageEvening: med.dosageEvening,
             days: med.days || 1,
             instruction:
-              med.instruction || "UÃ´ng theo chá»‰ dáº«n cá»§a bÃ¡c sÄ©",
+              med.instruction || "Uong theo chi dan cua bac si",
           })),
           note: additionalNotes,
         };
@@ -689,9 +744,16 @@ export default function PrescribeMed() {
               </div>
 
               <div className="flex flex-col items-end">
-                <div className="text-blue-200 text-sm font-medium mb-1 uppercase tracking-wider">Ngày khám</div>
+                <div className="text-blue-200 text-sm font-medium mb-1 uppercase tracking-wider">
+                  Ngày khám
+                </div>
                 <div className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-b from-white to-blue-100">
-                  {new Date().toLocaleDateString("vi-VN", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  {new Date().toLocaleDateString("vi-VN", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </div>
               </div>
             </div>
@@ -705,7 +767,9 @@ export default function PrescribeMed() {
               <div className="p-2 bg-red-100 rounded-lg">
                 <Heart className="w-5 h-5 text-red-600" />
               </div>
-              <CardTitle className="text-lg font-bold text-slate-800">Thông tin chẩn đoán</CardTitle>
+              <CardTitle className="text-lg font-bold text-slate-800">
+                Thông tin chẩn đoán
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-6">
@@ -728,7 +792,9 @@ export default function PrescribeMed() {
                     Triệu chứng & Ghi chú
                   </Label>
                   <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                    <div className="text-slate-700 leading-relaxed">{diagnosisData.note}</div>
+                    <div className="text-slate-700 leading-relaxed whitespace-pre-line">
+                      {cleanNoteText(diagnosisData.note)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -744,32 +810,48 @@ export default function PrescribeMed() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-slate-100 hover:border-blue-200 transition-colors">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Huyết áp</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Huyết áp
+                    </div>
                     <div className="text-lg font-black text-slate-800">
                       {diagnosisData.vitalSigns.bloodPressure}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium">mmHg</div>
+                    <div className="text-[10px] text-slate-400 font-medium">
+                      mmHg
+                    </div>
                   </div>
                   <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-slate-100 hover:border-emerald-200 transition-colors">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nhịp tim</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Nhịp tim
+                    </div>
                     <div className="text-lg font-black text-emerald-600">
                       {diagnosisData.vitalSigns.heartRate}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium">bpm</div>
+                    <div className="text-[10px] text-slate-400 font-medium">
+                      bpm
+                    </div>
                   </div>
                   <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-slate-100 hover:border-orange-200 transition-colors">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nhiệt độ</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Nhiệt độ
+                    </div>
                     <div className="text-lg font-black text-orange-500">
                       {diagnosisData.vitalSigns.temperature}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium">°C</div>
+                    <div className="text-[10px] text-slate-400 font-medium">
+                      °C
+                    </div>
                   </div>
                   <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-slate-100 hover:border-indigo-200 transition-colors">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cân nặng</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Cân nặng
+                    </div>
                     <div className="text-lg font-black text-indigo-600">
                       {diagnosisData.vitalSigns.weight}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium">kg</div>
+                    <div className="text-[10px] text-slate-400 font-medium">
+                      kg
+                    </div>
                   </div>
                 </div>
               </div>
@@ -784,7 +866,9 @@ export default function PrescribeMed() {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Pill className="w-5 h-5 text-blue-600" />
               </div>
-              <CardTitle className="text-lg font-bold text-slate-800">Kê đơn thuốc</CardTitle>
+              <CardTitle className="text-lg font-bold text-slate-800">
+                Kê đơn thuốc
+              </CardTitle>
             </div>
             <Button
               onClick={addMedication}
@@ -804,17 +888,28 @@ export default function PrescribeMed() {
                     <th className="py-3 px-4 min-w-[250px]">Tên thuốc</th>
                     <th className="py-3 px-4 w-24 text-center">Số lượng</th>
                     <th className="py-3 px-4 w-20 text-center">Ngày</th>
-                    <th className="py-3 px-4 w-16 text-center text-blue-600">Sáng</th>
-                    <th className="py-3 px-4 w-16 text-center text-orange-500">Trưa</th>
-                    <th className="py-3 px-4 w-16 text-center text-purple-600">Chiều</th>
-                    <th className="py-3 px-4 w-16 text-center text-indigo-600">Tối</th>
+                    <th className="py-3 px-4 w-16 text-center text-blue-600">
+                      Sáng
+                    </th>
+                    <th className="py-3 px-4 w-16 text-center text-orange-500">
+                      Trưa
+                    </th>
+                    <th className="py-3 px-4 w-16 text-center text-purple-600">
+                      Chiều
+                    </th>
+                    <th className="py-3 px-4 w-16 text-center text-indigo-600">
+                      Tối
+                    </th>
                     <th className="py-3 px-4 min-w-[200px]">Hướng dẫn</th>
                     <th className="py-3 px-4 w-12"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {medications.map((medication, index) => (
-                    <tr key={medication.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr
+                      key={medication.id}
+                      className="hover:bg-slate-50/50 transition-colors group"
+                    >
                       <td className="py-3 px-4 text-center font-medium text-slate-400 group-hover:text-slate-600">
                         {index + 1}
                       </td>
@@ -822,16 +917,23 @@ export default function PrescribeMed() {
                         <div className="relative">
                           <Input
                             placeholder="Nhập tên thuốc..."
-                            value={searchTerms[medication.id] || medication.name}
+                            value={
+                              searchTerms[medication.id] || medication.name
+                            }
                             onChange={(e) =>
-                              handleMedicineSearch(medication.id, e.target.value)
+                              handleMedicineSearch(
+                                medication.id,
+                                e.target.value
+                              )
                             }
                             onFocus={() =>
                               setShowSuggestions((prev) => ({
                                 ...prev,
                                 [medication.id]:
-                                  (searchTerms[medication.id] ||
-                                    medication.name).length > 0,
+                                  (
+                                    searchTerms[medication.id] ||
+                                    medication.name
+                                  ).length > 0,
                               }))
                             }
                             className="w-full font-medium border-slate-200 focus:border-blue-500 focus:ring-blue-500"
@@ -855,8 +957,11 @@ export default function PrescribeMed() {
                                       {medicine.name}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-0.5 flex items-center justify-between">
-                                        <span>{medicine.category}</span>
-                                        <span className="font-medium text-emerald-600">Kho: {medicine.currentStock} {medicine.unit}</span>
+                                      <span>{medicine.category}</span>
+                                      <span className="font-medium text-emerald-600">
+                                        Kho: {medicine.currentStock}{" "}
+                                        {medicine.unit}
+                                      </span>
                                     </div>
                                   </div>
                                 ))
@@ -870,40 +975,55 @@ export default function PrescribeMed() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                         <div className="h-10 flex items-center justify-center bg-blue-50/50 text-blue-700 font-bold rounded-lg border border-blue-100 min-w-[3rem]">
-                            {medication.quantity || 0}
-                         </div>
+                        <div className="h-10 flex items-center justify-center bg-blue-50/50 text-blue-700 font-bold rounded-lg border border-blue-100 min-w-[3rem]">
+                          {medication.quantity || 0}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
-                         <Input
+                        <Input
                           type="number"
                           min="1"
                           value={medication.days || ""}
                           onChange={(e) => {
-                             const days = parseInt(e.target.value) || 0;
-                             updateMedication(medication.id, "days", days);
+                            const days = parseInt(e.target.value) || 0;
+                            updateMedication(medication.id, "days", days);
                           }}
                           className="h-10 text-center font-bold border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                         />
+                        />
                       </td>
-                      {["dosageMorning", "dosageNoon", "dosageAfternoon", "dosageEvening"].map((field) => (
-                         <td key={field} className="py-3 px-2">
-                             <Input
-                               type="number"
-                               min="0"
-                               value={medication[field as keyof Medication] || ""}
-                               onChange={(e) => updateMedication(medication.id, field as keyof Medication, parseInt(e.target.value) || 0)}
-                               className="h-10 text-center font-semibold text-slate-700 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                               placeholder="0"
-                             />
-                         </td>
+                      {[
+                        "dosageMorning",
+                        "dosageNoon",
+                        "dosageAfternoon",
+                        "dosageEvening",
+                      ].map((field) => (
+                        <td key={field} className="py-3 px-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={medication[field as keyof Medication] || ""}
+                            onChange={(e) =>
+                              updateMedication(
+                                medication.id,
+                                field as keyof Medication,
+                                parseInt(e.target.value) || 0
+                              )
+                            }
+                            className="h-10 text-center font-semibold text-slate-700 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="0"
+                          />
+                        </td>
                       ))}
                       <td className="py-3 px-4">
                         <Input
                           placeholder="Cách dùng..."
                           value={medication.instruction}
                           onChange={(e) =>
-                            updateMedication(medication.id, "instruction", e.target.value)
+                            updateMedication(
+                              medication.id,
+                              "instruction",
+                              e.target.value
+                            )
                           }
                           className="w-full border-slate-200 focus:border-blue-500 focus:ring-blue-500"
                         />
@@ -925,15 +1045,15 @@ export default function PrescribeMed() {
               </table>
             </div>
             <div className="p-6 border-t border-slate-100 bg-slate-50/30">
-                <Label className="text-sm font-bold text-slate-700 mb-2 block">
-                  Lời dặn của bác sĩ
-                </Label>
-                <Textarea
-                  placeholder="Nhập lời dặn dò cho bệnh nhân..."
-                  value={additionalNotes}
-                  onChange={(e) => setAdditionalNotes(e.target.value)}
-                  className="min-h-[100px] border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl resize-y"
-                />
+              <Label className="text-sm font-bold text-slate-700 mb-2 block">
+                Lời dặn của bác sĩ
+              </Label>
+              <Textarea
+                placeholder="Nhập lời dặn dò cho bệnh nhân..."
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                className="min-h-[100px] border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl resize-y"
+              />
             </div>
           </CardContent>
         </Card>
@@ -947,11 +1067,11 @@ export default function PrescribeMed() {
             disabled={saving || updatingAppointment}
             className="border-slate-300 text-slate-700 hover:bg-slate-50 h-12 px-6 font-medium"
           >
-             {updatingAppointment ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-             ) : (
-                <Undo2 className="w-5 h-5 mr-2" />
-             )}
+            {updatingAppointment ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : (
+              <Undo2 className="w-5 h-5 mr-2" />
+            )}
             Quay lại khám
           </Button>
 

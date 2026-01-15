@@ -67,10 +67,10 @@ export default function SignupPage() {
       // 3. Gọi API register
       await register(formData.email, formData.password, formData.fullName)
       // Success toast
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.")
+      toast.success("Đăng ký thành công! Vui lòng xác thực email để tiếp tục.")
       
-      // 4. Chuyển hướng về trang đăng nhập
-      navigate("/login") 
+      // 4. Chuyển hướng đến trang xác thực email với email đã nhập
+      navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`) 
 
     } catch (err: any) {
       console.error("Lỗi đăng ký:", err)

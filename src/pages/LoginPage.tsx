@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { logError } from "@/utils/logger"
+import { toast } from "sonner"
 
 const loginSchema = yup.object({
   email: yup
@@ -138,6 +139,17 @@ export default function Login() {
       }
     } catch (err: any) {
       logError("Login Error", err)
+      
+      // Check if email not verified
+      if (err.response?.data?.message === "EMAIL_NOT_VERIFIED" || err.response?.status === 403) {
+        const emailToVerify = err.response?.data?.data?.email || data.email
+        toast.error("Email chưa được xác thực. Đang chuyển hướng...")
+        setTimeout(() => {
+          navigate(`/verify-email?email=${encodeURIComponent(emailToVerify)}`)
+        }, 1500)
+        return
+      }
+      
       if (err.response?.status === 429 || err.message?.includes("Quá nhiều yêu cầu")) {
         const retryAfter = err.response?.headers?.['retry-after'] || err.response?.headers?.['Retry-After'] || err.response?.data?.retryAfter;
         const waitTime = retryAfter ? `${retryAfter} giây` : "30-60 giây";

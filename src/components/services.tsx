@@ -55,31 +55,42 @@ export function Services() {
               ))}
            </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {specialties.length === 0 ? (
-               <div className="col-span-full text-center py-10 text-gray-500 bg-gray-50 rounded-2xl border border-gray-100">
-                 <p>Đang cập nhật danh sách chuyên khoa...</p>
-               </div>
-            ) : (
-              specialties.map((service) => {
-                const Icon = getSpecialtyIcon(service.name)
-                const colorClass = getSpecialtyColor()
-                
-                return (
-                  <Card key={service.id} className="group overflow-hidden border-0 shadow-sm bg-gray-50/50 hover:bg-white hover:shadow-xl transition-all duration-300 rounded-2xl">
-                    <CardContent className="p-8">
-                      <div className={`mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 group-hover:bg-blue-600 transition-colors duration-300`}>
-                        <Icon className={`h-6 w-6 ${colorClass} group-hover:text-white transition-colors duration-300`} />
-                      </div>
-                      
-                      <h3 className="mb-3 text-lg font-bold text-gray-900 line-clamp-1" title={service.name}>{service.name}</h3>
-                      <p className="mb-6 text-gray-500 leading-relaxed text-sm h-20 line-clamp-3">
-                        {service.description || `Chuyên khoa ${service.name} hàng đầu với đội ngũ bác sĩ giàu kinh nghiệm.`}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )
-              })
+          <div className="relative">
+            {/* Scroll container */}
+            <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide hover:scrollbar-default scroll-smooth">
+              {specialties.length === 0 ? (
+                <div className="w-full text-center py-10 text-gray-500 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p>Đang cập nhật danh sách chuyên khoa...</p>
+                </div>
+              ) : (
+                specialties.map((service) => {
+                  const Icon = getSpecialtyIcon(service.name)
+                  const colorClass = getSpecialtyColor()
+                  
+                  return (
+                    <Card 
+                      key={service.id} 
+                      className="group overflow-hidden border-0 shadow-sm bg-gray-50/50 hover:bg-white hover:shadow-xl transition-all duration-300 rounded-2xl flex-none w-80 snap-start"
+                    >
+                      <CardContent className="p-8">
+                        <div className={`mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 group-hover:bg-blue-600 transition-colors duration-300`}>
+                          <Icon className={`h-6 w-6 ${colorClass} group-hover:text-white transition-colors duration-300`} />
+                        </div>
+                        
+                        <h3 className="mb-3 text-lg font-bold text-gray-900 line-clamp-1" title={service.name}>{service.name}</h3>
+                        <p className="mb-6 text-gray-500 leading-relaxed text-sm h-20 line-clamp-3">
+                          {service.description || `Chuyên khoa ${service.name} hàng đầu với đội ngũ bác sĩ giàu kinh nghiệm.`}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )
+                })
+              )}
+            </div>
+            
+            {/* Scroll indicator - subtle hint */}
+            {specialties.length > 3 && (
+              <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-white to-transparent pointer-events-none" />
             )}
           </div>
         )}

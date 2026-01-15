@@ -27,6 +27,7 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 ## ✨ Features
 
 ### 🔐 Authentication & Authorization
+
 - **Multi-role authentication** (Admin, Doctor, Receptionist, Patient)
 - OAuth 2.0 integration (Google Sign-In)
 - JWT-based session management
@@ -34,6 +35,7 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 - Role-based access control (RBAC)
 
 ### 👨‍💼 Admin Portal
+
 - **Dashboard** with real-time analytics & KPIs
 - **User Management** - CRUD operations for all user roles
 - **Doctor Management** - Schedules, shifts, specialties
@@ -45,6 +47,7 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 - **System Settings** - Configurable app settings
 
 ### 👨‍⚕️ Doctor Portal
+
 - **Patient Queue** - Real-time patient list
 - **Medical Examination** - Diagnosis, vital signs recording
 - **Prescription Management** - Create, edit, lock prescriptions
@@ -52,12 +55,14 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 - **Shift Management** - View assigned schedules
 
 ### 🧑‍💻 Receptionist Portal
+
 - **Appointment Management** - Online & offline booking
 - **Patient Registration** - New patient intake
 - **Invoice Management** - Create, edit, payment processing
 - **Patient Lookup** - Quick search & history access
 
 ### 👤 Patient Portal
+
 - **Appointment Booking** - Online scheduling
 - **Medical History** - View past visits & diagnoses
 - **Prescription Access** - Digital prescription viewer
@@ -65,6 +70,7 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 - **Profile Management** - Personal health information
 
 ### 📊 Reporting & Analytics
+
 - Revenue & financial reports with charts
 - Appointment statistics & trends
 - Patient demographics analysis
@@ -74,41 +80,46 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 ## 🛠 Tech Stack
 
 ### Core Framework
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **React** | 19.2 | UI Library |
-| **TypeScript** | 5.9 | Type Safety |
-| **Vite** | 7.2 | Build Tool & Dev Server |
+
+| Technology     | Version | Purpose                 |
+| -------------- | ------- | ----------------------- |
+| **React**      | 19.2    | UI Library              |
+| **TypeScript** | 5.9     | Type Safety             |
+| **Vite**       | 7.2     | Build Tool & Dev Server |
 
 ### UI & Styling
-| Technology | Purpose |
-|------------|---------|
-| **Tailwind CSS 4** | Utility-first CSS |
-| **Radix UI** | Headless UI Components |
-| **Lucide React** | Icon Library |
-| **shadcn/ui** | Component Library |
-| **Recharts** | Data Visualization |
+
+| Technology         | Purpose                |
+| ------------------ | ---------------------- |
+| **Tailwind CSS 4** | Utility-first CSS      |
+| **Radix UI**       | Headless UI Components |
+| **Lucide React**   | Icon Library           |
+| **shadcn/ui**      | Component Library      |
+| **Recharts**       | Data Visualization     |
 
 ### State & Forms
-| Technology | Purpose |
-|------------|---------|
-| **Zustand** | Global State Management |
-| **React Hook Form** | Form Handling |
-| **Zod / Yup** | Schema Validation |
+
+| Technology          | Purpose                 |
+| ------------------- | ----------------------- |
+| **Zustand**         | Global State Management |
+| **React Hook Form** | Form Handling           |
+| **Zod / Yup**       | Schema Validation       |
 
 ### Backend Integration
-| Technology | Purpose |
-|------------|---------|
-| **Axios** | HTTP Client |
-| **Firebase** | Authentication & Hosting |
-| **React Router DOM** | Client-side Routing |
+
+| Technology           | Purpose                  |
+| -------------------- | ------------------------ |
+| **Axios**            | HTTP Client              |
+| **Firebase**         | Authentication & Hosting |
+| **React Router DOM** | Client-side Routing      |
 
 ### Developer Experience
-| Technology | Purpose |
-|------------|---------|
-| **ESLint** | Code Linting |
+
+| Technology            | Purpose             |
+| --------------------- | ------------------- |
+| **ESLint**            | Code Linting        |
 | **TypeScript ESLint** | TS-specific Linting |
-| **Prettier** | Code Formatting |
+| **Prettier**          | Code Formatting     |
 
 ## 🚀 Getting Started
 
@@ -121,17 +132,14 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
-<<<<<<< HEAD
-   git clone https://github.com/your-org/healos-frontend.git
-   cd healos-frontend
-=======
    git clone https://github.com/QLBV/Frontend.git
    cd Frontend
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -139,24 +147,22 @@ HEALOS is a full-featured **Healthcare Management System** designed to streamlin
    ```
 
 3. **Environment Setup**
-   
+
    Create a `.env` file in the root directory:
+
    ```env
-<<<<<<< HEAD
-   VITE_API_URL=http://localhost:3000/api
-=======
    VITE_API_URL=http://localhost:5000/api
->>>>>>> a96f911 (Refine UI for Pharmacy and Admin pages, update components, and improve styling)
    VITE_FIREBASE_API_KEY=your_firebase_api_key
    VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
    VITE_FIREBASE_PROJECT_ID=your_project_id
    ```
 
 4. **Start Development Server**
+
    ```bash
    npm run dev
    ```
-   
+
    The app will be available at `http://localhost:5173`
 
 ### Build for Production
@@ -198,21 +204,21 @@ src/
 
 ## 🔑 Role-Based Routes
 
-| Role | Base Route | Access Level |
-|------|------------|--------------|
-| **Admin** | `/admin/*` | Full system access |
-| **Doctor** | `/doctor/*` | Medical operations |
-| **Receptionist** | `/recep/*` | Front desk operations |
-| **Patient** | `/patient/*` | Self-service portal |
+| Role             | Base Route   | Access Level          |
+| ---------------- | ------------ | --------------------- |
+| **Admin**        | `/admin/*`   | Full system access    |
+| **Doctor**       | `/doctor/*`  | Medical operations    |
+| **Receptionist** | `/recep/*`   | Front desk operations |
+| **Patient**      | `/patient/*` | Self-service portal   |
 
 ## 📜 Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `npm run dev`     | Start development server |
+| `npm run build`   | Build for production     |
 | `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
+| `npm run lint`    | Run ESLint               |
 
 ## 🎨 Design System
 
@@ -227,13 +233,13 @@ HEALOS uses a modern, premium design language featuring:
 
 ### Color Palette
 
-| Color | Usage |
-|-------|-------|
-| `blue-600` | Primary actions, links |
+| Color         | Usage                         |
+| ------------- | ----------------------------- |
+| `blue-600`    | Primary actions, links        |
 | `emerald-600` | Success states, confirmations |
-| `amber-500` | Warnings, pending states |
-| `rose-500` | Errors, cancellations |
-| `slate-900` | Text, headings |
+| `amber-500`   | Warnings, pending states      |
+| `rose-500`    | Errors, cancellations         |
+| `slate-900`   | Text, headings                |
 
 ## 🔒 Security Features
 
@@ -246,6 +252,7 @@ HEALOS uses a modern, premium design language featuring:
 ## 📱 Responsive Design
 
 Fully responsive across all breakpoints:
+
 - **Mobile**: 320px - 767px
 - **Tablet**: 768px - 1023px
 - **Desktop**: 1024px - 1279px

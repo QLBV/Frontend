@@ -34,7 +34,8 @@ import {
   ShieldCheck,
   Thermometer,
   Wind,
-  Scale
+  Scale,
+  Ruler
 } from "lucide-react"
 
 // Interfaces
@@ -63,7 +64,9 @@ const initialVitalSigns: VitalSign[] = [
   { key: "heartRate", label: "Nhịp tim", value: "72", unit: "bpm" },
   { key: "temperature", label: "Nhiệt độ", value: "36.5", unit: "°C" },
   { key: "spo2", label: "SpO2", value: "98", unit: "%" },
+  { key: "respiratoryRate", label: "Nhịp thở", value: "20", unit: "l/p" },
   { key: "weight", label: "Cân nặng", value: "70", unit: "kg"},
+  { key: "height", label: "Chiều cao", value: "170", unit: "cm" },
 ]
 
 export default function FormMedical() {
@@ -497,7 +500,9 @@ Examination completed on: ${new Date().toLocaleString()}
               if(item.key === 'heartRate') { Icon = Activity; colorClass = "from-pink-500 to-rose-500"; bgClass = "bg-pink-50/50"; borderClass = "border-pink-100" }
               if(item.key === 'temperature') { Icon = Thermometer; colorClass = "from-orange-500 to-amber-500"; bgClass = "bg-orange-50/50"; borderClass = "border-orange-100" }
               if(item.key === 'spo2') { Icon = Wind; colorClass = "from-sky-500 to-blue-500"; bgClass = "bg-sky-50/50"; borderClass = "border-sky-100" }
+              if(item.key === 'respiratoryRate') { Icon = Wind; colorClass = "from-purple-500 to-fuchsia-500"; bgClass = "bg-purple-50/50"; borderClass = "border-purple-100" }
               if(item.key === 'weight') { Icon = Scale; colorClass = "from-emerald-500 to-green-500"; bgClass = "bg-emerald-50/50"; borderClass = "border-emerald-100" }
+              if(item.key === 'height') { Icon = Ruler; colorClass = "from-indigo-500 to-violet-500"; bgClass = "bg-indigo-50/50"; borderClass = "border-indigo-100" }
 
               return (
                 <div key={item.key} className={`relative overflow-hidden rounded-2xl p-4 border ${borderClass} ${bgClass} shadow-sm hover:shadow-md transition-all group`}>

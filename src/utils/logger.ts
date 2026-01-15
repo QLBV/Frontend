@@ -1,5 +1,5 @@
 /**
- * Logger utility - Only logs in development mode
+ * Logger utility
  * In production, logs are suppressed for security and performance
  */
 
@@ -7,7 +7,7 @@ const isDev = import.meta.env.DEV
 const isProduction = import.meta.env.PROD
 
 /**
- * Log info messages (only in development)
+ * Log info messages
  */
 export const log = (...args: any[]) => {
   if (isDev) {
@@ -16,7 +16,7 @@ export const log = (...args: any[]) => {
 }
 
 /**
- * Log error messages (always logged, but can be sent to error tracking service)
+ * Log error messages
  */
 export const logError = (message: string, error?: any, context?: Record<string, any>) => {
   if (isDev) {
@@ -30,7 +30,7 @@ export const logError = (message: string, error?: any, context?: Record<string, 
 }
 
 /**
- * Log warning messages (only in development)
+ * Log warning messages
  */
 export const logWarn = (...args: any[]) => {
   if (isDev) {
@@ -39,7 +39,7 @@ export const logWarn = (...args: any[]) => {
 }
 
 /**
- * Log debug messages (only in development)
+ * Log debug messages
  */
 export const logDebug = (...args: any[]) => {
   if (isDev) {
@@ -48,7 +48,7 @@ export const logDebug = (...args: any[]) => {
 }
 
 /**
- * Log API requests (only in development)
+ * Log API requests
  */
 export const logRequest = (method: string, url: string, data?: any) => {
   if (isDev) {
@@ -57,7 +57,7 @@ export const logRequest = (method: string, url: string, data?: any) => {
 }
 
 /**
- * Log API responses (only in development)
+ * Log API responses 
  */
 export const logResponse = (method: string, url: string, status: number, data?: any) => {
   if (isDev) {

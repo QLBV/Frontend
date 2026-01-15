@@ -15,6 +15,7 @@ import TermsOfServicePage from "@/pages/TermsOfServicePage"
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
 import OAuthCallbackPage from "@/pages/OAuthCallbackPage"
 import OAuthErrorPage from "@/pages/OAuthErrorPage"
+import EmailVerificationPage from "@/pages/EmailVerificationPage"
 const ProfilePage = lazy(() => import("./pages/ProfilePage"))
 
 // Lazy load profile pages for each role
@@ -103,6 +104,7 @@ const SetupPatientProfilePage = lazy(() => import("./pages/patient/SetupPatientP
 // Lazy load shared pages
 const AppointmentDetailPage = lazy(() => import("./pages/AppointmentDetailPage"))
 const VisitDetailPage = lazy(() => import("./pages/doctor/VisitDetailPage"))
+const DoctorPrescriptionDetailPage = lazy(() => import("./pages/doctor/PrescriptionDetailPage"))
 const AttendancePage = lazy(() => import("./pages/AttendancePage"))
 const HelpCenterPage = lazy(() => import("./pages/HelpCenterPage"))
 
@@ -130,6 +132,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/oauth/callback" element={<OAuthCallbackPage />} />
           <Route path="/auth/oauth/error" element={<OAuthErrorPage />} />
+          <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           {/* Redirect old booking route to new patient route */}
@@ -715,6 +718,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="doctor">
                 <UiQuanLyDT />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/prescriptions/:id"
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <DoctorPrescriptionDetailPage />
               </ProtectedRoute>
             }
           />

@@ -31,6 +31,24 @@ import DoctorSidebar from "@/components/sidebar/doctor"
 import ReceptionistSidebar from "@/components/sidebar/recep"
 import PatientSidebar from "@/components/sidebar/patient"
 
+// Helper to clean note text (remove system generated headers)
+const cleanNoteText = (noteText: string) => {
+  if (!noteText) return "Không có ghi chú";
+  let cleanedText = noteText;
+  cleanedText = cleanedText.replace(/CLINICAL OBSERVATIONS:.*?ADDITIONAL NOTES:/is, "");
+  cleanedText = cleanedText.replace(/VITAL SIGNS:.*?(?=\n\n|$)/is, "");
+  cleanedText = cleanedText.replace(/Huy[eếệ]t áp:\s*\d+\/\d+\s*mmHg\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/Nh[iịĩ]p tim:\s*\d+\s*bpm\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/Nhi[eệ]t đ[oộ]:\s*\d+(?:\.\d+)?\s*°C\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/SpO2:\s*\d+\s*%\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/Nh[iịĩ]p th[ởờ]:\s*\d+\s*l\/p\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/Chi[eề]u cao:\s*\d+(?:\.\d+)?\s*cm\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/C[aâ]n n[ặa]ng:\s*\d+(?:\.\d+)?\s*kg\s*•?\s*/gi, "");
+  cleanedText = cleanedText.replace(/Examination completed on:.*$/im, "");
+  cleanedText = cleanedText.replace(/•\s*/g, "");
+  return cleanedText.trim() || "Không có ghi chú chi tiết";
+};
+
 export default function VisitDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -199,7 +217,7 @@ export default function VisitDetailPage() {
                   (String(user?.roleId || user?.role || "").toLowerCase() === "admin" || String(user?.roleId || user?.role || "") === "1")
                     ? `/admin/prescriptions/${visit.prescription.id}`
                     : (String(user?.roleId || user?.role || "").toLowerCase() === "doctor" || String(user?.roleId || user?.role || "") === "2")
-                    ? `/doctor/prescriptions/${visit.prescription.id}/edit`
+                    ? `/doctor/prescriptions/${visit.prescription.id}`
                     : `/patient/prescriptions/${visit.prescription.id}`
                 }>
                   <Pill className="h-4 w-4 mr-2" />
@@ -336,7 +354,7 @@ export default function VisitDetailPage() {
                       Ghi chú
                     </h3>
                     <div className="bg-slate-50 p-4 rounded-xl text-slate-600 text-sm">
-                      {visit.note}
+                      {cleanNoteText(visit.note)}
                     </div>
                   </div>
                 )}
@@ -378,22 +396,6 @@ export default function VisitDetailPage() {
                          <div className="text-[10px] text-slate-400">kg</div>
                       </div>
                   </div>
-                  
-                  {/* Advanced Vitals */}
-                   <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                      <div className="text-center">
-                         <div className="text-[10px] text-slate-500 font-medium">Nhịp thở</div>
-                         <div className="font-bold text-slate-700">{visit.vitalSigns.respiratoryRate || "--"} <span className="text-[10px] font-normal text-slate-400">l/p</span></div>
-                      </div>
-                      <div className="text-center border-l border-slate-100">
-                         <div className="text-[10px] text-slate-500 font-medium">Chiều cao</div>
-                         <div className="font-bold text-slate-700">{visit.vitalSigns.height || "--"} <span className="text-[10px] font-normal text-slate-400">cm</span></div>
-                      </div>
-                       <div className="text-center border-l border-slate-100">
-                         <div className="text-[10px] text-slate-500 font-medium">SpO2</div>
-                         <div className="font-bold text-cyan-600">{visit.vitalSigns.spo2 || "--"} <span className="text-[10px] font-normal text-slate-400">%</span></div>
-                      </div>
-                   </div>
                 </CardContent>
               </Card>
             )}

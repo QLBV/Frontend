@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { formatVND } from "@/utils/currency"
 
 export default function InvoiceDetailPage() {
   const { id } = useParams()
@@ -346,7 +347,7 @@ export default function InvoiceDetailPage() {
                 <div>
                   <p className="text-xs text-slate-500">Tổng tiền</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                    {formatVND(invoice.totalAmount)}
                   </p>
                 </div>
               </div>
@@ -359,11 +360,11 @@ export default function InvoiceDetailPage() {
                 <div>
                   <p className="text-xs text-slate-500">Đã thanh toán</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {invoice.paidAmount.toLocaleString("vi-VN")} VND
+                    {formatVND(invoice.paidAmount)}
                   </p>
                   {remainingAmount > 0 && (
                     <p className="text-xs text-red-600 mt-1">
-                      Còn lại: {remainingAmount.toLocaleString("vi-VN")} VND
+                      Còn lại: {formatVND(remainingAmount)}
                     </p>
                   )}
                 </div>
@@ -442,7 +443,7 @@ export default function InvoiceDetailPage() {
                   <div className="flex justify-between py-2">
                     <span className="text-slate-600">Phí khám bệnh</span>
                     <span className="font-semibold text-slate-900">
-                      {invoice.examinationFee.toLocaleString("vi-VN")} VND
+                      {formatVND(invoice.examinationFee)}
                     </span>
                   </div>
                 )}
@@ -454,20 +455,22 @@ export default function InvoiceDetailPage() {
                     {medicineItems.map((item) => (
                       <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
                         <div className="flex-1">
-                          <div className="font-medium text-slate-900">{item.description}</div>
+                          <div className="font-medium text-slate-900">
+                            {item.medicineName || item.description || "Thuốc"}
+                          </div>
                           <div className="text-sm text-slate-500">
-                            {item.quantity} x {item.unitPrice.toLocaleString("vi-VN")} VND
+                            SL: {item.quantity} • Don gia: {formatVND(item.unitPrice)}
                           </div>
                         </div>
                         <div className="font-semibold text-slate-900">
-                          {item.subtotal.toLocaleString("vi-VN")} VND
+                          {formatVND(item.subtotal)}
                         </div>
                       </div>
                     ))}
                     <div className="flex justify-between py-2 pt-3 border-t">
                       <span className="text-slate-600">Tổng tiền thuốc</span>
                       <span className="font-semibold text-slate-900">
-                        {invoice.medicineTotalAmount.toLocaleString("vi-VN")} VND
+                        {formatVND(invoice.medicineTotalAmount)}
                       </span>
                     </div>
                   </div>
@@ -477,7 +480,7 @@ export default function InvoiceDetailPage() {
                 {invoice.discount > 0 && (
                   <div className="flex justify-between py-2 text-red-600">
                     <span>Giảm giá</span>
-                    <span className="font-semibold">-{invoice.discount.toLocaleString("vi-VN")} VND</span>
+                    <span className="font-semibold">-{formatVND(invoice.discount)}</span>
                   </div>
                 )}
 
@@ -487,20 +490,20 @@ export default function InvoiceDetailPage() {
                     <div className="flex justify-between">
                       <span className="text-slate-600">Tổng cộng</span>
                       <span className="font-semibold text-slate-900">
-                        {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                        {formatVND(invoice.totalAmount)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-600">Đã thanh toán</span>
                       <span className="font-semibold text-emerald-600">
-                        {invoice.paidAmount.toLocaleString("vi-VN")} VND
+                        {formatVND(invoice.paidAmount)}
                       </span>
                     </div>
                     {remainingAmount > 0 && (
                       <div className="flex justify-between pt-2 border-t">
                         <span className="text-slate-700 font-medium">Còn lại</span>
                         <span className="font-bold text-amber-600">
-                          {remainingAmount.toLocaleString("vi-VN")} VND
+                          {formatVND(remainingAmount)}
                         </span>
                       </div>
                     )}
@@ -513,7 +516,7 @@ export default function InvoiceDetailPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-slate-900">Tổng cộng</span>
                     <span className="text-2xl font-bold text-blue-600">
-                      {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                      {formatVND(invoice.totalAmount)}
                     </span>
                   </div>
                 </div>

@@ -424,6 +424,7 @@ export default function PharmacyPage() {
                           <th className="text-left py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Tên thuốc</th>
                           <th className="text-left py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Nhóm</th>
                           <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Số lượng</th>
+                          <th className="text-right py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Giá nhập</th>
                           <th className="text-right py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Giá bán</th>
                           <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Hạn dùng</th>
                           <th className="text-center py-3 px-4 text-[9px] font-black text-slate-400 uppercase tracking-wider">Trạng thái</th>
@@ -433,7 +434,7 @@ export default function PharmacyPage() {
                       <tbody>
                         {paginatedMedications.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="py-16 text-center text-slate-500 text-sm">
+                            <td colSpan={9} className="py-16 text-center text-slate-500 text-sm">
                               Không tìm thấy thuốc
                             </td>
                           </tr>
@@ -463,8 +464,13 @@ export default function PharmacyPage() {
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 text-right">
-                                  <div className="font-bold text-xs text-slate-900">
-                                    {medication.salePrice.toLocaleString("vi-VN")}đ
+                                  <div className="font-semibold text-xs text-slate-600">
+                                    {new Intl.NumberFormat('vi-VN').format(medication.importPrice)}₫
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <div className="font-bold text-xs text-cyan-700">
+                                    {new Intl.NumberFormat('vi-VN').format(medication.salePrice)}₫
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-center">

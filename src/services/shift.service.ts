@@ -115,6 +115,9 @@ export interface DoctorWithShifts {
     }
     workDate: string
     status: string
+    maxSlots?: number
+    currentBookings?: number
+    isFull?: boolean
   }>
   shiftCount: number
 }

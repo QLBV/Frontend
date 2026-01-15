@@ -20,7 +20,9 @@ export interface InvoiceItem {
   id: number
   invoiceId: number
   itemType: "EXAMINATION" | "MEDICINE"
-  description: string
+  description?: string
+  medicineName?: string
+  medicineCode?: string
   quantity: number
   unitPrice: number
   subtotal: number

@@ -529,7 +529,7 @@ export default function InventoryPage() {
                   <tr>
                     <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Thông tin thuốc</th>
                     <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Nhóm</th>
-                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Tồn kho</th>
+                    <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Số lượng</th>
                     <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Giá nhập</th>
                     <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Giá bán</th>
                     <th className="p-4 text-left font-bold uppercase text-[11px] tracking-widest text-slate-500">Hạn sử dụng</th>
@@ -544,10 +544,8 @@ export default function InventoryPage() {
                       return (
                         <tr key={medicine.id} className="border-b hover:bg-slate-50 transition-colors">
                           <td className="p-4">
-                            <span className="font-mono text-sm text-slate-600 font-bold">{medicine.medicineCode}</span>
-                          </td>
-                          <td className="p-4">
-                            <div>
+                            <div className="space-y-1">
+                              <span className="font-mono text-[10px] text-slate-500 font-semibold block">{medicine.medicineCode}</span>
                               <p className="font-bold text-slate-900">{medicine.name}</p>
                               {medicine.manufacturer && (
                                 <p className="text-xs text-slate-500 font-medium">{medicine.manufacturer}</p>
@@ -569,12 +567,12 @@ export default function InventoryPage() {
                           </td>
                           <td className="p-4">
                             <span className="text-slate-600 font-semibold text-sm">
-                              {medicine.importPrice.toLocaleString()}đ
+                              {new Intl.NumberFormat('vi-VN').format(medicine.importPrice)}₫
                             </span>
                           </td>
                           <td className="p-4">
                             <span className="font-bold text-blue-600">
-                              {medicine.salePrice.toLocaleString()}đ
+                              {new Intl.NumberFormat('vi-VN').format(medicine.salePrice)}₫
                             </span>
                           </td>
                           <td className="p-4">

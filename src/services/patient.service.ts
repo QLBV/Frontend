@@ -106,6 +106,20 @@ export interface Prescription {
       name: string
     }
   }>
+  // Add details array to match backend response
+  details?: Array<{
+    id: number
+    medicineName: string
+    quantity: number
+    unit: string
+    dosageMorning: number
+    dosageNoon: number
+    dosageAfternoon: number
+    dosageEvening: number
+    instruction?: string
+    days?: number
+    unitPrice: number
+  }>
 }
 
 /**
