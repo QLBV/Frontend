@@ -966,19 +966,13 @@ export default function AdminPatientDetailPage() {
                               <p>
                                 <span className="text-slate-500">Tổng tiền:</span>{" "}
                                 <span className="font-medium text-slate-900">
-                                  {new Intl.NumberFormat("vi-VN", {
-                                    style: "currency",
-                                    currency: "VND",
-                                  }).format(invoice.totalAmount)}
+                                  {new Intl.NumberFormat("vi-VN").format(invoice.totalAmount) + " VND"}
                                 </span>
                               </p>
                               <p>
                                 <span className="text-slate-500">Đã trả:</span>{" "}
                                 <span className="font-medium text-emerald-700">
-                                  {new Intl.NumberFormat("vi-VN", {
-                                    style: "currency",
-                                    currency: "VND",
-                                  }).format(invoice.paidAmount)}
+                                  {new Intl.NumberFormat("vi-VN").format(invoice.paidAmount) + " VND"}
                                 </span>
                               </p>
                               <p>

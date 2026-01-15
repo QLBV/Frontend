@@ -1,23 +1,21 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import DoctorSidebar from '@/components/sidebar/doctor'
+import { ReferralModal } from "@/components/modal/ReferralModal"
+import DoctorSidebar from "@/components/sidebar/doctor"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import api from "@/lib/api"
-import { toast } from "sonner"
 import {
   ArrowLeft,
   User,
@@ -35,8 +33,11 @@ import {
   Thermometer,
   Wind,
   Scale,
-  Ruler
+  Ruler,
+  ArrowRightLeft
 } from "lucide-react"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 // Interfaces
 interface PatientData {
@@ -49,6 +50,7 @@ interface PatientData {
   visitId?: number
   symptomInitial?: string
   status?: string
+  symptomImages?: string[]
 }
 
 interface VitalSign {
@@ -88,6 +90,7 @@ export default function FormMedical() {
   
   // Modal states
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [showReferralModal, setShowReferralModal] = useState(false)
 
   // Fetch patient data
   useEffect(() => {
@@ -117,7 +120,8 @@ export default function FormMedical() {
               appointmentId: appointment.id || visit.appointmentId,
               visitId: visit.id,
               symptomInitial: appointment.symptomInitial,
-              status: visit.status
+              status: visit.status,
+              symptomImages: appointment.symptomImages
             })
             
             // Populate existing visit data
@@ -166,7 +170,8 @@ export default function FormMedical() {
               appointmentId: appointment.id,
               visitId: visit?.id,
               symptomInitial: appointment.symptomInitial,
-              status: visit?.status || appointment.status
+              status: visit?.status || appointment.status,
+              symptomImages: appointment.symptomImages
             })
 
             // Populate from visit if available via appointment
@@ -375,6 +380,16 @@ Examination completed on: ${new Date().toLocaleString()}
           </Button>
 
           <div className="flex gap-3">
+             {patientData && patientData.status !== 'COMPLETED' && (
+               <Button 
+                  variant="outline" 
+                  className="bg-white border-slate-200 text-slate-600 shadow-sm hover:text-indigo-600 hover:border-indigo-200"
+                  onClick={() => setShowReferralModal(true)}
+               >
+                  <ArrowRightLeft className="w-4 h-4 mr-2" />
+                  Chuyển khoa
+               </Button>
+             )}
              <Button 
                 variant="outline" 
                 className="bg-white border-slate-200 text-slate-600 shadow-sm hover:text-indigo-600 hover:border-indigo-200"
@@ -385,6 +400,17 @@ Examination completed on: ${new Date().toLocaleString()}
              </Button>
           </div>
         </div>
+
+        {patientData && (
+          <ReferralModal 
+            open={showReferralModal} 
+            onOpenChange={setShowReferralModal}
+            visitId={patientData.visitId || 0}
+            onSuccess={() => {
+               // Optional: Disable button or show badge
+            }}
+          />
+        )}
 
         {/* History Modal */}
         <Dialog open={showHistoryModal} onOpenChange={setShowHistoryModal}>
@@ -554,6 +580,54 @@ Examination completed on: ${new Date().toLocaleString()}
                         {patientData.symptomInitial || <span className="text-slate-400 italic">Không có thông tin khai báo</span>}
                      </p>
                   </div>
+
+                  {patientData.symptomImages && patientData.symptomImages.length > 0 && (
+                    <div className="mb-6">
+                      <Label className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                         <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                         Hình ảnh đính kèm từ Booking
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                         {patientData.symptomImages.map((img, idx) => {
+                           // Helper to resolve image URL
+                           const getImageUrl = (path: string) => {
+                             if (!path) return "/placeholder-image.jpg"; // Fallback
+                             if (path.startsWith("http")) return path;
+                             
+                             // Get base URL (remove /api from VITE_API_URL if present)
+                             const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+                             const baseUrl = apiUrl.replace(/\/api\/?$/, "");
+                             
+                             // Ensure path handles both / and \
+                             let normalizedPath = path.replace(/\\/g, "/");
+                             if (!normalizedPath.startsWith("/")) {
+                               normalizedPath = `/${normalizedPath}`;
+                             }
+                             
+                             return `${baseUrl}${normalizedPath}`;
+                           };
+
+                           const fullImageUrl = getImageUrl(img);
+
+                           return (
+                             <div key={idx} className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm cursor-pointer hover:shadow-md transition-all" onClick={() => window.open(fullImageUrl, '_blank')}>
+                                <img 
+                                  src={fullImageUrl} 
+                                  alt={`Symptom ${idx+1}`} 
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400?text=Error+Loading+Image';
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                   <span className="bg-white/90 text-slate-900 text-xs font-bold px-2 py-1 rounded shadow-sm backdrop-blur-sm">Xem full</span>
+                                </div>
+                             </div>
+                           );
+                         })}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                      <Label className="text-sm font-semibold text-slate-700">Ghi chú lâm sàng chi tiết</Label>

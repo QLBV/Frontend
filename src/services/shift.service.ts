@@ -365,15 +365,24 @@ export class ShiftService {
         params.append('specialtyId', specialtyId.toString())
       }
 
+      console.log('🔍 Calling getDoctorsByDate with:', { workDate, specialtyId })
+
       const response = await api.get(
         `/doctor-shifts/doctors-by-date?${params.toString()}`
       )
+      
+      console.log('✅ getDoctorsByDate response:', response.data)
+      
       if (response.data.success) {
+        console.log(`✅ Found ${response.data.data?.length || 0} doctors`)
         return response.data.data || []
       }
+      console.warn('⚠️ API returned success=false')
       return []
     } catch (error: any) {
-      console.error('Error in getDoctorsByDate:', error)
+      console.error('❌ Error in getDoctorsByDate:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       if (error.response?.status === 429) {
         throw new Error('Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.')
       }

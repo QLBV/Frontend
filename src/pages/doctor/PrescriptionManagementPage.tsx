@@ -16,9 +16,7 @@ import {
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
@@ -50,7 +48,6 @@ import {
   Clock,
   Ban,
   Download,
-  Info,
   UserCheck,
   Lock
 } from "lucide-react"
@@ -96,12 +93,7 @@ interface Prescription {
   }
 }
 
-interface PaginationInfo {
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
+
 
 export default function PrescriptionManagementPage() {
   const navigate = useNavigate()
@@ -163,7 +155,7 @@ export default function PrescriptionManagementPage() {
       if (response.data.success) {
         const transformed: Prescription[] = response.data.data.map((p: any) => ({
           ...p,
-          patientName: p.patient?.user?.fullName || p.patient?.fullName || 'N/A',
+          patientName: p.visit?.appointment?.patientName || p.patient?.user?.fullName || p.patient?.fullName || 'N/A',
           patient: p.patient ? {
             ...p.patient,
             patientCode: p.patient.patientCode || null

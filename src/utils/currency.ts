@@ -21,8 +21,8 @@ export function formatVND(
     return showSymbol ? "0 VND" : "0";
   }
 
-  // Format with thousand separators and decimals
-  const formatted = numAmount.toLocaleString("en-US", {
+  // Format with thousand separators (dots)
+  const formatted = numAmount.toLocaleString("vi-VN", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -51,17 +51,17 @@ export function formatVNDShort(amount: number | string): string {
     return `${(numAmount / 1000).toFixed(0)}K VND`;
   }
 
-  return `${numAmount.toLocaleString("en-US")} VND`;
+  return `${numAmount.toLocaleString("vi-VN")} VND`;
 }
 
 /**
  * Parse VND string back to number
- * @param vndString - String like "100,000 VND" or "100000"
+ * @param vndString - String like "100.000 VND" or "100.000"
  * @returns Number value
  */
 export function parseVND(vndString: string): number {
-  // Remove "VND", commas, and spaces
-  const cleaned = vndString.replace(/VND|,|\s/g, "");
+  // Remove "VND", commas, dots, and spaces
+  const cleaned = vndString.replace(/VND|,|\.|\s/g, "");
   const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
 }

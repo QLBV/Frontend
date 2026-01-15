@@ -79,6 +79,7 @@ const DoctorShiftPage = lazy(() => import("./pages/doctor/DoctorShiftPage"))
 const UiQuanLyDT = lazy(() => import("./pages/doctor/PrescriptionManagementPage"))
 
 const EditPrescriptionPage = lazy(() => import("./pages/doctor/EditPrescriptionPage"))
+const ConsultationPage = lazy(() => import("./pages/doctor/ConsultationPage"))
 
 // Lazy load receptionist pages
 const ReceptionistDashboardPage = lazy(() => import("./pages/recep/DashboardPage"))
@@ -734,6 +735,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="doctor">
                 <EditPrescriptionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/consultation/:visitId"
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <ConsultationPage />
               </ProtectedRoute>
             }
           />

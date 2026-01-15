@@ -5,10 +5,9 @@ import {
   Search,
   Calendar,
   ChevronRight,
-  ChevronLeft,
   Activity,
   Filter,
-  UserCheck,
+  UserCheck,                                              
   Bell,
   Stethoscope,
 } from "lucide-react";
@@ -19,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import api from "@/lib/api";
 import { useAuth } from "@/auth/authContext";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Pagination,
@@ -38,65 +36,41 @@ interface MedicalAppointment {
   shiftId: number;
   date: string;
   slotNumber: number;
-  status: "WAITING" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  status: "WAITING" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "REFERRAL";
   bookingType: string;
   bookedBy: string;
   symptomInitial?: string;
   isVisit?: boolean;
-  // Backend returns lowercase aliases with nested user object
+  isReferral?: boolean;
+  referralInfo?: any;
+  // Custom patient details (for booking for relatives)
+  patientName?: string;
+  patientPhone?: string;
+  patientDob?: string;
+  patientGender?: "MALE" | "FEMALE";
+  // Support both lowercase (standard) and uppercase (legacy/backend) aliases
   patient?: {
     id: number;
-    dateOfBirth: string;
-    gender: "MALE" | "FEMALE";
-    phoneNumber: string;
-    user?: {
-      id: number;
-      fullName: string;
-      email: string;
-      avatar?: string;
-    };
-    // Legacy: some APIs might return fullName directly
     fullName?: string;
+    gender?: string;
+    dateOfBirth?: string;
+    phoneNumber?: string;
+    user?: {
+      fullName: string;
+    };
   };
-  doctor?: {
+  Patient?: {
     id: number;
-    user?: {
-      id: number;
-      fullName: string;
-      email: string;
-      avatar?: string;
-    };
     fullName?: string;
+    User?: {
+      fullName: string;
+    };
   };
   shift?: {
     id: number;
     name: string;
     startTime: string;
     endTime: string;
-  };
-  // Legacy uppercase (for backward compatibility with API responses)
-  Patient?: {
-    id: number;
-    dateOfBirth: string;
-    gender: "MALE" | "FEMALE";
-    phoneNumber: string;
-    User?: {
-      id: number;
-      fullName: string;
-      email: string;
-      avatar?: string;
-    };
-    fullName?: string;
-  };
-  Doctor?: {
-    id: number;
-    User?: {
-      id: number;
-      fullName: string;
-      email: string;
-      avatar?: string;
-    };
-    fullName?: string;
   };
   Shift?: {
     id: number;
@@ -110,8 +84,9 @@ export default function MedicalList() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  // filterStatus uses union type including REFERRAL
   const [filterStatus, setFilterStatus] = useState<
-    "all" | "WAITING" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+    "all" | "WAITING" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "REFERRAL"
   >("all");
   const [appointments, setAppointments] = useState<MedicalAppointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +120,6 @@ export default function MedicalList() {
       return;
     }
   }, [user, authLoading]);
-
   // Fetch appointments from API
   const fetchAppointments = async (silent = false) => {
     try {
@@ -159,29 +133,13 @@ export default function MedicalList() {
         return;
       }
 
-
       const currentDoctorId = user.doctorId;
       const dateToFetch = showAllDates ? undefined : selectedDate;
       const today = new Date().toLocaleDateString("en-CA");
 
-      console.log(
-        "MedicalList - Fetching data for doctor:",
-        currentDoctorId,
-        "date:",
-        dateToFetch || "ALL",
-        "showAllDates:",
-        showAllDates
-      );
-      console.log("ðŸ” MedicalList - User info:", {
-        userId: user.id,
-        doctorId: user.doctorId,
-        roleId: user.roleId,
-      });
-
-      // Fetch both appointments and visits for current doctor
+      // Fetch appointments, visits AND referrals
       let appointmentsRes, visitsRes;
 
-      // Build query string
       const appointmentsQuery = showAllDates
         ? `/appointments?doctorId=${currentDoctorId}`
         : `/appointments?doctorId=${currentDoctorId}&date=${dateToFetch}`;
@@ -189,69 +147,33 @@ export default function MedicalList() {
       const visitsQuery = showAllDates
         ? `/visits?doctorId=${currentDoctorId}`
         : `/visits?doctorId=${currentDoctorId}&startDate=${dateToFetch}&endDate=${dateToFetch}`;
+      
+      const referralsQuery = `/visits/referrals/pending`;
 
-      try {
-        appointmentsRes = await api.get(appointmentsQuery);
-        console.log(
-          "MedicalList - Appointments response:",
-          appointmentsRes.data
-        );
-      } catch (apptErr: any) {
-        console.error("MedicalList - Error fetching appointments:", apptErr);
-        console.error("MedicalList - Appointments error details:", {
-          message: apptErr.message,
-          response: apptErr.response?.data,
-          status: apptErr.response?.status,
-          url: apptErr.config?.url,
-        });
-        appointmentsRes = {
-          data: {
-            success: false,
-            data: [],
-            message: apptErr.response?.data?.message || apptErr.message,
-          },
-        };
+      // Parallel fetch
+      const [apptResult, visitResult, refResult] = await Promise.allSettled([
+        api.get(appointmentsQuery),
+        api.get(visitsQuery),
+        api.get(referralsQuery)
+      ]);
+
+      // Process Appointments
+      appointmentsRes = apptResult.status === 'fulfilled' ? apptResult.value : { data: { success: false, data: [] } };
+      
+      // Process Visits
+      visitsRes = visitResult.status === 'fulfilled' ? visitResult.value : { data: { success: false, data: [] } };
+
+      // Process Referrals
+      let referralsData: any[] = [];
+      if (refResult.status === 'fulfilled' && refResult.value.data.success) {
+        referralsData = refResult.value.data.data || [];
       }
 
-      try {
-        visitsRes = await api.get(visitsQuery);
-        console.log("MedicalList - Visits response:", visitsRes.data);
-      } catch (visitErr: any) {
-        console.error("MedicalList - Error fetching visits:", visitErr);
-        console.error("MedicalList - Visits error details:", {
-          message: visitErr.message,
-          response: visitErr.response?.data,
-          status: visitErr.response?.status,
-          url: visitErr.config?.url,
-        });
-        visitsRes = {
-          data: {
-            success: false,
-            data: [],
-            message: visitErr.response?.data?.message || visitErr.message,
-          },
-        };
-      }
-
-      if (appointmentsRes.data.success) {
-        const appointmentsData = appointmentsRes.data.data || [];
-        const visitsData = visitsRes.data.success
-          ? visitsRes.data.data || []
-          : [];
-
-        console.log(
-          "MedicalList - Appointments count:",
-          appointmentsData.length
-        );
-        console.log("MedicalList - Visits count:", visitsData.length);
-        console.log(
-          "MedicalList - First appointment:",
-          appointmentsData[0]
-        );
-        console.log("MedicalList - First visit:", visitsData[0]);
-
-        // Combine appointments and visits
-        // Convert visits to appointment-like format for display
+      if (appointmentsRes.data.success || visitsRes.data.success || referralsData.length > 0) {
+        const appointmentsData = appointmentsRes.data.success ? appointmentsRes.data.data || [] : [];
+        const visitsData = visitsRes.data.success ? visitsRes.data.data || [] : [];
+        
+        // Convert visits to appointment format
         const visitAppointments = visitsData.map((visit: any) => {
           const appointment = visit.appointment || {};
           const patient = visit.patient || {};
@@ -287,7 +209,38 @@ export default function MedicalList() {
             },
             shift: appointment.shift || visit.appointment?.shift,
             isVisit: true,
+            patientName: appointment.patientName,
+            patientPhone: appointment.patientPhone,
+            patientDob: appointment.patientDob,
+            patientGender: appointment.patientGender,
           };
+        });
+
+        // Convert Referrals to appointment format
+        const referralAppointments = referralsData.map((ref: any) => {
+           // ref structure: { ...referralFields, visit: { patientName, visitCode, ... } }
+           // We need to shape this like MedicalAppointment
+           return {
+             id: ref.visit.id, // Use visit ID as key
+             visitId: ref.visit.id,
+             patientId: ref.visit.patientId,
+             doctorId: currentDoctorId, // Me
+             shiftId: 0,
+             date: ref.createdAt.split('T')[0],
+             slotNumber: 0,
+             status: "REFERRAL", // Custom status for UI
+             bookingType: "REFERRAL",
+             bookedBy: "DOCTOR",
+             symptomInitial: ref.reason,
+             isVisit: true,
+             isReferral: true,
+             referralInfo: ref,
+             patient: {
+               id: ref.visit.patientId,
+               fullName: ref.visit.patientName, 
+               user: { fullName: ref.visit.patientName } 
+             }
+           };
         });
 
         // Filter out appointments that already have visits
@@ -298,64 +251,34 @@ export default function MedicalList() {
           .filter((apt: any) => !appointmentIdsWithVisits.has(apt.id))
           .map((apt: any) => ({ ...apt, isVisit: false }));
 
-        // Combine all
-        const allAppointments = [...uniqueAppointments, ...visitAppointments];
+        // Combine all: Referrals first?
+        const allAppointments = [...referralAppointments, ...visitAppointments, ...uniqueAppointments];
 
         console.log(
           "MedicalList - Combined appointments count:",
           allAppointments.length
         );
-        console.log("MedicalList - All appointments:", allAppointments);
-
+        
         // Use combined data
         setAppointments(allAppointments);
 
         // Show info if no data
         if (allAppointments.length === 0) {
-          console.warn(
-            "MedicalList - No appointments or visits found for today"
-          );
-          console.warn("MedicalList - Check:", {
-            doctorId: currentDoctorId,
-            date: dateToFetch || "ALL",
-            showAllDates: showAllDates,
-            appointmentsCount: appointmentsData.length,
-            visitsCount: visitsData.length,
-            appointmentsQuery: appointmentsQuery,
-            visitsQuery: visitsQuery,
-          });
-          // Don't set error, just show empty state
           setError(null);
         }
       } else {
         // API returned success: false
-        console.warn(
-          "MedicalList - Appointments API returned success: false"
-        );
-        console.warn("MedicalList - Response:", appointmentsRes.data);
         setAppointments([]);
         setError(appointmentsRes.data.message || "Failed to load appointments");
       }
     } catch (err: any) {
-      // This catch should rarely be hit now since we catch individual API calls
       console.error("MedicalList - Unexpected error:", err);
-      console.error("MedicalList - Error details:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        url: err.config?.url,
-        stack: err.stack,
-      });
       setAppointments([]);
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
         "An error occurred while loading appointments";
       setError(errorMessage);
-      // Show toast in development
-      if (import.meta.env.DEV) {
-        toast.error(`Error loading appointments: ${errorMessage}`);
-      }
     } finally {
       if (!silent) setLoading(false);
     }
@@ -380,7 +303,9 @@ export default function MedicalList() {
 
   const filteredAppointments = appointments.filter((appointment) => {
     // Get patient name from nested user object
+    // Get patient name from nested user object or custom booking details
     const patientName =
+      appointment.patientName ||
       appointment.patient?.user?.fullName ||
       appointment.Patient?.User?.fullName ||
       appointment.patient?.fullName ||
@@ -397,6 +322,19 @@ export default function MedicalList() {
       filterStatus === "all" || appointment.status === filterStatus;
 
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    // Sort by Slot Number (Ascending) - Primary
+    if (a.slotNumber && b.slotNumber) {
+      if (a.slotNumber !== b.slotNumber) {
+        return a.slotNumber - b.slotNumber;
+      }
+    }
+    // If one has slot number and other doesn't (0), prioritize the one with slot number
+    if (a.slotNumber && !b.slotNumber) return -1;
+    if (!a.slotNumber && b.slotNumber) return 1;
+
+    // Secondary Sort: By ID (or Date)
+    return a.id - b.id;
   });
 
   // Calculate pagination
@@ -434,6 +372,8 @@ export default function MedicalList() {
         return "bg-green-100 text-green-800 border-green-200";
       case "CANCELLED":
         return "bg-red-100 text-red-800 border-red-200";
+      case "REFERRAL":
+        return "bg-purple-100 text-purple-800 border-purple-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -442,7 +382,7 @@ export default function MedicalList() {
   const getStatusText = (status: string) => {
     switch (status) {
       case "WAITING":
-        return "Chờ khám";
+        return "Chờ checkin";
       case "CHECKED_IN":
         return "Đã check-in";
       case "IN_PROGRESS":
@@ -451,41 +391,28 @@ export default function MedicalList() {
         return "Đã khám";
       case "CANCELLED":
         return "Đã hủy";
+      case "REFERRAL":
+        return "Chuyển khoa";
       default:
         return status;
     }
   };
 
   const calculateAge = (dateOfBirth: string) => {
+    // ...
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-    return age;
+    // basic age calc
+    return today.getFullYear() - birthDate.getFullYear();
   };
 
   const handleCallPatient = (appointment: MedicalAppointment) => {
-    const patientName =
-      appointment.patient?.user?.fullName ||
-      appointment.patient?.fullName ||
-      appointment.Patient?.User?.fullName ||
-      appointment.Patient?.fullName ||
-      "Unknown";
-    console.log(
-      "Calling patient:",
-      patientName,
-      "appointment:",
-      appointment
-    );
+    // If Referral, go to Consultation Page
+    if (appointment.isReferral && appointment.visitId) {
+       navigate(`/doctor/consultation/${appointment.visitId}`);
+       return;
+    }
 
-    // Navigate to medical form for examination
-    // Use visitId if it's a visit, otherwise use appointmentId
     const idToUse =
       appointment.isVisit && appointment.visitId
         ? appointment.visitId
@@ -767,6 +694,9 @@ export default function MedicalList() {
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
                       Tên bệnh nhân
                     </th>
+                    <th className="text-center py-4 px-4 text-sm font-semibold text-slate-700 w-20">
+                      STT
+                    </th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-slate-700">
                       Mã khám
                     </th>
@@ -785,7 +715,7 @@ export default function MedicalList() {
                   {paginatedAppointments.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="py-12 text-center text-slate-500"
                       >
                         <Search className="h-12 w-12 mx-auto mb-3 text-slate-300" />
@@ -810,21 +740,28 @@ export default function MedicalList() {
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
                             {(() => {
-                              // Get patient data - API returns patient.user.fullName, not patient.fullName
                               const patient =
                                 appointment.patient || appointment.Patient;
-                              const patientUser =
-                                appointment.patient?.user ||
-                                appointment.Patient?.User;
-                              const patientName =
-                                patientUser?.fullName ||
-                                patient?.fullName ||
-                                "Unknown";
-                              const patientGender = patient?.gender || "MALE";
-                              const patientDateOfBirth =
-                                patient?.dateOfBirth || patient?.dateOfBirth;
 
-                              if (!patient) {
+                              // Prioritize custom patient details from booking (for relatives)
+                              const patientName =
+                                appointment.patientName ||
+                                appointment.patient?.user?.fullName ||
+                                appointment.Patient?.User?.fullName ||
+                                appointment.patient?.fullName ||
+                                appointment.Patient?.fullName ||
+                                "";
+                                
+                              const patientGender = 
+                                appointment.patientGender || 
+                                appointment.patient?.gender || 
+                                "MALE";
+                                
+                              const patientDateOfBirth = 
+                                appointment.patientDob || 
+                                appointment.patient?.dateOfBirth;
+
+                              if (!patient && !appointment.patientName) {
                                 console.warn(
                                   "No patient data for appointment:",
                                   appointment.id
@@ -870,6 +807,16 @@ export default function MedicalList() {
                             })()}
                           </div>
                         </td>
+                        <td className="py-4 px-4 text-center">
+                          <div className={cn(
+                            "inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm",
+                            appointment.slotNumber 
+                              ? "bg-blue-100 text-blue-700" 
+                              : "bg-slate-100 text-slate-400"
+                          )}>
+                             {appointment.slotNumber || "-"}
+                          </div>
+                        </td>
                         <td className="py-4 px-6">
                           <Badge
                             variant="outline"
@@ -901,6 +848,17 @@ export default function MedicalList() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-2">
+                            {/* Show "Kiểm tra" button for REFERRAL status */}
+                            {appointment.status === "REFERRAL" && appointment.visitId && (
+                              <Button
+                                size="sm"
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                onClick={() => navigate(`/doctor/consultation/${appointment.visitId}`)}
+                              >
+                                <Stethoscope className="h-4 w-4 mr-1" />
+                                Kiểm tra
+                              </Button>
+                            )}
                             {/* Show "Chi tiết" for completed or cancelled appointments */}
                             {(appointment.status === "COMPLETED" ||
                               appointment.status === "CANCELLED") && (

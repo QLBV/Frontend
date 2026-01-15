@@ -14,10 +14,14 @@ export interface Appointment {
   updatedAt: string
   displayStatus?: string
   slotNumber?: number
+  queueNumber?: number
   patient?: {
     id: number
     fullName: string
     patientCode: string
+    gender?: string
+    dateOfBirth?: string
+    phone?: string
   }
   doctor?: {
     id: number
@@ -38,6 +42,10 @@ export interface Appointment {
     startTime: string
     endTime: string
   }
+  patientName?: string
+  patientPhone?: string
+  patientDob?: string
+  patientGender?: string
 }
 
 export interface CreateAppointmentData {
@@ -46,6 +54,10 @@ export interface CreateAppointmentData {
   date: string
   symptomInitial?: string
   patientId?: number // Required for offline booking
+  patientName?: string
+  patientPhone?: string
+  patientDob?: string
+  patientGender?: "MALE" | "FEMALE" | "OTHER"
 }
 
 /**
@@ -145,3 +157,29 @@ export const cancelAppointment = async (
 export const markNoShow = async (appointmentId: number): Promise<void> => {
   await api.put(`/appointments/${appointmentId}/no-show`)
 }
+
+/**
+ * Upload symptom images
+ */
+export const uploadSymptomImages = async (
+  appointmentId: number,
+  files: File[]
+): Promise<{ imageUrls: string[] }> => {
+  const formData = new FormData()
+  files.forEach((file) => {
+    formData.append("images", file)
+  })
+
+  const response = await api.post(
+    `/appointments/${appointmentId}/symptoms/images`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  )
+  return response.data.data
+}
+
+

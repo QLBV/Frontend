@@ -82,7 +82,10 @@ export default function DoctorDashboardPage() {
               visitId: visit.id,
               appointmentId: visit.appointmentId,
               patientId: visit.patientId,
-              patient: visit.patient,
+              patient: {
+                ...visit.patient,
+                fullName: visit.appointment?.patientName || visit.patient?.fullName || visit.patient?.user?.fullName
+              },
               shift: visit.appointment?.shift || { startTime: 'N/A', endTime: 'N/A' },
               date: visitDate,
               status: visit.status, // Keep original visit status (EXAMINING, EXAMINED, COMPLETED)
@@ -94,6 +97,10 @@ export default function DoctorDashboardPage() {
             .filter((apt: any) => !visits.some((v: any) => v.appointmentId === apt.id))
             .map((apt: any) => ({
               ...apt,
+              patient: {
+                ...apt.patient,
+                fullName: apt.patientName || apt.patient?.fullName || apt.patient?.user?.fullName
+              },
               isVisit: false,
             }))
         ]
@@ -168,7 +175,7 @@ export default function DoctorDashboardPage() {
       NO_SHOW: "bg-gray-500/10 text-gray-700 border-gray-200",
     }
     const labels: Record<string, string> = {
-      WAITING: "Chờ khám",
+      WAITING: "Chờ checkin",
       CHECKED_IN: "Đã check-in",
       EXAMINING: "Đang khám",
       EXAMINED: "Đã khám",

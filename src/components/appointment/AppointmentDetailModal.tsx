@@ -105,8 +105,12 @@ export function AppointmentDetailModal({ isOpen, onOpenChange, appointment }: Ap
                      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
                          <div className="flex items-center justify-between pb-3 border-b border-gray-50">
                              <div>
-                                 <p className="font-bold text-gray-900 text-lg">{appointment.patient?.name}</p>
-                                 <p className="text-xs text-gray-500">{appointment.patient?.code}</p>
+                                 <p className="font-bold text-gray-900 text-lg">
+                                   {appointment.patientName || appointment.patient?.name || "N/A"}
+                                 </p>
+                                 {appointment.patient?.code && (
+                                     <p className="text-xs text-gray-500">{appointment.patient.code}</p>
+                                 )}
                              </div>
                              <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
                                  <User className="w-5 h-5" />
@@ -115,20 +119,30 @@ export function AppointmentDetailModal({ isOpen, onOpenChange, appointment }: Ap
                          <div className="grid grid-cols-2 gap-4 text-sm">
                              <div>
                                  <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Ngày sinh</p>
-                                 <p className="font-medium text-gray-700">{appointment.patient?.dob || "N/A"}</p>
+                                 <p className="font-medium text-gray-700">
+                                   {appointment.patientDob || appointment.patient?.dob || "N/A"}
+                                 </p>
                              </div>
                              <div>
                                  <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Giới tính</p>
-                                 <p className="font-medium text-gray-700">{appointment.patient?.gender || "N/A"}</p>
+                                 <p className="font-medium text-gray-700">
+                                   {appointment.patientGender === "MALE" ? "Nam" : 
+                                    appointment.patientGender === "FEMALE" ? "Nữ" : 
+                                    appointment.patient?.gender || "N/A"}
+                                 </p>
                              </div>
                              <div>
                                  <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Điện thoại</p>
-                                 <p className="font-medium text-gray-700">{appointment.patient?.phone || "N/A"}</p>
+                                 <p className="font-medium text-gray-700">
+                                   {appointment.patientPhone || appointment.patient?.phone || "N/A"}
+                                 </p>
                              </div>
-                             <div>
-                                 <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Địa chỉ</p>
-                                 <p className="font-medium text-gray-700 truncate" title={appointment.patient?.address}>{appointment.patient?.address || "N/A"}</p>
-                             </div>
+                             {appointment.patient?.address && (
+                                 <div>
+                                     <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Địa chỉ</p>
+                                     <p className="font-medium text-gray-700 truncate" title={appointment.patient.address}>{appointment.patient.address}</p>
+                                 </div>
+                             )}
                          </div>
                      </div>
                 </div>

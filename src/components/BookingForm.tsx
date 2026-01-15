@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -44,14 +45,18 @@ import {
   Phone,
   UserCheck,
   CalendarCheck,
-  Activity
+  Activity,
+  Upload,
+  X,
+  Image as ImageIcon,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { SpecialtyService, type Specialty } from "@/services/specialty.service"
 import { ShiftService, type DoctorWithShifts } from "@/services/shift.service"
-import { createAppointment } from "@/services/appointment.service"
+import { createAppointment, uploadSymptomImages } from "@/services/appointment.service"
 import { useAuth } from "@/auth/authContext"
 
 // Map specialty names to icons for visual appeal
@@ -103,7 +108,14 @@ export function BookingForm() {
   const [patientName, setPatientName] = useState("")
   const [patientPhone, setPatientPhone] = useState("")
   const [patientEmail, setPatientEmail] = useState("")
+  const [patientDob, setPatientDob] = useState("")
+  const [patientGender, setPatientGender] = useState<"MALE" | "FEMALE" | "OTHER">("MALE")
+  const [isBookingForRelative, setIsBookingForRelative] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
   const [symptoms, setSymptoms] = useState("")
+  const [symptomImages, setSymptomImages] = useState<File[]>([])
+  const [symptomImagePreviews, setSymptomImagePreviews] = useState<string[]>([])
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [createdAppointment, setCreatedAppointment] = useState<any>(null)
@@ -127,29 +139,41 @@ export function BookingForm() {
     fetchSpecialties()
   }, [])
 
-  // Pre-fill patient info if user is authenticated
+  // Fetch patient profile once
   useEffect(() => {
-    if (isAuthenticated && user) {
-      setPatientName(user.fullName || "")
-      setPatientEmail(user.email || "")
-      
-      // Fetch more detailed patient profile for phone number if needed
-      const fetchPatientProfile = async () => {
+    const fetchPatientProfile = async () => {
+      if (isAuthenticated && user && user.patientId) {
         try {
-          if (user.patientId) {
-            const { getPatientById } = await import("@/services/patient.service")
-            const patientData = await getPatientById(user.patientId)
-            if (patientData && patientData.phone) {
-              setPatientPhone(patientData.phone)
-            }
-          }
+          const { getPatientById } = await import("@/services/patient.service")
+          const patientData = await getPatientById(user.patientId)
+          setUserProfile(patientData)
         } catch (error) {
-          console.error("Error fetching patient profile for pre-fill:", error)
+          console.error("Error fetching patient profile:", error)
         }
       }
-      fetchPatientProfile()
     }
+    fetchPatientProfile()
   }, [isAuthenticated, user])
+
+  // Handle form filling based on mode
+  useEffect(() => {
+    if (isBookingForRelative) {
+      // Clear fields for relative
+      setPatientName("")
+      setPatientPhone("")
+      setPatientDob("")
+      setPatientGender("MALE")
+      // We keep email as user email for confirmation
+    } else {
+      // Pre-fill from profile
+      setPatientName(user?.fullName || "")
+      if (userProfile) {
+        setPatientPhone(userProfile.phone || "")
+        setPatientDob(userProfile.dateOfBirth ? String(userProfile.dateOfBirth).split('T')[0] : "")
+        setPatientGender(userProfile.gender || "MALE")
+      }
+    }
+  }, [isBookingForRelative, userProfile, user])
 
   // Fetch doctors by date when date and specialty are selected (NEW FLOW)
   useEffect(() => {
@@ -218,7 +242,7 @@ export function BookingForm() {
     }
 
     // Validation
-    if (!selectedDoctor || !selectedShift || !date || !patientName || !patientPhone || !patientEmail) {
+    if (!selectedDoctor || !selectedShift || !date || !patientName || !patientPhone || !patientEmail || !patientDob) {
       toast.error("Vui lòng điền đầy đủ thông tin")
       return
     }
@@ -238,7 +262,23 @@ export function BookingForm() {
         shiftId: selectedShift!,
         date: format(date!, "yyyy-MM-dd"),
         symptomInitial: symptoms || undefined,
+        patientName,
+        patientPhone,
+        patientDob,
+        patientGender,
       })
+      
+      // Upload images if any
+      if (symptomImages.length > 0) {
+        try {
+          await uploadSymptomImages(result.id, symptomImages)
+        } catch (uploadError) {
+          console.error("Error uploading images:", uploadError)
+          toast.warning("Đặt lịch thành công nhưng không thể tải lên hình ảnh.")
+        }
+      }
+      
+
       
       setCreatedAppointment(result)
       toast.success("Đặt lịch hẹn thành công!")
@@ -717,37 +757,63 @@ export function BookingForm() {
                           <div className="grid grid-cols-1 gap-2">
                             {selectedDoctorShifts.map((shiftData) => {
                               const isShiftSelected = selectedShift === shiftData.shift.id
+                              const isFull = shiftData.isFull || (shiftData.currentBookings || 0) >= (shiftData.maxSlots || 10)
                               
                               return (
                                 <button
                                   key={shiftData.doctorShiftId}
                                   type="button"
+                                  disabled={isFull}
                                   onClick={() => {
-                                    setSelectedShift(shiftData.shift.id)
-                                    setStep(5)
+                                    if (!isFull) {
+                                      setSelectedShift(shiftData.shift.id)
+                                      setStep(5)
+                                    }
                                   }}
                                   className={cn(
-                                    "flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all duration-200",
+                                    "flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all duration-200 w-full",
                                     isShiftSelected
                                       ? "border-primary bg-gradient-to-r from-primary to-cyan-500 text-white shadow-lg"
-                                      : "border-slate-200 bg-white hover:border-primary/50 hover:shadow-sm"
+                                      : isFull
+                                        ? "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed"
+                                        : "border-slate-200 bg-white hover:border-primary/50 hover:shadow-sm"
                                   )}
                                 >
                                   <Clock className={cn(
-                                    "h-5 w-5",
+                                    "h-5 w-5 flex-shrink-0",
                                     isShiftSelected ? "text-white" : "text-primary"
                                   )} />
-                                  <div className="flex-1">
-                                    <div className="font-semibold text-sm">{shiftData.shift.name}</div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-semibold text-sm truncate">{shiftData.shift.name}</div>
                                     <div className={cn(
-                                      "text-xs",
+                                      "text-xs mb-1.5",
                                       isShiftSelected ? "text-white/80" : "text-muted-foreground"
                                     )}>
                                       {shiftData.shift.startTime} - {shiftData.shift.endTime}
                                     </div>
+                                    
+                                    {/* Slot Info */}
+                                    <div className="flex items-center gap-2">
+                                      <div className={cn(
+                                        "text-[10px] px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1",
+                                        isShiftSelected 
+                                            ? "bg-white/20 text-white" 
+                                            : isFull
+                                                ? "bg-red-100 text-red-600"
+                                                : "bg-slate-100 text-slate-600"
+                                      )}>
+                                        <Users className="h-3 w-3" />
+                                        {shiftData.currentBookings || 0}/{shiftData.maxSlots || 10}
+                                      </div>
+                                      {isFull && (
+                                        <span className="text-[10px] font-bold text-red-500 uppercase bg-red-50 px-1 rounded border border-red-100">
+                                          Hết chỗ
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                   {isShiftSelected && (
-                                    <CheckCircle2 className="h-5 w-5 text-white" />
+                                    <CheckCircle2 className="h-5 w-5 text-white flex-shrink-0" />
                                   )}
                                 </button>
                               )
@@ -792,6 +858,18 @@ export function BookingForm() {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center space-x-2 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
+             <Switch 
+               id="relative-mode" 
+               checked={isBookingForRelative}
+               onCheckedChange={setIsBookingForRelative}
+             />
+             <div className="flex flex-col">
+               <Label htmlFor="relative-mode" className="text-base font-medium cursor-pointer">Đặt cho người thân</Label>
+               <span className="text-xs text-muted-foreground">Chọn tùy chọn này nếu bạn đặt lịch hộ người khác</span>
+             </div>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
@@ -824,6 +902,26 @@ export function BookingForm() {
                 className="h-12 bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20"
               />
             </div>
+            
+             {/* Gender - Required */}
+             <div className="space-y-2">
+              <Label htmlFor="gender" className="text-sm font-medium flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                Giới Tính <span className="text-destructive">*</span>
+              </Label>
+              <select
+                id="gender"
+                value={patientGender}
+                onChange={(e) => setPatientGender(e.target.value as any)}
+                disabled={!selectedShift}
+                required
+                className="flex h-12 w-full rounded-md border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="MALE">Nam</option>
+                <option value="FEMALE">Nữ</option>
+                <option value="OTHER">Khác</option>
+              </select>
+            </div>
 
             {/* Email - Required */}
             <div className="space-y-2">
@@ -843,20 +941,155 @@ export function BookingForm() {
               />
             </div>
             
-            {/* Symptoms - Optional */}
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="symptoms" className="text-sm font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Mô Tả Triệu Chứng <span className="text-xs text-muted-foreground">(Không bắt buộc)</span>
+            {/* Date of Birth - Required */}
+            <div className="space-y-2">
+              <Label htmlFor="dob" className="text-sm font-medium flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                Ngày Sinh <span className="text-destructive">*</span>
               </Label>
-              <Textarea
-                id="symptoms"
-                placeholder="Mô tả ngắn gọn triệu chứng hoặc lý do khám bệnh..."
-                value={symptoms}
-                onChange={(e) => setSymptoms(e.target.value)}
+              <Input
+                id="dob"
+                type="date"
+                value={patientDob}
+                onChange={(e) => setPatientDob(e.target.value)}
                 disabled={!selectedShift}
-                className="min-h-[100px] bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20 resize-none"
+                required
+                max={new Date().toISOString().split("T")[0]}
+                className="h-12 bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20"
               />
+            </div>
+            
+            {/* Symptoms and Images - Two columns */}
+            <div className="md:col-span-2 grid md:grid-cols-2 gap-6">
+              {/* Symptoms Description */}
+              <div className="space-y-2">
+                <Label htmlFor="symptoms" className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Mô Tả Triệu Chứng <span className="text-xs text-muted-foreground">(Không bắt buộc)</span>
+                </Label>
+                <Textarea
+                  id="symptoms"
+                  placeholder="Mô tả ngắn gọn triệu chứng hoặc lý do khám bệnh..."
+                  value={symptoms}
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  disabled={!selectedShift}
+                  className="min-h-[200px] bg-slate-50/50 border-slate-200 focus:border-primary focus:ring-primary/20 resize-none"
+                />
+              </div>
+
+              {/* Symptom Images Upload */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                  Hình Ảnh Triệu Chứng <span className="text-xs text-muted-foreground">(Không bắt buộc)</span>
+                </Label>
+                
+                <div className="space-y-3">
+                  {/* Upload Button */}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="symptom-images"
+                      accept="image/*"
+                      multiple
+                      disabled={!selectedShift}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || [])
+                        if (files.length === 0) return
+                        
+                        // Validate file size (max 5MB per file)
+                        const maxSize = 5 * 1024 * 1024
+                        const validFiles = files.filter(file => {
+                          if (file.size > maxSize) {
+                            toast.error(`File ${file.name} quá lớn. Kích thước tối đa là 5MB.`)
+                            return false
+                          }
+                          return true
+                        })
+                        
+                        // Limit to 5 images total
+                        const currentCount = symptomImages.length
+                        const availableSlots = 5 - currentCount
+                        const filesToAdd = validFiles.slice(0, availableSlots)
+                        
+                        if (validFiles.length > availableSlots) {
+                          toast.warning(`Bạn chỉ có thể upload tối đa 5 hình ảnh. ${availableSlots} hình đã được thêm.`)
+                        }
+                        
+                        if (filesToAdd.length > 0) {
+                          // Add new files
+                          setSymptomImages(prev => [...prev, ...filesToAdd])
+                          
+                          // Create previews
+                          filesToAdd.forEach(file => {
+                            const reader = new FileReader()
+                            reader.onloadend = () => {
+                              setSymptomImagePreviews(prev => [...prev, reader.result as string])
+                            }
+                            reader.readAsDataURL(file)
+                          })
+                        }
+                        
+                        // Reset input
+                        e.target.value = ''
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="symptom-images"
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed transition-all cursor-pointer",
+                        !selectedShift
+                          ? "border-slate-200 bg-slate-50/50 cursor-not-allowed"
+                          : "border-slate-300 bg-slate-50/50 hover:border-primary hover:bg-primary/5"
+                      )}
+                    >
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/10 to-cyan-500/10 flex items-center justify-center">
+                        <Upload className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-foreground">Tải lên hình ảnh</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PNG, JPG tối đa 5MB
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Tối đa 5 hình ({symptomImages.length}/5)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  {/* Image Previews - Compact Grid */}
+                  {symptomImagePreviews.length > 0 && (
+                    <div className="grid grid-cols-4 gap-3">
+                      {symptomImagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group aspect-square">
+                          <div 
+                            className="absolute inset-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in"
+                            onClick={() => setZoomedImage(preview)}
+                          >
+                            <img
+                              src={preview}
+                              alt={`Triệu chứng ${index + 1}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSymptomImages(prev => prev.filter((_, i) => i !== index))
+                              setSymptomImagePreviews(prev => prev.filter((_, i) => i !== index))
+                            }}
+                            className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -877,6 +1110,8 @@ export function BookingForm() {
                 setPatientPhone("")
                 setPatientEmail("")
                 setSymptoms("")
+                setSymptomImages([])
+                setSymptomImagePreviews([])
                 setStep(1)
               }}
               className="text-muted-foreground hover:text-foreground"
@@ -1015,7 +1250,13 @@ export function BookingForm() {
                <span className="text-muted-foreground">Bệnh nhân:</span>
                <div className="text-right">
                 <span className="font-semibold text-foreground block">{patientName}</span>
-                <span className="text-muted-foreground text-xs">{patientPhone}</span>
+                <span className="text-muted-foreground text-xs block">{patientPhone}</span>
+                <span className="text-muted-foreground text-xs block mt-1">
+                  {patientDob && format(new Date(patientDob), "dd/MM/yyyy")}
+                </span>
+                <span className="text-muted-foreground text-xs block mt-1">
+                  Giới tính: {patientGender === "MALE" ? "Nam" : patientGender === "FEMALE" ? "Nữ" : "Khác"}
+                </span>
                </div>
             </div>
           </div>
@@ -1035,6 +1276,31 @@ export function BookingForm() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Zoom Modal */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 md:p-10 animate-in fade-in duration-200"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setZoomedImage(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-[70] p-2 rounded-full hover:bg-white/10"
+          >
+            <X className="h-8 w-8" />
+          </button>
+          
+          <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
+            <img
+              src={zoomedImage}
+              alt="Zoomed preview"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl pointer-events-auto cursor-default"
+              onClick={(e) => e.stopPropagation()} 
+            />
+          </div>
+        </div>
+      )}
     </>
   )
 }

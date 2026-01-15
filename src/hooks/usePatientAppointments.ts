@@ -54,14 +54,22 @@ export function usePatientAppointments() {
       },
       patient: {
         id: apt.patient?.id || 0,
-        name: apt.patient?.fullName || "Bệnh nhân", // Fallback if missing
-        code: apt.patient?.patientCode || "N/A",
+        name: apt.patientName || apt.patient?.fullName || "Bệnh nhân",
+        code: (apt.patientName && apt.patient?.fullName && apt.patientName.toLowerCase().trim() !== apt.patient.fullName.toLowerCase().trim()) 
+              ? "" 
+              : (apt.patient?.patientCode || "N/A"),
         // Map extended fields safely
-        gender: (apt.patient as any)?.gender === 'MALE' ? 'Nam' : (apt.patient as any)?.gender === 'FEMALE' ? 'Nữ' : 'Khác',
-        dob: (apt.patient as any)?.dateOfBirth || (apt.patient as any)?.dob || "Chưa cập nhật",
-        phone: (apt.patient as any)?.phoneNumber || (apt.patient as any)?.phone || "Chưa cập nhật",
+        gender: (apt.patientGender === 'MALE' || (!apt.patientGender && (apt.patient as any)?.gender === 'MALE')) ? 'Nam' 
+              : (apt.patientGender === 'FEMALE' || (!apt.patientGender && (apt.patient as any)?.gender === 'FEMALE')) ? 'Nữ' 
+              : 'Khác',
+        dob: apt.patientDob 
+             ? new Date(apt.patientDob).toLocaleDateString("vi-VN") 
+             : ((apt.patient as any)?.dateOfBirth ? new Date((apt.patient as any).dateOfBirth).toLocaleDateString("vi-VN") : "Chưa cập nhật"),
+        phone: apt.patientPhone || (apt.patient as any)?.phoneNumber || (apt.patient as any)?.phone || "Chưa cập nhật",
         email: (apt.patient as any)?.email || (apt.patient as any)?.user?.email || "Chưa cập nhật",
-        address: (apt.patient as any)?.address || "Chưa cập nhật"
+        address: (apt.patientName && apt.patient?.fullName && apt.patientName.toLowerCase().trim() !== apt.patient.fullName.toLowerCase().trim())
+                 ? ""
+                 : ((apt.patient as any)?.address || "Chưa cập nhật")
       },
       type: apt.bookingType === "ONLINE" ? "Online" : "Offline",
       location: "Clinic",

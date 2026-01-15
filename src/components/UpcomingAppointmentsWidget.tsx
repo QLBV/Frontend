@@ -55,7 +55,7 @@ export default function UpcomingAppointmentsWidget({
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
-      WAITING: { label: "Chờ khám", className: "bg-blue-100/50 text-blue-700" },
+      WAITING: { label: "Chờ checkin", className: "bg-blue-100/50 text-blue-700" },
       CHECKED_IN: { label: "Đã đến", className: "bg-emerald-100/50 text-emerald-700" },
       IN_PROGRESS: { label: "Đang khám", className: "bg-purple-100/50 text-purple-700" },
       COMPLETED: { label: "Đã khám", className: "bg-slate-100/50 text-slate-600" },
@@ -131,7 +131,7 @@ export default function UpcomingAppointmentsWidget({
                   {/* Patient Info */}
                   <div className="mb-3">
                     <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors leading-tight">
-                      {appointment.patient?.fullName || "Bệnh nhân vãng lai"}
+                      {appointment.patientName || appointment.patient?.fullName || "Bệnh nhân vãng lai"}
                     </h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
                        MÃ: {appointment.patient?.patientCode || "N/A"}

@@ -212,7 +212,7 @@ export default function AppointmentDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
-      WAITING: { label: "Chờ khám", className: "bg-blue-50 text-blue-700 border-blue-200" },
+      WAITING: { label: "Chờ checkin", className: "bg-blue-50 text-blue-700 border-blue-200" },
       IN_PROGRESS: { label: "Đang khám", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
       COMPLETED: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
       CANCELLED: { label: "Đã hủy", className: "bg-red-50 text-red-700 border-red-200" },
@@ -324,7 +324,7 @@ export default function AppointmentDetailPage() {
                 <div className="flex items-center gap-4 text-blue-100">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span>{appointment.patient?.fullName || "N/A"}</span>
+                    <span>{appointment.patientName || appointment.patient?.fullName || "N/A"}</span>
                   </div>
                   <span>•</span>
                   <div className="flex items-center gap-2">
@@ -395,7 +395,7 @@ export default function AppointmentDetailPage() {
                 <div>
                   <p className="text-xs text-slate-500">Bệnh nhân</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {appointment.patient?.fullName || "N/A"}
+                    {appointment.patientName || appointment.patient?.fullName || "N/A"}
                   </p>
                   {appointment.patient?.patientCode && (
                     <p className="text-xs text-slate-500 mt-1">
@@ -466,10 +466,34 @@ export default function AppointmentDetailPage() {
               <div>
                 <p className="text-xs text-slate-500 mb-1">Họ và tên</p>
                 <p className="text-sm font-medium text-slate-900">
-                  {appointment.patient?.fullName || "N/A"}
+                  {appointment.patientName || appointment.patient?.fullName || "N/A"}
                 </p>
               </div>
-              {appointment.patient?.patientCode && (
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Số điện thoại</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {appointment.patientPhone || appointment.patient?.phone || "N/A"}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Ngày sinh</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {appointment.patientDob 
+                      ? new Date(appointment.patientDob).toLocaleDateString("vi-VN") 
+                      : (appointment.patient?.dateOfBirth ? new Date(appointment.patient.dateOfBirth).toLocaleDateString("vi-VN") : "N/A")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Giới tính</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {appointment.patientGender === "MALE" ? "Nam" : appointment.patientGender === "FEMALE" ? "Nữ" : 
+                     (appointment.patient?.gender === "MALE" ? "Nam" : appointment.patient?.gender === "FEMALE" ? "Nữ" : "Khác")}
+                  </p>
+                </div>
+              </div>
+              {appointment.patient?.patientCode && 
+               !(appointment.patientName && appointment.patient?.fullName && appointment.patientName.toLowerCase().trim() !== appointment.patient.fullName.toLowerCase().trim()) && (
                 <div>
                   <p className="text-xs text-slate-500 mb-1">Mã bệnh nhân</p>
                   <p className="text-sm font-medium text-slate-900">

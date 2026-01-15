@@ -555,7 +555,7 @@ export default function RecepPatientDetail() {
                                        <td className="py-5 px-8 font-black text-slate-900 uppercase text-sm group-hover:text-emerald-700 transition-colors">{inv.invoiceCode}</td>
                                        <td className="py-5 px-6 italic text-slate-500 text-xs font-bold">{format(new Date(inv.createdAt), "dd/MM/yyyy HH:mm")}</td>
                                        <td className="py-5 px-6 text-right font-black text-slate-900 group-hover:scale-105 transition-transform origin-right">
-                                          {parseFloat(inv.totalAmount.toString()).toLocaleString("vi-VN")}
+                                          {parseFloat(inv.totalAmount.toString()).toLocaleString("vi-VN")} VND
                                        </td>
                                        <td className="py-5 px-6 text-center">
                                           {inv.paymentStatus === 'PAID' ? 

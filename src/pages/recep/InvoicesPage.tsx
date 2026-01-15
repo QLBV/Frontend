@@ -319,7 +319,7 @@ export default function InvoicesPage() {
                               {invoice.patient?.fullName?.charAt(0)}
                             </div>
                             <div>
-                              <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase text-sm tracking-tight whitespace-nowrap">{invoice.patient?.fullName || "N/A"}</div>
+                              <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase text-sm tracking-tight whitespace-nowrap">{invoice.visit?.appointment?.patientName || invoice.patient?.fullName || "N/A"}</div>
                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {invoice.patient?.patientCode || "#---"}</div>
                             </div>
                           </div>
@@ -333,7 +333,7 @@ export default function InvoicesPage() {
                         <td className="py-3 px-4 text-right">
                           <div className="font-extrabold text-slate-900">{parseFloat(invoice.totalAmount.toString()).toLocaleString("vi-VN")} <span className="text-[10px] text-slate-400 ml-0.5 uppercase tracking-tighter">VND</span></div>
                           {invoice.paidAmount > 0 && invoice.paymentStatus !== 'PAID' && (
-                             <div className="text-[10px] text-emerald-600 font-bold uppercase mt-0.5">Đã thu: {parseFloat(invoice.paidAmount.toString()).toLocaleString("vi-VN")}</div>
+                             <div className="text-[10px] text-emerald-600 font-bold uppercase mt-0.5">Đã thu: {parseFloat(invoice.paidAmount.toString()).toLocaleString("vi-VN")} VND</div>
                           )}
                         </td>
                         <td className="py-3 px-4">

@@ -169,10 +169,10 @@ export class PrescriptionService {
       updatedAt: apiData.updatedAt,
       patient: {
         id: apiData.patientId,
-        fullName: apiData.patient?.user?.fullName || apiData.patient?.fullName || "N/A",
-        dateOfBirth: apiData.patient?.dateOfBirth || "",
-        gender: apiData.patient?.gender || "MALE",
-        phoneNumber: patientPhone,
+        fullName: apiData.visit?.appointment?.patientName || apiData.patient?.user?.fullName || apiData.patient?.fullName || "N/A",
+        dateOfBirth: apiData.visit?.appointment?.patientDob || apiData.patient?.dateOfBirth || "",
+        gender: apiData.visit?.appointment?.patientGender || apiData.patient?.gender || "MALE",
+        phoneNumber: apiData.visit?.appointment?.patientPhone || patientPhone,
         email: patientEmail,
         address: apiData.patient?.address || undefined,
         cccd: apiData.patient?.cccd || undefined

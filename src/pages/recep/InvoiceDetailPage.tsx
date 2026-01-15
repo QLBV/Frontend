@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "@/auth/authContext"
-import { ArrowLeft, Download, Printer, User, FileText, Activity, Check, Loader2, Edit, DollarSign } from "lucide-react"
+import { ArrowLeft, Download, User, FileText, Activity, Check, Loader2, Edit, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -17,8 +17,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -262,7 +260,7 @@ export default function InvoiceDetailPage() {
                   <span>•</span>
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span>{invoice.patient?.fullName || "N/A"}</span>
+                    <span>{invoice.visit?.appointment?.patientName || invoice.patient?.fullName || "N/A"}</span>
                   </div>
                   <span>•</span>
                   <div className="flex items-center gap-2">
@@ -329,7 +327,7 @@ export default function InvoiceDetailPage() {
                 <div>
                   <p className="text-xs text-slate-500">Bệnh nhân</p>
                   <p className="text-lg font-bold text-slate-900">
-                    {invoice.patient?.fullName || "N/A"}
+                    {invoice.visit?.appointment?.patientName || invoice.patient?.fullName || "N/A"}
                   </p>
                   {invoice.patient?.patientCode && (
                     <p className="text-xs text-slate-500 mt-1">
@@ -387,7 +385,7 @@ export default function InvoiceDetailPage() {
               <div>
                 <p className="text-xs text-slate-500 mb-1">Họ và tên</p>
                 <p className="text-sm font-medium text-slate-900">
-                  {invoice.patient?.fullName || "N/A"}
+                  {invoice.visit?.appointment?.patientName || invoice.patient?.fullName || "N/A"}
                 </p>
               </div>
               {invoice.patient?.patientCode && (
@@ -553,7 +551,7 @@ export default function InvoiceDetailPage() {
                   <div key={payment.id} className="flex justify-between items-center py-3 border-b last:border-0">
                     <div>
                       <div className="font-medium text-slate-900">
-                        {payment.amount.toLocaleString("vi-VN")} VND
+                        {new Intl.NumberFormat("vi-VN").format(parseFloat(payment.amount.toString()))} VND
                       </div>
                       <div className="text-sm text-slate-500">
                         {getPaymentMethodLabel(payment.paymentMethod)} -{" "}

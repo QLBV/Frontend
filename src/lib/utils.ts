@@ -6,12 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number | string | undefined | null): string {
-  if (amount === undefined || amount === null) return "0 ₫"
+  if (amount === undefined || amount === null) return "0 VND"
   const value = typeof amount === "string" ? parseFloat(amount) : amount
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(value)
+  return new Intl.NumberFormat("vi-VN").format(value) + " VND"
 }
 
 export function formatDate(date: string | Date | undefined | null): string {

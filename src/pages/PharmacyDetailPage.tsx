@@ -292,7 +292,7 @@ export default function PharmacyDetailPage() {
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-5 w-5 text-slate-400" />
                       <span className="text-xl font-bold text-slate-900">
-                        {medicine.importPrice.toLocaleString("vi-VN")} VND
+                        {new Intl.NumberFormat("vi-VN").format(Number(medicine.importPrice))} VND
                       </span>
                     </div>
                   </div>
@@ -301,7 +301,7 @@ export default function PharmacyDetailPage() {
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-5 w-5 text-blue-400" />
                       <span className="text-xl font-bold text-blue-600">
-                        {medicine.salePrice.toLocaleString("vi-VN")} VND
+                        {new Intl.NumberFormat("vi-VN").format(Number(medicine.salePrice))} VND
                       </span>
                     </div>
                   </div>
@@ -384,13 +384,13 @@ export default function PharmacyDetailPage() {
                               <div className="flex justify-between">
                                 <span>Giá nhập:</span>
                                 <span className="font-medium text-slate-900">
-                                  {importItem.importPrice.toLocaleString("vi-VN")} VND
+                                  {new Intl.NumberFormat("vi-VN").format(Number(importItem.importPrice))} VND
                                 </span>
                               </div>
                               <div className="flex justify-between">
                                 <span>Thành tiền:</span>
                                 <span className="font-medium text-slate-900">
-                                  {(importItem.quantity * importItem.importPrice).toLocaleString("vi-VN")} VND
+                                  {new Intl.NumberFormat("vi-VN").format(Number(importItem.quantity * importItem.importPrice))} VND
                                 </span>
                               </div>
                               {importItem.supplier && (

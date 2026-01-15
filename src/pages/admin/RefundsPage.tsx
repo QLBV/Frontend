@@ -113,7 +113,7 @@ export default function RefundsPage() {
                     <td className="py-4 px-6 font-medium">{refund.id}</td>
                     <td className="py-4 px-6 text-blue-600 hover:underline cursor-pointer">{refund.invoiceId}</td>
                     <td className="py-4 px-6">{refund.patientName}</td>
-                    <td className="py-4 px-6 font-semibold">{refund.amount.toLocaleString()} đ</td>
+                    <td className="py-4 px-6 font-semibold">{refund.amount.toLocaleString("vi-VN")} VND</td>
                     <td className="py-4 px-6 text-gray-600">{refund.reason}</td>
                     <td className="py-4 px-6 text-gray-600">{refund.requestDate}</td>
                     <td className="py-4 px-6">{getStatusBadge(refund.status)}</td>

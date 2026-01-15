@@ -162,12 +162,12 @@ export default function MedicineImportDetailPage() {
                 <CardContent className="space-y-4">
                     <div className="flex justify-between items-center py-2 border-b">
                         <span className="text-gray-600">Đơn giá nhập</span>
-                        <span className="font-medium">{importData.importPrice?.toLocaleString()} đ</span>
+                        <span className="font-medium">{importData.importPrice?.toLocaleString("vi-VN")} VND</span>
                     </div>
                      <div className="flex justify-between items-center py-2">
                         <span className="font-semibold text-gray-900">Tổng tiền</span>
                         <span className="font-bold text-xl text-green-600">
-                            {(importData.importPrice * importData.quantity).toLocaleString()} đ
+                            {(importData.importPrice * importData.quantity).toLocaleString("vi-VN")} VND
                         </span>
                     </div>
                 </CardContent>

@@ -71,6 +71,12 @@ export interface Invoice {
     visitDate: string
     symptoms?: string
     diagnosis?: string
+    appointment?: {
+      patientName?: string
+      patientPhone?: string
+      patientDob?: string
+      patientGender?: string
+    }
   }
   patient?: {
     id: number

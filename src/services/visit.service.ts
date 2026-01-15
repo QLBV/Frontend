@@ -76,6 +76,10 @@ export interface Visit {
   appointment?: {
     id: number
     date: string
+    patientName?: string
+    patientPhone?: string
+    patientDob?: string
+    patientGender?: string
     shift?: {
       id: number
       name: string

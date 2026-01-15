@@ -242,10 +242,8 @@ export default function MedicineReportPage() {
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
       minimumFractionDigits: 0,
-    }).format(value);
+    }).format(value) + " VND";
   };
 
   const topMedicinesChartData = (topMedicinesData?.topMedicines || []).map((item, idx) => ({

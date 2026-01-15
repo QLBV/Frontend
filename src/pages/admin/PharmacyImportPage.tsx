@@ -5,7 +5,6 @@ import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { 
-  Activity, 
   ArrowLeft, 
   Plus, 
   Trash2, 
@@ -183,7 +182,7 @@ export default function PharmacyImportPage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tổng giá vốn</p>
-                    <p className="text-2xl font-black text-slate-900">{totalCost.toLocaleString()} đ</p>
+                    <p className="text-2xl font-black text-slate-900">{totalCost.toLocaleString("vi-VN")} VND</p>
                   </div>
                 </CardContent>
               </Card>
@@ -195,7 +194,7 @@ export default function PharmacyImportPage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Giá trị bán ra</p>
-                    <p className="text-2xl font-black text-emerald-600">{totalValue.toLocaleString()} đ</p>
+                    <p className="text-2xl font-black text-emerald-600">{totalValue.toLocaleString("vi-VN")} VND</p>
                   </div>
                 </CardContent>
               </Card>

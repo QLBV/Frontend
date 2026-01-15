@@ -139,7 +139,7 @@ export default function ReceptionistAppointmentsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string; icon: any }> = {
-      WAITING: { label: "Chờ khám", className: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
+      WAITING: { label: "Chờ checkin", className: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
       IN_PROGRESS: { label: "Đang khám", className: "bg-amber-50 text-amber-700 border-amber-200", icon: Activity },
       COMPLETED: { label: "Đã khám", className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
       CANCELLED: { label: "Đã hủy", className: "bg-rose-50 text-rose-700 border-rose-200", icon: XCircle },
@@ -228,10 +228,14 @@ export default function ReceptionistAppointmentsPage() {
   }
 
   const filteredAppointments = appointments.filter((apt) => {
+    const patientName = apt.patientName || apt.patient?.fullName || ""
+    const patientCode = apt.patient?.patientCode || ""
+    const doctorName = apt.doctor?.user?.fullName || ""
+
     const matchesSearch =
-      apt.patient?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.patient?.patientCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.doctor?.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+      patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      patientCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doctorName.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesSearch
   })
 
@@ -319,7 +323,7 @@ export default function ReceptionistAppointmentsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="WAITING">Chờ khám</SelectItem>
+                    <SelectItem value="WAITING">Chờ checkin</SelectItem>
                     <SelectItem value="IN_PROGRESS">Đang khám</SelectItem>
                     <SelectItem value="COMPLETED">Đã khám</SelectItem>
                     <SelectItem value="CANCELLED">Đã hủy</SelectItem>
@@ -403,11 +407,18 @@ export default function ReceptionistAppointmentsPage() {
                         <td className="py-5 px-8">
                           <div className="flex items-center gap-4">
                             <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-100">
-                              {appointment.patient?.fullName?.charAt(0) || "?"}
+                              {(appointment.patientName || appointment.patient?.fullName || "?").charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase text-sm tracking-tight">{appointment.patient?.fullName || "N/A"}</div>
+                              <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors uppercase text-sm tracking-tight">
+                                {appointment.patientName || appointment.patient?.fullName || "N/A"}
+                              </div>
                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {appointment.patient?.patientCode || "#---"}</div>
+                              {appointment.patientName && appointment.patientName !== appointment.patient?.fullName && (
+                                <div className="text-[10px] text-slate-500 italic">
+                                  Đặt bởi: {appointment.patient?.fullName}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -438,7 +449,7 @@ export default function ReceptionistAppointmentsPage() {
                                  disabled={isCheckingIn === appointment.id}
                                >
                                  {isCheckingIn === appointment.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="w-4 h-4 mr-1.5" />}
-                                 Xác nhận
+                                 Checkin
                                </Button>
                              )}
                              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white hover:shadow-md border border-transparent hover:border-slate-200" asChild>
@@ -504,7 +515,12 @@ export default function ReceptionistAppointmentsPage() {
                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col gap-3">
                   <div className="flex justify-between items-center">
                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Bệnh nhân</span>
-                     <span className="text-sm font-extrabold text-slate-900">{selectedAppointment.patient?.fullName}</span>
+                     <span className="text-sm font-extrabold text-slate-900">
+                       {selectedAppointment.patientName || selectedAppointment.patient?.fullName}
+                       {selectedAppointment.patientName && selectedAppointment.patientName !== selectedAppointment.patient?.fullName && (
+                         <span className="block text-[10px] font-normal text-slate-500 mt-0.5">Đặt bởi: {selectedAppointment.patient?.fullName}</span>
+                       )}
+                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Bác sĩ</span>
@@ -581,7 +597,7 @@ export default function ReceptionistAppointmentsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tất cả</SelectItem>
-                      <SelectItem value="WAITING">Chờ khám</SelectItem>
+                      <SelectItem value="WAITING">Chờ checkin</SelectItem>
                       <SelectItem value="IN_PROGRESS">Đang khám</SelectItem>
                       <SelectItem value="COMPLETED">Đã khám</SelectItem>
                       <SelectItem value="CANCELLED">Đã hủy</SelectItem>

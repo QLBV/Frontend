@@ -59,6 +59,10 @@ interface Appointment {
     startTime: string
     endTime: string
   }
+  patientName?: string
+  patientPhone?: string
+  patientDob?: string
+  patientGender?: string
 }
 
 // Personal schedule interface
@@ -255,7 +259,7 @@ export default function DoctorShiftPage() {
     apts.forEach(apt => {
       const appointmentDate = apt.date ? apt.date.split('T')[0] : ""
       const appointmentTime = apt.shift?.startTime || apt.appointmentTime || ""
-      const patientName = apt.patient?.user?.fullName || "Bệnh nhân"
+      const patientName = apt.patientName || apt.patient?.user?.fullName || "Bệnh nhân"
       
       schedule.push({
         id: `appointment-${apt.id}`,
@@ -266,7 +270,7 @@ export default function DoctorShiftPage() {
         description: `Khám cho ${patientName}`,
         status: apt.status === "COMPLETED" ? "completed" :
                apt.status === "CANCELLED" ? "cancelled" : "active",
-        patientName: patientName
+        patientName: apt.patientName || apt.patient?.user?.fullName || "Bệnh nhân"
       })
     })
 

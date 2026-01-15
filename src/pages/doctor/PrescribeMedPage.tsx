@@ -138,10 +138,10 @@ export default function PrescribeMed() {
             if (patient) {
               setPatientData({
                 id: patient.id,
-                fullName: patientUser.fullName || patient.fullName || "Unknown",
-                dateOfBirth: patient.dateOfBirth || "",
-                gender: patient.gender || "MALE",
-                phoneNumber: patient.phoneNumber || "",
+                fullName: appointment.patientName || patientUser.fullName || patient.fullName || "Unknown",
+                dateOfBirth: appointment.patientDob || patient.dateOfBirth || "",
+                gender: appointment.patientGender || patient.gender || "MALE",
+                phoneNumber: appointment.patientPhone || patient.phoneNumber || "",
                 appointmentId: appointment.id || visit.appointmentId,
                 visitId: visit.id,
                 symptomInitial: appointment.symptomInitial,
@@ -181,10 +181,10 @@ export default function PrescribeMed() {
 
             setPatientData({
               id: patient.id,
-              fullName: patientUser.fullName || patient.fullName || "Unknown",
-              dateOfBirth: patient.dateOfBirth || "",
-              gender: patient.gender || "MALE",
-              phoneNumber: patient.phoneNumber || "",
+              fullName: appointment.patientName || patientUser.fullName || patient.fullName || "Unknown",
+              dateOfBirth: appointment.patientDob || patient.dateOfBirth || "",
+              gender: appointment.patientGender || patient.gender || "MALE",
+              phoneNumber: appointment.patientPhone || patient.phoneNumber || "",
               appointmentId: appointment.id,
               visitId: visitId,
               symptomInitial: appointment.symptomInitial,

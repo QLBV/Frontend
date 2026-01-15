@@ -567,12 +567,12 @@ export default function InventoryPage() {
                           </td>
                           <td className="p-4">
                             <span className="text-slate-600 font-semibold text-sm">
-                              {new Intl.NumberFormat('vi-VN').format(medicine.importPrice)}₫
+                              {new Intl.NumberFormat('vi-VN').format(medicine.importPrice)} VND
                             </span>
                           </td>
                           <td className="p-4">
                             <span className="font-bold text-blue-600">
-                              {new Intl.NumberFormat('vi-VN').format(medicine.salePrice)}₫
+                              {new Intl.NumberFormat('vi-VN').format(medicine.salePrice)} VND
                             </span>
                           </td>
                           <td className="p-4">
