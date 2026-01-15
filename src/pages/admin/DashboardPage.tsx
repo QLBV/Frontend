@@ -10,15 +10,15 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import { Link } from "react-router-dom"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import AdminSidebar from "@/components/sidebar/admin"
-import { MedicineService, type Medicine } from "@/services/medicine.service"
-import { DashboardService, type DashboardData } from "@/services/dashboard.service"
-import { ShiftService, type DoctorOnDuty } from "@/services/shift.service"
+import { Avatar, AvatarFallback } from "../../components/ui/avatar"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { MedicineService, type Medicine } from "../../features/inventory/services/medicine.service"
+import { DashboardService, type DashboardData } from "../../features/admin/services/dashboard.service"
+import { ShiftService, type DoctorOnDuty } from "../../features/shift/services/shift.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 
@@ -89,12 +89,12 @@ export default function AdminDashboardPage() {
     }
   }
 
-  // Derived Stats
+  
   const revenueData = useMemo(() => dashboardData?.charts?.dailyRevenue || [], [dashboardData])
   const overview = dashboardData?.overview
   const activities = dashboardData?.recentActivities || []
 
-  // Auto-expand on new activity and update count
+  
   useEffect(() => {
     if (activities.length > lastActivityCount && lastActivityCount !== 0) {
       setIsExpanded(true)
@@ -109,12 +109,12 @@ export default function AdminDashboardPage() {
     const total = dist.reduce((acc: number, curr: { count: number }) => acc + curr.count, 0)
     
     const colors: Record<string, string> = {
-      COMPLETED: "#10b981", // Emerald 500
-      NO_SHOW: "#3b82f6",   // Blue 500
-      IN_PROGRESS: "#f59e0b",// Amber 500
-      CHECKED_IN: "#ef4444", // Red 500
-      WAITING: "#64748b",    // Slate 500
-      CANCELLED: "#94a3b8"   // Slate 400
+      COMPLETED: "#10b981", 
+      NO_SHOW: "#3b82f6",   
+      IN_PROGRESS: "#f59e0b",
+      CHECKED_IN: "#ef4444", 
+      WAITING: "#64748b",    
+      CANCELLED: "#94a3b8"   
     }
 
     const labels: Record<string, string> = {
@@ -153,7 +153,7 @@ export default function AdminDashboardPage() {
   return (
     <AdminSidebar>
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8 bg-slate-50/50 min-h-screen">
-        {/* Header Section - Modern Greeting with Glassmorphism */}
+        {}
         <header className="flex flex-col lg:flex-row lg:items-end justify-between mb-6 md:mb-8 lg:mb-10 gap-4 md:gap-6">
           <div className="space-y-2 md:space-y-3">
 
@@ -173,7 +173,7 @@ export default function AdminDashboardPage() {
 
         </header>
 
-        {/* Premium Top Level Stats - Full Width */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
           {[
             { 
@@ -239,10 +239,10 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        {/* Full Width Operational Alerts - Top Level Prominence */}
+        {}
         <Card className="border-0 shadow-2xl shadow-rose-200/20 bg-white overflow-hidden rounded-2xl md:rounded-[28px] border border-white/60 mb-6 md:mb-8">
             <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-50">
-                {/* Header Section */}
+                {}
                 <div className="p-4 md:p-6 lg:w-1/4 bg-slate-50/30 flex flex-col justify-center">
                     <div className="flex items-center gap-4 mb-3">
                         <div className="h-11 w-11 rounded-2xl bg-rose-50 flex items-center justify-center border border-rose-100 shadow-sm shadow-rose-200/40 shrink-0">
@@ -258,9 +258,9 @@ export default function AdminDashboardPage() {
                     </Badge>
                 </div>
 
-                {/* Content Sections */}
+                {}
                 <div className="flex-1 p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                    {/* Low Stock Horizontal */}
+                    {}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-3 border-rose-500 pl-3">Sắp hết hàng</p>
@@ -280,7 +280,7 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
 
-                    {/* Expiry Horizontal */}
+                    {}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-3 border-amber-500 pl-3">Sắp hết hạn</p>
@@ -303,10 +303,10 @@ export default function AdminDashboardPage() {
             </div>
         </Card>
 
-        {/* Main Content Sections - Vertical Stack */}
+        {}
         <div className="space-y-8">
 
-            {/* Performance Chart Section - High Fidelity */}
+            {}
             <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-2xl md:rounded-[24px] border border-white/40 group/chart">
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-50 py-4 md:py-6 px-4 md:px-8 bg-slate-50/10 gap-3 md:gap-0">
                 <div className="space-y-1">
@@ -402,9 +402,9 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Doctors & Attendance Hub - Harmonized */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                {/* Appointment Status Distribution - Compact Premium */}
+                {}
                 <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-2xl md:rounded-[24px] border border-white/40">
                   <CardHeader className="pb-2 px-6 pt-6 border-b border-slate-50/50 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-black flex items-center gap-2.5">
@@ -482,7 +482,7 @@ export default function AdminDashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Doctors Tag Feed - Compact Premium */}
+                {}
                 <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden rounded-2xl md:rounded-[24px] border border-white/40">
                   <CardHeader className="pb-3 px-6 pt-6 border-b border-slate-50/50">
                     <CardTitle className="text-sm font-black flex items-center gap-2.5">
@@ -543,7 +543,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Real-time Activity Hub - Floating Widget with Expand/Collapse */}
+      {}
       <div className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isExpanded ? 'w-[calc(100vw-2rem)] max-w-[340px] md:w-[340px]' : 'w-12 h-12 md:w-14 md:h-14'}`}>
         <Card className={`border-0 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl overflow-hidden border border-white/40 ring-1 ring-slate-200/50 transition-all duration-500 ${!isExpanded ? 'rounded-full h-12 md:h-14' : 'rounded-2xl md:rounded-[28px] h-[90vh] max-h-[520px]'}`}>
             <div 

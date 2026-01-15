@@ -18,11 +18,11 @@ import {
   Filter,
   ArrowRight,
 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -38,21 +38,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
+} from "../../components/ui/table"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
+import { Switch } from "../../components/ui/switch"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { SpecialtyService, type Specialty, type Doctor } from "@/services/specialty.service"
-import api from "@/lib/api"
+} from "../../components/ui/select"
+import { SpecialtyService, type Specialty, type Doctor } from "../../features/appointment/services/specialty.service"
+import api from "../../lib/api"
 
 export default function SpecialtiesPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([])
@@ -70,13 +70,13 @@ export default function SpecialtiesPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   
-  // Pagination state
+  
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalSpecialties, setTotalSpecialties] = useState(0)
   const itemsPerPage = 10
 
-  // Form states
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -154,7 +154,7 @@ export default function SpecialtiesPage() {
     setFormData({
       name: specialty.name,
       description: specialty.description || "",
-      isActive: specialty.isActive !== false, // Use true by default
+      isActive: specialty.isActive !== false, 
     })
     setIsEditDialogOpen(true)
   }
@@ -263,7 +263,7 @@ export default function SpecialtiesPage() {
     }
   }
 
-  // No local filtering needed anymore as it's handled on server
+  
   const displaySpecialties = specialties
 
   return (
@@ -271,7 +271,7 @@ export default function SpecialtiesPage() {
       <div className="relative p-6 lg:p-8 min-h-screen bg-slate-50/50">
         <div className="max-w-[1600px] mx-auto space-y-6">
           
-          {/* Simplified Header Section */}
+          {}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -309,10 +309,10 @@ export default function SpecialtiesPage() {
 
 
 
-          {/* Compact Filter Bar */}
+          {}
           <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
             <div className="flex flex-col xl:flex-row gap-3">
-              {/* Search input with focus effects */}
+              {}
               <div className="relative flex-grow group">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -325,7 +325,7 @@ export default function SpecialtiesPage() {
                 />
               </div>
 
-              {/* Filters grid */}
+              {}
               <div className="flex flex-wrap items-center gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[180px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
@@ -344,7 +344,7 @@ export default function SpecialtiesPage() {
             </div>
           </div>
 
-          {/* Specialties List */}
+          {}
           <Card className="border-0 shadow-lg overflow-hidden bg-white rounded-[24px]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-4 border-b border-slate-50">
               <div className="flex flex-col gap-1">
@@ -439,7 +439,7 @@ export default function SpecialtiesPage() {
                     </TableBody>
                   </Table>
 
-                  {/* Pagination Control */}
+                  {}
                   <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
                     <div className="flex items-center gap-2">
                       <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
@@ -505,7 +505,7 @@ export default function SpecialtiesPage() {
             </CardContent>
           </Card>
 
-          {/* Create Dialog */}
+          {}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border shadow-lg rounded-xl bg-white">
               <div className="p-6 border-b border-slate-100">
@@ -567,7 +567,7 @@ export default function SpecialtiesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Edit Dialog */}
+          {}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden border shadow-lg rounded-xl bg-white">
               <div className="p-6 border-b border-slate-100">
@@ -629,7 +629,7 @@ export default function SpecialtiesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Delete Dialog */}
+          {}
           <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import AdminSidebar from '@/components/sidebar/admin'
+import AdminSidebar from '../../components/layout/sidebar/admin'
 import { 
   Search,
   ChevronLeft,
@@ -10,19 +10,19 @@ import {
   FileText,
   Calendar,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { toast } from "sonner"
-import { AuditService, type AuditLog } from "@/services/audit.service"
+import { AuditService, type AuditLog } from "../../features/admin/services/audit.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 
@@ -138,11 +138,11 @@ export default function AuditLogPage() {
   return (
     <AdminSidebar>
       <div className="p-8">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Nhật ký kiểm toán</h1>
           
-          {/* Search and Filters */}
+          {}
           <div className="flex items-center gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -181,14 +181,14 @@ export default function AuditLogPage() {
           </div>
         </div>
 
-        {/* Results Count */}
+        {}
         <div className="mb-4">
           <span className="text-sm text-gray-600">
             Hiển thị {logs.length} bản ghi
           </span>
         </div>
 
-        {/* Audit Logs Table */}
+        {}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -275,7 +275,7 @@ export default function AuditLogPage() {
           </CardContent>
         </Card>
 
-        {/* Pagination */}
+        {}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
             <Button 
@@ -314,7 +314,7 @@ export default function AuditLogPage() {
           </div>
         )}
 
-        {/* Empty State */}
+        {}
         {!loading && logs.length === 0 && (
           <Card className="border-0 shadow-sm mt-6">
             <CardContent className="py-12">

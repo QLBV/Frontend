@@ -15,28 +15,28 @@ import {
   ChevronRight,
   Sparkles
 } from "lucide-react";
-import { useAuth } from "@/auth/authContext";
-import { usePatientAppointments } from "@/hooks/usePatientAppointments";
+import { useAuth } from "../../features/auth/context/authContext";
+import { usePatientAppointments } from "../../hooks/usePatientAppointments";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
+import { Label } from "../../components/ui/label";
+import { Skeleton } from "../../components/ui/skeleton";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from "../../components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -44,14 +44,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "../../components/ui/dialog";
 
-import PatientSidebar from "@/components/sidebar/patient";
-import { AppointmentStats } from "@/components/appointment/AppointmentStats";
-import { AppointmentCard } from "@/components/appointment/AppointmentCard";
-import { AppointmentDetailModal } from "@/components/appointment/AppointmentDetailModal";
+import PatientSidebar from "../../components/layout/sidebar/patient";
+import { AppointmentStats } from "../../features/appointment/components/AppointmentStats";
+import { AppointmentCard } from "../../features/appointment/components/AppointmentCard";
+import { AppointmentDetailModal } from "../../features/appointment/components/AppointmentDetailModal";
 
-// Premium Pagination Component
+
 interface PremiumPaginationProps {
   currentPage: number;
   totalPages: number;
@@ -152,7 +152,7 @@ export default function PatientAppointmentsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  // --- HOOK INTEGRATION ---
+  
   const { 
     appointments, 
     stats,
@@ -164,16 +164,16 @@ export default function PatientAppointmentsPage() {
     isLoading
   } = usePatientAppointments();
 
-  // --- LOCAL STATE ---
+  
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   
-  // Filters for Upcoming tab
+  
   const [upcomingStatusFilter, setUpcomingStatusFilter] = useState("ALL");
   const [upcomingSearchQuery, setUpcomingSearchQuery] = useState("");
   
-  // Filters for Past tab
+  
   const [pastStatusFilter, setPastStatusFilter] = useState("ALL");
   const [pastSearchQuery, setPastSearchQuery] = useState("");
 
@@ -181,7 +181,7 @@ export default function PatientAppointmentsPage() {
   const [pastPage, setPastPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Reset pages when filters change
+  
   useEffect(() => {
     setUpcomingPage(1);
   }, [upcomingStatusFilter, upcomingSearchQuery]);
@@ -190,7 +190,7 @@ export default function PatientAppointmentsPage() {
     setPastPage(1);
   }, [pastStatusFilter, pastSearchQuery]);
 
-  // --- EVENT HANDLERS ---
+  
   const onInitiateCancel = (id: string) => {
     setCancelTargetId(id);
     setCancelReason("");
@@ -208,16 +208,16 @@ export default function PatientAppointmentsPage() {
     navigate("/patient/book-appointment", { state: { selectedDoctorId: doctorId } });
   };
 
-  // Filter Logic for Upcoming
+  
   const filteredUpcoming = appointments.upcoming.filter(apt => {
-    // Status Filter - rawStatus is: WAITING, CHECKED_IN, IN_PROGRESS
+    
     const matchesStatus = upcomingStatusFilter === "ALL" 
       ? true 
       : upcomingStatusFilter === "CONFIRMED" 
         ? ["CHECKED_IN", "IN_PROGRESS"].includes(apt.rawStatus || "")
-        : apt.rawStatus === "WAITING"; // PENDING = WAITING
+        : apt.rawStatus === "WAITING"; 
 
-    // Search Filter
+    
     const query = upcomingSearchQuery.toLowerCase();
     const matchesSearch = 
       apt.doctor.name.toLowerCase().includes(query) || 
@@ -227,16 +227,16 @@ export default function PatientAppointmentsPage() {
     return matchesStatus && matchesSearch;
   });
 
-  // Filter Logic for Past
+  
   const filteredPast = appointments.past.filter(apt => {
-    // Status Filter
+    
     const matchesStatus = pastStatusFilter === "ALL" 
       ? true 
       : pastStatusFilter === "COMPLETED" 
         ? apt.rawStatus === "COMPLETED"
         : ["CANCELLED", "NO_SHOW"].includes(apt.rawStatus || "");
 
-    // Search Filter
+    
     const query = pastSearchQuery.toLowerCase();
     const matchesSearch = 
       apt.doctor.name.toLowerCase().includes(query) || 
@@ -246,22 +246,22 @@ export default function PatientAppointmentsPage() {
     return matchesStatus && matchesSearch;
   });
 
-  // Pagination Logic
+  
   const totalUpcomingPages = Math.ceil(filteredUpcoming.length / ITEMS_PER_PAGE);
   const currentUpcoming = filteredUpcoming.slice((upcomingPage - 1) * ITEMS_PER_PAGE, upcomingPage * ITEMS_PER_PAGE);
 
   const totalPastPages = Math.ceil(filteredPast.length / ITEMS_PER_PAGE);
   const currentPast = filteredPast.slice((pastPage - 1) * ITEMS_PER_PAGE, pastPage * ITEMS_PER_PAGE);
 
-  // --- RENDER ---
+  
   return (
     <PatientSidebar 
       userName={user?.fullName || user?.email || "Patient"}
     >
       <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
-        {/* Premium Header Section */}
+        {}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-8 shadow-xl">
-          {/* Background Pattern */}
+          {}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
@@ -295,10 +295,10 @@ export default function PatientAppointmentsPage() {
           </div>
         </div>
 
-        {/* STATS SECTION */}
+        {}
         <AppointmentStats stats={stats} />
 
-        {/* TABS SECTION */}
+        {}
         <Tabs defaultValue="upcoming" className="space-y-6">
           <div className="flex justify-center mb-8">
             <TabsList className="bg-white p-0 rounded-2xl border border-gray-200 inline-flex shadow-lg shadow-gray-100 overflow-hidden">
@@ -347,7 +347,7 @@ export default function PatientAppointmentsPage() {
               </Card>
             ) : appointments.upcoming.length > 0 ? (
               <Card className="overflow-hidden border-gray-100 shadow-sm">
-                {/* List Header with Filters */}
+                {}
                 <div className="p-4 border-b bg-gray-50/40">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -390,7 +390,7 @@ export default function PatientAppointmentsPage() {
                   </div>
                 </div>
 
-                {/* List Content */}
+                {}
                 <CardContent className="p-0">
                   {filteredUpcoming.length > 0 ? (
                     <div className="divide-y divide-gray-100">
@@ -421,7 +421,7 @@ export default function PatientAppointmentsPage() {
                   )}
                 </CardContent>
                 
-                {/* Always-visible Pagination Footer */}
+                {}
                 <div className="border-t border-gray-100 bg-gray-50/50">
                   <PremiumPagination
                     currentPage={upcomingPage}
@@ -455,9 +455,9 @@ export default function PatientAppointmentsPage() {
           </TabsContent>
 
           <TabsContent value="past" className="focus:outline-none">
-            {/* Premium List Container for Past Appointments */}
+            {}
             <Card className="overflow-hidden border-gray-100 shadow-sm">
-              {/* List Header with Filters */}
+              {}
               <div className="p-4 border-b bg-gray-50/40">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -500,7 +500,7 @@ export default function PatientAppointmentsPage() {
                 </div>
               </div>
 
-              {/* List Content */}
+              {}
               <CardContent className="p-0">
                 {isLoading ? (
                   <div className="divide-y divide-gray-100">
@@ -555,7 +555,7 @@ export default function PatientAppointmentsPage() {
                 )}
               </CardContent>
               
-              {/* Always-visible Pagination Footer */}
+              {}
               {(filteredPast.length > 0 || !isLoading) && (
                 <div className="border-t border-gray-100 bg-gray-50/50">
                   <PremiumPagination
@@ -572,7 +572,7 @@ export default function PatientAppointmentsPage() {
           </TabsContent>
         </Tabs>
 
-        {/* --- MODALS --- */}
+        {}
         
         <AppointmentDetailModal 
           isOpen={isDetailOpen} 

@@ -1,31 +1,31 @@
 import { Routes, Route, Navigate } from "react-router-dom"
 import { Suspense, lazy } from "react"
-import { AuthProvider } from "@/auth/authContext"
-import { Toaster } from "@/components/ui/sonner"
-import ProtectedRoute from "@/components/ProtectedRoute"
+import { AuthProvider } from "./features/auth/context/authContext"
+import { Toaster } from "./components/ui/sonner"
+import ProtectedRoute from "./features/auth/components/ProtectedRoute"
 
-// Public pages - No lazy loading needed (small, frequently accessed)
-import HomePage from "@/pages/LandingPage"
-import LoginPage from "@/pages/LoginPage"
-import SignUpPage from "@/pages/patient/SignupPage"
-import BookAppointmentPage from "@/pages/patient/BookAppointmentPage"
-import ForgotPasswordPage from "@/pages/ForgotPasswordPage"
-import ResetPasswordPage from "@/pages/ResetPasswordPage"
-import TermsOfServicePage from "@/pages/TermsOfServicePage"
-import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage"
-import OAuthCallbackPage from "@/pages/OAuthCallbackPage"
-import OAuthErrorPage from "@/pages/OAuthErrorPage"
-import EmailVerificationPage from "@/pages/EmailVerificationPage"
+
+import HomePage from "./pages/LandingPage"
+import LoginPage from "./pages/LoginPage"
+import SignUpPage from "./pages/patient/SignupPage"
+import BookAppointmentPage from "./pages/patient/BookAppointmentPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
+import TermsOfServicePage from "./pages/TermsOfServicePage"
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage"
+import OAuthCallbackPage from "./pages/OAuthCallbackPage"
+import OAuthErrorPage from "./pages/OAuthErrorPage"
+import EmailVerificationPage from "./pages/EmailVerificationPage"
 const ProfilePage = lazy(() => import("./pages/ProfilePage"))
 
-// Lazy load profile pages for each role
+
 const AdminProfilePage = lazy(() => import("./pages/admin/ProfilePage"))
 const DoctorProfilePage = lazy(() => import("./pages/doctor/ProfilePage"))
 const PatientProfilePage = lazy(() => import("./pages/patient/ProfilePage"))
 const PatientUpdateHealthInfoPage = lazy(() => import("./pages/patient/UpdateHealthInfoPage"))
 const ReceptionistProfilePage = lazy(() => import("./pages/recep/ProfilePage"))
 
-// Lazy load admin pages
+
 const AdminDashboardPage = lazy(() => import("./pages/admin/DashboardPage"))
 const DoctorListPage = lazy(() => import("./pages/admin/DoctorListPage"))
 const DoctorDetailPage = lazy(() => import("./pages/admin/DoctorDetailPage"))
@@ -70,7 +70,7 @@ const PayrollStatisticsPage = lazy(() => import("./pages/admin/PayrollStatistics
 const MyPayrollsPage = lazy(() => import("./pages/MyPayrollsPage"))
 const MyPayrollDetailPage = lazy(() => import("./pages/MyPayrollDetailPage"))
 
-// Lazy load doctor pages
+
 const DoctorDashboardPage = lazy(() => import("./pages/doctor/DashboardPage"))
 const MedicalListPage = lazy(() => import("./pages/doctor/MedicalListPage"))
 const FormMedicalPage = lazy(() => import("./pages/doctor/FormMedicalPage"))
@@ -81,7 +81,7 @@ const UiQuanLyDT = lazy(() => import("./pages/doctor/PrescriptionManagementPage"
 const EditPrescriptionPage = lazy(() => import("./pages/doctor/EditPrescriptionPage"))
 const ConsultationPage = lazy(() => import("./pages/doctor/ConsultationPage"))
 
-// Lazy load receptionist pages
+
 const ReceptionistDashboardPage = lazy(() => import("./pages/recep/DashboardPage"))
 const RecepPatientsPage = lazy(() => import("./pages/recep/PatientListPage"))
 const PatientDetailPage = lazy(() => import("./pages/recep/PatientDetailPage"))
@@ -92,7 +92,7 @@ const InvoiceStatisticsPage = lazy(() => import("./pages/admin/InvoiceStatistics
 const OfflineAppointmentPage = lazy(() => import("./pages/recep/OfflineAppointmentPage"))
 const ReceptionistAppointmentsPage = lazy(() => import("./pages/recep/AppointmentsPage"))
 
-// Lazy load patient pages
+
 const PatientAppointmentsPage = lazy(() => import("./pages/patient/Appointments"))
 const PatientDashboardPage = lazy(() => import("./pages/patient/DashboardPage"))
 const PatientMedicalHistoryPage = lazy(() => import("./pages/patient/MedicalHistoryPage"))
@@ -102,18 +102,18 @@ const PatientInvoicesPage = lazy(() => import("./pages/patient/InvoicesPage"))
 const PatientSettingsPage = lazy(() => import("./pages/patient/PatientSettingsPage"))
 const SetupPatientProfilePage = lazy(() => import("./pages/patient/SetupPatientProfilePage"))
 
-// Lazy load shared pages
+
 const AppointmentDetailPage = lazy(() => import("./pages/AppointmentDetailPage"))
 const VisitDetailPage = lazy(() => import("./pages/doctor/VisitDetailPage"))
 const DoctorPrescriptionDetailPage = lazy(() => import("./pages/doctor/PrescriptionDetailPage"))
 const AttendancePage = lazy(() => import("./pages/AttendancePage"))
 const HelpCenterPage = lazy(() => import("./pages/HelpCenterPage"))
 
-// Lazy load pharmacy pages
+
 const PharmacyPage = lazy(() => import("./pages/PharmacyPage"))
 const PharmacyDetailPage = lazy(() => import("./pages/PharmacyDetailPage"))
 
-// Loading component
+
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -125,7 +125,7 @@ function App() {
     <AuthProvider>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public Routes */}
+          {}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<SignUpPage />} />
@@ -136,10 +136,10 @@ function App() {
           <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
-          {/* Redirect old booking route to new patient route */}
+          {}
           <Route path="/book-appointment" element={<Navigate to="/patient/book-appointment" replace />} />
 
-          {/* Patient Routes */}
+          {}
           <Route
             path="/patient/book-appointment"
             element={
@@ -237,7 +237,7 @@ function App() {
             }
           />
 
-          {/* Appointment Detail - All roles */}
+          {}
           <Route
             path="/appointments/:id"
             element={
@@ -247,7 +247,7 @@ function App() {
             }
           />
 
-          {/* Visit Detail - All roles */}
+          {}
           <Route
             path="/visits/:id"
             element={
@@ -257,7 +257,7 @@ function App() {
             }
           />
 
-          {/* Profile Route - All authenticated users */}
+          {}
           <Route
             path="/profile"
             element={
@@ -267,7 +267,7 @@ function App() {
             }
           />
 
-          {/* Help Center - All authenticated users */}
+          {}
           <Route
             path="/help"
             element={
@@ -277,7 +277,7 @@ function App() {
             }
           />
 
-          {/* Admin Routes */}
+          {}
           <Route
             path="/admin/profile"
             element={
@@ -657,7 +657,7 @@ function App() {
             }
           />
 
-          {/* Doctor Routes */}
+          {}
           <Route
             path="/doctor/profile"
             element={
@@ -747,7 +747,7 @@ function App() {
             }
           />
 
-          {/* Receptionist Routes */}
+          {}
           <Route
             path="/receptionist/profile"
             element={
@@ -829,7 +829,7 @@ function App() {
             }
           />
 
-          {/* Pharmacy Routes - Accessible by multiple roles */}
+          {}
           <Route
             path="/pharmacy"
             element={

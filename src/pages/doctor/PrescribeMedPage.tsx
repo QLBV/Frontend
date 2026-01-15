@@ -1,12 +1,12 @@
 ﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import DoctorSidebar from "@/components/sidebar/doctor";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import api from "@/lib/api";
+import DoctorSidebar from "../../components/layout/sidebar/doctor";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
+import api from "../../lib/api";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -23,7 +23,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-// Interfaces
+
 interface Medicine {
   id: number;
   name: string;
@@ -71,7 +71,7 @@ interface Medication {
 export default function PrescribeMed() {
   const { id } = useParams();
   const navigate = useNavigate();
-  // Data states
+  
   const [patientData, setPatientData] = useState<PatientData | null>(null);
   const [diagnosisData, setDiagnosisData] = useState<DiagnosisData | null>(
     null
@@ -82,7 +82,7 @@ export default function PrescribeMed() {
   const [updatingAppointment, setUpdatingAppointment] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State cho danh sach thuoc duoc kham
+  
   const [medications, setMedications] = useState<Medication[]>([
     {
       id: "1",
@@ -98,16 +98,16 @@ export default function PrescribeMed() {
     },
   ]);
 
-  // State cho ghi chu them
+  
   const [additionalNotes, setAdditionalNotes] = useState("");
 
-  // State cho tim kiem thuoc
+  
   const [searchTerms, setSearchTerms] = useState<{ [key: string]: string }>({});
   const [showSuggestions, setShowSuggestions] = useState<{
     [key: string]: boolean;
   }>({});
 
-  // Fetch data on component mount
+  
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
@@ -117,16 +117,16 @@ export default function PrescribeMed() {
       try {
         setLoading(true);
 
-        // Fetch medicines list
+        
         const medicinesResponse = await api.get("/medicines");
         if (medicinesResponse.data.success) {
           setMedicines(medicinesResponse.data.data);
         }
 
-        // Fetch patient data directly by appointment ID (similar to formMedical)
+        
         const recordId = parseInt(id);
 
-        // Try to fetch as visit first (if patient was checked in and examination was saved)
+        
         try {
           const visitResponse = await api.get(`/visits/${recordId}`);
           if (visitResponse.data.success && visitResponse.data.data) {
@@ -147,7 +147,7 @@ export default function PrescribeMed() {
                 symptomInitial: appointment.symptomInitial,
               });
 
-              // Parse diagnosis from visit note
+              
               setDiagnosisData({
                 primaryDiagnosis: visit.diagnosis || "Pending diagnosis",
                 note:
@@ -161,10 +161,10 @@ export default function PrescribeMed() {
             }
           }
         } catch (visitErr: any) {
-          // Visit not found, try fetching as appointment
+          
         }
 
-        // If visit not found, fetch appointment by id directly
+        
         const response = await api.get(`/appointments/${recordId}`);
         const appointment = response.data.data || response.data;
 
@@ -190,7 +190,7 @@ export default function PrescribeMed() {
               symptomInitial: appointment.symptomInitial,
             });
 
-            // Use diagnosis from visit if available
+            
             setDiagnosisData({
               primaryDiagnosis: visit?.diagnosis || "Pending diagnosis",
               note:
@@ -204,7 +204,7 @@ export default function PrescribeMed() {
           }
         }
 
-        // Neither visit nor appointment found
+        
         toast.error("Không tìm thấy lịch hẹn thông tin khám bệnh");
         setError("Appointment not found");
       } catch (err: any) {
@@ -235,7 +235,7 @@ export default function PrescribeMed() {
     return age;
   };
 
-  // Parse vital signs from visit note text
+  
   const parseVitalSigns = (noteText: string) => {
     const vitalSigns = {
       bloodPressure: "120/80",
@@ -246,53 +246,53 @@ export default function PrescribeMed() {
 
     if (!noteText) return vitalSigns;
 
-    // Extract blood pressure: "Huyet ap: 120/81 mmHg"
+    
     const bpMatch = noteText.match(/Huy[eếệ]t áp:\s*(\d+\/\d+)/i);
     if (bpMatch) vitalSigns.bloodPressure = bpMatch[1];
 
-    // Extract heart rate: "Nhip tim: 70 bpm"
+    
     const hrMatch = noteText.match(/Nh[iịĩ]p tim:\s*(\d+)/i);
     if (hrMatch) vitalSigns.heartRate = hrMatch[1];
 
-    // Extract temperature: "Nhiet do: 40 °C"
+    
     const tempMatch = noteText.match(/Nhi[eệ]t đ[oộ]:\s*(\d+(?:\.\d+)?)/i);
     if (tempMatch) vitalSigns.temperature = tempMatch[1];
 
-    // Extract weight: "Can nang: 70 kg"
+    
     const weightMatch = noteText.match(/C[aâ]n n[ặa]ng:\s*(\d+(?:\.\d+)?)/i);
     if (weightMatch) vitalSigns.weight = weightMatch[1];
 
     return vitalSigns;
   };
 
-  // Remove vital signs text from note to display only symptoms and notes
+  
   const cleanNoteText = (noteText: string) => {
     if (!noteText) return "";
 
     let cleanedText = noteText;
 
-    // Remove vital signs section (usually starts with "CLINICAL OBSERVATIONS:" or "VITAL SIGNS:")
+    
     cleanedText = cleanedText.replace(/CLINICAL OBSERVATIONS:.*?ADDITIONAL NOTES:/is, "");
     cleanedText = cleanedText.replace(/VITAL SIGNS:.*?(?=\n\n|$)/is, "");
     
-    // Remove individual vital sign lines
+    
     cleanedText = cleanedText.replace(/Huy[eếệ]t áp:\s*\d+\/\d+\s*mmHg\s*•?\s*/gi, "");
     cleanedText = cleanedText.replace(/Nh[iịĩ]p tim:\s*\d+\s*bpm\s*•?\s*/gi, "");
     cleanedText = cleanedText.replace(/Nhi[eệ]t đ[oộ]:\s*\d+(?:\.\d+)?\s*°C\s*•?\s*/gi, "");
     cleanedText = cleanedText.replace(/SpO2:\s*\d+\s*%\s*•?\s*/gi, "");
     cleanedText = cleanedText.replace(/C[aâ]n n[ặa]ng:\s*\d+(?:\.\d+)?\s*kg\s*•?\s*/gi, "");
 
-    // Remove "Examination completed on:" line
+    
     cleanedText = cleanedText.replace(/Examination completed on:.*$/im, "");
 
-    // Clean up extra whitespace and bullet points
+    
     cleanedText = cleanedText.replace(/•\s*/g, "");
     cleanedText = cleanedText.trim();
 
     return cleanedText || "Không có ghi chú về triệu chứng";
   };
 
-  // Lay danh sach thuoc theo tu khoa tim kiem
+  
   const getFilteredMedicines = (searchTerm: string) => {
     if (!searchTerm) return [];
     return medicines
@@ -301,10 +301,10 @@ export default function PrescribeMed() {
           medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           medicine.category?.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .slice(0, 5); // Chi hien thi 5 ket qua dau tien
+      .slice(0, 5); 
   };
 
-  // Chon thuoc tu danh sach goi y
+  
   const selectMedicine = (medicationId: string, medicine: Medicine) => {
     updateMedication(medicationId, "name", medicine.name);
     updateMedication(medicationId, "medicineId", medicine.id);
@@ -312,7 +312,7 @@ export default function PrescribeMed() {
     setSearchTerms((prev) => ({ ...prev, [medicationId]: medicine.name }));
   };
 
-  // Add Medicine moi
+  
   const addMedication = () => {
     const newMedication: Medication = {
       id: Date.now().toString(),
@@ -329,14 +329,14 @@ export default function PrescribeMed() {
     setMedications([...medications, newMedication]);
   };
 
-  // Xoa thuoc
+  
   const removeMedication = (id: string) => {
     if (medications.length > 1) {
       setMedications(medications.filter((med) => med.id !== id));
     }
   };
 
-  // Cap nhat thong tin thuoc
+  
   const updateMedication = (
     id: string,
     field: keyof Medication,
@@ -347,7 +347,7 @@ export default function PrescribeMed() {
         if (med.id === id) {
           const updatedMed = { ...med, [field]: value };
 
-          // Tự động tính tổng số lượng khi thay đổi dosage hoặc số ngày
+          
           if (
             field === "dosageMorning" ||
             field === "dosageNoon" ||
@@ -377,13 +377,13 @@ export default function PrescribeMed() {
       })
     );
 
-    // Cap nhat search term khi thay doi ten thuoc
+    
     if (field === "name") {
       setSearchTerms((prev) => ({ ...prev, [id]: value as string }));
     }
   };
 
-  // Xu ly thay doi input tim kiem thuoc
+  
   const handleMedicineSearch = (medicationId: string, value: string) => {
     setSearchTerms((prev) => ({ ...prev, [medicationId]: value }));
     setShowSuggestions((prev) => ({
@@ -391,10 +391,10 @@ export default function PrescribeMed() {
       [medicationId]: value.length > 0,
     }));
     updateMedication(medicationId, "name", value);
-    updateMedication(medicationId, "medicineId", null); // Reset medicine ID when typing
+    updateMedication(medicationId, "medicineId", null); 
   };
 
-  // Luu don thuoc
+  
   const handleSavePrescription = async () => {
     if (!patientData || !diagnosisData) return;
 
@@ -402,7 +402,7 @@ export default function PrescribeMed() {
       setSaving(true);
       setError(null);
 
-      // Form validation
+      
       const validMedications = medications.filter(
         (med) => med.medicineId && med.quantity > 0
       );
@@ -417,7 +417,7 @@ export default function PrescribeMed() {
         return;
       }
 
-      // Validate each medicine has at least one dosage > 0
+      
       for (let i = 0; i < validMedications.length; i++) {
         const med = validMedications[i];
         const totalDosage =
@@ -451,14 +451,14 @@ export default function PrescribeMed() {
         }
       }
 
-      // Step 1: Get or create visitId
+      
       let visitId = patientData.visitId;
 
-      // If no visitId, check-in the appointment to create a visit
+      
       if (!visitId && patientData.appointmentId) {
         try {
           const { checkInAppointment } = await import(
-            "@/services/visit.service"
+            "@/features/appointment/services/visit.service"
           );
           const visit = await checkInAppointment(patientData.appointmentId);
           visitId = visit.id;
@@ -483,9 +483,9 @@ export default function PrescribeMed() {
         return;
       }
 
-      // Step 2: Complete visit with diagnosis
+      
       try {
-        const { completeVisit } = await import("@/services/visit.service");
+        const { completeVisit } = await import("@/features/appointment/services/visit.service");
         await completeVisit(visitId, {
           diagnosis: diagnosisData.primaryDiagnosis,
           note: diagnosisData.note,
@@ -493,7 +493,7 @@ export default function PrescribeMed() {
         });
         console.log("Visit completed successfully");
       } catch (visitError: any) {
-        // If visit already completed, that's OK, continue
+        
         const msg =
           visitError.response?.data?.message || visitError.message || "";
         if (
@@ -510,7 +510,7 @@ export default function PrescribeMed() {
         console.warn("Visit already completed, proceeding...", msg);
       }
 
-      // Step 3: Save prescription with visitId
+      
       const prescriptionData = {
         visitId: visitId,
         patientId: patientData.id,
@@ -536,7 +536,7 @@ export default function PrescribeMed() {
       if (response.data.success) {
         console.log("Prescription saved successfully:", response.data);
 
-        // Check if invoice was created
+        
         const invoice = response.data.data?.invoice;
         if (invoice) {
           toast.success(
@@ -564,7 +564,7 @@ export default function PrescribeMed() {
     }
   };
 
-  // Hoan tac kham (quay lai form kham)
+  
   const handleBackToExamination = async () => {
     if (!patientData?.appointmentId) {
       navigate(`/doctor/patients/${id}/examination`);
@@ -574,19 +574,19 @@ export default function PrescribeMed() {
     try {
       setUpdatingAppointment(true);
 
-      // 1. Luu prescription truoc (neu co thuoc duoc ke)
+      
       const validMedications = medications.filter(
         (med) => med.medicineId && med.quantity > 0
       );
 
       if (validMedications.length > 0) {
-        // Get or create visitId (allow saving even after hoan tac kham)
+        
         let visitId = patientData.visitId;
 
         if (!visitId && patientData.appointmentId) {
           try {
             const { checkInAppointment } = await import(
-              "@/services/visit.service"
+              "@/features/appointment/services/visit.service"
             );
             const visit = await checkInAppointment(patientData.appointmentId);
             visitId = visit.id;
@@ -641,11 +641,11 @@ export default function PrescribeMed() {
         }
       }
 
-      // Vẫn điều hướng về trang khám bệnh dù có lỗi
+      
       navigate(`/doctor/patients/${id}/examination`);
     } catch (error: any) {
       console.error("Error in handleBackToExamination:", error);
-      // Vẫn điều hướng về trang khám bệnh dù có lỗi
+      
       navigate(`/doctor/patients/${id}/examination`);
     } finally {
       setUpdatingAppointment(false);
@@ -691,7 +691,7 @@ export default function PrescribeMed() {
   return (
     <DoctorSidebar>
       <div className="space-y-6">
-        {/* Back Button */}
+        {}
         <div className="flex items-center gap-4 -ml-2">
           <Button
             variant="ghost"
@@ -704,14 +704,14 @@ export default function PrescribeMed() {
           </Button>
         </div>
 
-        {/* Error Alert */}
+        {}
         {error && (
           <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
             {error}
           </div>
         )}
 
-        {/* Patient Info Header */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-10 -mb-10 blur-xl"></div>
@@ -760,7 +760,7 @@ export default function PrescribeMed() {
           </CardContent>
         </Card>
 
-        {/* Diagnosis Information */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5 overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-2">
@@ -774,7 +774,7 @@ export default function PrescribeMed() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Diagnosis Details */}
+              {}
               <div className="lg:col-span-2 space-y-6">
                 <div>
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
@@ -799,7 +799,7 @@ export default function PrescribeMed() {
                 </div>
               </div>
 
-              {/* Vital Signs */}
+              {}
               <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
                 <div className="flex items-center gap-2 mb-4">
                   <Activity className="w-4 h-4 text-emerald-600" />
@@ -859,7 +859,7 @@ export default function PrescribeMed() {
           </CardContent>
         </Card>
 
-        {/* Prescription Form */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5 flex flex-col overflow-visible">
           <CardHeader className="bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between py-4 rounded-t-xl">
             <div className="flex items-center gap-2">
@@ -1058,7 +1058,7 @@ export default function PrescribeMed() {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
+        {}
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 mt-6">
           <Button
             variant="outline"

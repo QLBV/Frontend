@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin'
+import AdminSidebar from '../../components/layout/sidebar/admin'
 import { 
   ArrowLeft,
   Save,
@@ -17,24 +17,24 @@ import {
   Camera,
   Award,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { toast } from "sonner"
-import { EmployeeService, type Employee, type UpdateEmployeeData } from "@/services/employee.service"
+import { EmployeeService, type Employee, type UpdateEmployeeData } from "../../features/doctor/services/employee.service"
 import { format } from "date-fns"
-import { TimeAgo } from "@/components/ui/time-ago"
-import api from '@/lib/api'
+import { TimeAgo } from "../../components/ui/time-ago"
+import api from '../../lib/api'
 
 
 export default function EmployeeDetailPage() {

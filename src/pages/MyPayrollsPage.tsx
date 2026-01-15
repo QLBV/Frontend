@@ -1,25 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/auth/authContext"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useAuth } from "../features/auth/context/authContext"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Button } from "../components/ui/button"
+import { Badge } from "../components/ui/badge"
 import { Loader2, DollarSign, Calendar, Download, Eye, FileText, Wallet } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { PayrollService, type Payroll } from "@/services/payroll.service"
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import { TablePagination } from "@/components/TablePagination"
+import { PayrollService, type Payroll } from "../features/finance/services/payroll.service"
+import AdminSidebar from "../components/layout/sidebar/admin"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
+import { TablePagination } from "../components/shared/TablePagination"
 
 export default function MyPayrollsPage() {
   const { user } = useAuth()
   const [payrolls, setPayrolls] = useState<Payroll[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
-  // Client-side pagination
+  
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -77,7 +77,7 @@ export default function MyPayrollsPage() {
 
   const role = String(user.roleId || user.role || "").toLowerCase()
 
-  // Calculate totals
+  
   const totalSalary = payrolls.reduce((sum, p) => {
     return sum + (p.totalSalary || 0)
   }, 0)
@@ -88,7 +88,7 @@ export default function MyPayrollsPage() {
     return sum + (p.totalSalary || 0)
   }, 0)
 
-  // Calculate pagination
+  
   const totalPages = Math.ceil(payrolls.length / itemsPerPage)
   const paginatedPayrolls = payrolls.slice(
     (currentPage - 1) * itemsPerPage,
@@ -97,7 +97,7 @@ export default function MyPayrollsPage() {
 
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
-      {/* Page Title */}
+      {}
       <div className="flex items-center gap-4 mb-8">
         <div className="h-14 w-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 ring-1 ring-white/50">
              <Wallet className="h-7 w-7 text-white" />
@@ -109,7 +109,7 @@ export default function MyPayrollsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -117,9 +117,9 @@ export default function MyPayrollsPage() {
               <DollarSign className="h-5 w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
-              {/* #region agent log */}
+              {}
               
-              {/* #endregion */}
+              {}
               <div className="text-3xl font-bold text-slate-900">{(totalSalary || 0).toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">VND</p>
             </CardContent>
@@ -131,9 +131,9 @@ export default function MyPayrollsPage() {
               <FileText className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
-              {/* #region agent log */}
+              {}
               
-              {/* #endregion */}
+              {}
               <div className="text-3xl font-bold text-slate-900">{(totalPaid || 0).toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">VND</p>
             </CardContent>
@@ -145,16 +145,16 @@ export default function MyPayrollsPage() {
               <Calendar className="h-5 w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
-              {/* #region agent log */}
+              {}
               
-              {/* #endregion */}
+              {}
               <div className="text-3xl font-bold text-slate-900">{(pendingSalary || 0).toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">VND</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Payroll List */}
+        {}
         <Card className="border-0 shadow-xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
             <CardTitle className="text-xl font-bold text-slate-800">Danh sách lương</CardTitle>
@@ -256,7 +256,7 @@ export default function MyPayrollsPage() {
     </div>
   )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
   if (role === "admin" || role === "1") {
     return <AdminSidebar>{content}</AdminSidebar>
   } else if (role === "doctor" || role === "4") {

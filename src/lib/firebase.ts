@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
-// Your Firebase config (replace with your project's values from Firebase Console)
+
 const firebaseConfig = {
   apiKey: "AIzaSyBaFW0sNAgrO-agT8FtEqeNGKh-pyNksNM",
   authDomain: "heathcare-b42b7.firebaseapp.com",
@@ -13,10 +13,10 @@ const firebaseConfig = {
   measurementId: "G-F6V3KR4XRW"
 };
 
-// Initialize Firebase
+
 const app = initializeApp(firebaseConfig)
 
-// Initialize Firebase Authentication
+
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 export default app

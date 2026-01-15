@@ -19,15 +19,15 @@ import {
   Truck,
   FileText
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/auth/authContext"
-import SidebarLayout from "@/components/SidebarLayout"
-import AdminSidebar from "@/components/sidebar/admin"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import DoctorSidebar from "@/components/sidebar/doctor"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Label } from "../../components/ui/label"
+import { useAuth } from "../../features/auth/context/authContext"
+import SidebarLayout from "../../components/layout/SidebarLayout"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import DoctorSidebar from "../../components/layout/sidebar/doctor"
 
 interface ImportItem {
   id: string
@@ -91,7 +91,7 @@ export default function PharmacyImportPage() {
         if (item.id === id) {
           const updatedItem = { ...item, [field]: value }
 
-          // Auto-calculate selling price when cost price or profit margin changes
+          
           if (field === "costPrice" || field === "profitMargin") {
             const costPrice = field === "costPrice" ? Number(value) : item.costPrice
             const profitMargin = field === "profitMargin" ? Number(value) : item.profitMargin
@@ -107,7 +107,7 @@ export default function PharmacyImportPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically send the data to your backend
+    
     console.log("Importing medications:", importItems)
     alert("Nhập thuốc thành công!")
     navigate("/pharmacy")
@@ -135,7 +135,7 @@ export default function PharmacyImportPage() {
   
   const pageContent = (
     <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
-      {/* Background Blobs */}
+      {}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-200/30 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -144,7 +144,7 @@ export default function PharmacyImportPage() {
       <div className="relative p-4 md:p-6 lg:p-8">
         <div className="max-w-[1700px] mx-auto space-y-6">
           
-          {/* Header */}
+          {}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <Link to="/pharmacy" className="inline-flex items-center text-slate-500 hover:text-cyan-600 mb-2 transition-colors">
@@ -161,7 +161,7 @@ export default function PharmacyImportPage() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Summary Card */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className="border-0 shadow-lg shadow-cyan-500/5 bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-6 flex items-center gap-4">
@@ -200,7 +200,7 @@ export default function PharmacyImportPage() {
               </Card>
             </div>
 
-            {/* Import Items */}
+            {}
             <div className="space-y-6">
               {importItems.map((item, index) => (
                 <Card key={item.id} className="border-0 shadow-xl shadow-slate-200/40 bg-white/90 backdrop-blur overflow-hidden group hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-300">
@@ -228,7 +228,7 @@ export default function PharmacyImportPage() {
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {/* Name */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <Package className="h-3.5 w-3.5" />
@@ -243,7 +243,7 @@ export default function PharmacyImportPage() {
                         />
                       </div>
 
-                      {/* Group */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <Tags className="h-3.5 w-3.5" />
@@ -265,7 +265,7 @@ export default function PharmacyImportPage() {
                         </select>
                       </div>
 
-                      {/* Quantity & Unit */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <Box className="h-3.5 w-3.5" />
@@ -297,7 +297,7 @@ export default function PharmacyImportPage() {
                         </div>
                       </div>
 
-                      {/* Cost Price */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <DollarSign className="h-3.5 w-3.5" />
@@ -314,7 +314,7 @@ export default function PharmacyImportPage() {
                         />
                       </div>
 
-                      {/* Profit Margin */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <TrendingUp className="h-3.5 w-3.5" />
@@ -332,7 +332,7 @@ export default function PharmacyImportPage() {
                         />
                       </div>
 
-                      {/* Selling Price */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <ShoppingCart className="h-3.5 w-3.5" />
@@ -346,7 +346,7 @@ export default function PharmacyImportPage() {
                         />
                       </div>
 
-                      {/* Batch Number */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <FileText className="h-3.5 w-3.5" />
@@ -361,7 +361,7 @@ export default function PharmacyImportPage() {
                         />
                       </div>
 
-                      {/* Expiry Date */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <Calendar className="h-3.5 w-3.5" />
@@ -376,7 +376,7 @@ export default function PharmacyImportPage() {
                         />
                       </div>
 
-                      {/* Supplier */}
+                      {}
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                           <Truck className="h-3.5 w-3.5" />
@@ -396,7 +396,7 @@ export default function PharmacyImportPage() {
               ))}
             </div>
 
-            {/* Action Buttons */}
+            {}
             <div className="mt-8 flex items-center justify-between sticky bottom-6 bg-white/80 p-4 rounded-2xl shadow-2xl backdrop-blur-md border border-white/50 z-10">
               <Button
                 type="button"

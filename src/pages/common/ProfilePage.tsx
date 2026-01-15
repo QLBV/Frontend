@@ -4,9 +4,9 @@ import {
   Calendar, X, Shield, Activity, Briefcase, GraduationCap, 
   Award, FileText, CheckCircle
 } from "lucide-react";
-import { ProfileService } from "@/services/profile.service";
-import type { UserProfile, UpdateProfileData, ChangePasswordData } from "@/types/profile.types";
-import { useAuth } from "@/auth/authContext";
+import { ProfileService } from "../../features/auth/services/profile.service";
+import type { UserProfile, UpdateProfileData, ChangePasswordData } from "../../types/profile.types";
+import { useAuth } from "../../features/auth/context/authContext";
 import { toast } from "sonner";
 
 interface ProfilePageProps {
@@ -20,11 +20,11 @@ export default function ProfilePage({ role }: ProfilePageProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "password">("info");
 
-  // Profile form state
+  
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    // Patient-specific
+    
     dateOfBirth: "",
     gender: "",
     cccd: "",
@@ -32,7 +32,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
     address: "",
     city: "",
     ward: "",
-    // Staff/Doctor-specific
+    
     bio: "",
     yearsOfExperience: 0,
     position: "",
@@ -40,18 +40,18 @@ export default function ProfilePage({ role }: ProfilePageProps) {
     expertise: "",
   });
 
-  // Password form state
+  
   const [passwordData, setPasswordData] = useState<ChangePasswordData>({
     currentPassword: "",
     newPassword: "",
   });
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Avatar upload state
+  
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  // Fetch profile on mount
+  
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -62,20 +62,20 @@ export default function ProfilePage({ role }: ProfilePageProps) {
       const data = await ProfileService.getMyProfile();
       setProfile(data);
 
-      // Populate form with existing data
+      
       setFormData({
         fullName: data.fullName || "",
         email: data.email || "",
-        // Dates handling - safely handle null/undefined
+        
         dateOfBirth: (data.patient?.dateOfBirth || data.doctor?.dateOfBirth)?.split("T")[0] || "",
         gender: data.patient?.gender || data.doctor?.gender || "",
         cccd: data.patient?.cccd || data.doctor?.cccd || "",
-        // Prioritize patient profiles, fallback to doctor/employee fields
+        
         phone: data.patient?.profiles?.find((p) => p.type === "phone")?.value || data.doctor?.phone || "",
         address: data.patient?.profiles?.find((p) => p.type === "address")?.value || data.doctor?.address || "",
         city: data.patient?.profiles?.find((p) => p.type === "address")?.city || "",
         ward: data.patient?.profiles?.find((p) => p.type === "address")?.ward || "",
-        // Doctor specific
+        
         bio: data.doctor?.bio || data.doctor?.description || "",
         yearsOfExperience: data.doctor?.yearsOfExperience || 0,
         position: data.doctor?.position || "",
@@ -83,8 +83,8 @@ export default function ProfilePage({ role }: ProfilePageProps) {
         expertise: data.doctor?.expertise || "",
       });
 
-      // Set avatar preview
-      // Handle potential missing avatar property in doctor type by safe casting
+      
+      
       const docWithAvatar = data.doctor as unknown as { avatar?: string };
       const avatarUrl = data.avatar || docWithAvatar?.avatar || data.patient?.avatar;
       
@@ -93,7 +93,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
         setAvatarPreview(`${baseUrl}${avatarUrl}?t=${new Date().getTime()}`);
       }
     } catch (error) {
-      // Safe error handling to avoid lint 'any' errors
+      
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || "Không thể tải thông tin profile");
     } finally {
@@ -104,13 +104,13 @@ export default function ProfilePage({ role }: ProfilePageProps) {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 10MB)
+      
       if (file.size > 10 * 1024 * 1024) {
         toast.error("Kích thước file không được vượt quá 10MB");
         return;
       }
 
-      // Validate file type
+      
       if (!file.type.startsWith("image/")) {
         toast.error("Chỉ chấp nhận file ảnh");
         return;
@@ -125,13 +125,13 @@ export default function ProfilePage({ role }: ProfilePageProps) {
     try {
       setSaving(true);
 
-      // Upload avatar first if changed
+      
       if (avatarFile) {
         await ProfileService.uploadAvatar(avatarFile);
         toast.success("Cập nhật avatar thành công");
       }
 
-      // Prepare update data based on role
+      
       const updateData: UpdateProfileData = {
         fullName: formData.fullName,
         email: formData.email,
@@ -163,12 +163,12 @@ export default function ProfilePage({ role }: ProfilePageProps) {
       const updatedProfile = await ProfileService.updateMyProfile(updateData);
       setProfile(updatedProfile);
 
-      // Update auth context by refreshing user data
+      
       await refreshUser();
 
       toast.success("Cập nhật thông tin thành công");
-      setAvatarFile(null); // Reset avatar file after successful upload
-      // Optional: Wait a bit before redirecting so user sees the success toast
+      setAvatarFile(null); 
+      
       setTimeout(() => {
         window.history.back();
       }, 1000);
@@ -197,7 +197,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
 
       toast.success("Đổi mật khẩu thành công");
 
-      // Reset password form
+      
       setPasswordData({ currentPassword: "", newPassword: "" });
       setConfirmPassword("");
       setActiveTab("info");
@@ -209,7 +209,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
     }
   };
 
-  // Helper to determine role color theme
+  
   const getRoleTheme = () => {
     switch (role) {
       case "admin": return { gradient: "from-indigo-600 to-purple-700", text: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200" };
@@ -234,9 +234,9 @@ export default function ProfilePage({ role }: ProfilePageProps) {
     <div className="min-h-screen bg-gray-50/50 p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Header Section */}
+        {}
         <div className="relative rounded-3xl overflow-hidden shadow-xl bg-white">
-          {/* Banner */}
+          {}
           <div className={`h-48 w-full bg-gradient-to-r ${theme.gradient} relative`}>
             <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]"></div>
             <div className="absolute bottom-4 right-6 text-white/90 text-sm font-medium backdrop-blur-md bg-white/20 px-4 py-1.5 rounded-full">
@@ -246,7 +246,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
 
           <div className="px-8 pb-8 relative">
             <div className="flex flex-col md:flex-row items-start md:items-end -mt-16 gap-6">
-              {/* Avatar */}
+              {}
               <div className="relative group">
                 <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-2xl bg-white flex items-center justify-center overflow-hidden relative z-10 transition-transform duration-300 group-hover:scale-105">
                   {avatarPreview ? (
@@ -266,13 +266,11 @@ export default function ProfilePage({ role }: ProfilePageProps) {
                     id="avatar-upload"
                     type="file"
                     accept="image/*"
-                    onChange={handleAvatarChange}
                     className="hidden"
+                    onChange={handleAvatarChange}
                   />
                 </label>
               </div>
-
-              {/* Basic Info */}
               <div className="flex-1 pt-4 md:pt-0 mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">{formData.fullName || "User Name"}</h1>
                 <p className="text-gray-500 font-medium flex items-center gap-2 mt-1">
@@ -300,10 +298,10 @@ export default function ProfilePage({ role }: ProfilePageProps) {
           </div>
         </div>
 
-        {/* Main Content Grid */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Left Sidebar - Navigation & Quick Stats */}
+          {}
           <div className="lg:col-span-3 space-y-6">
             <nav className="space-y-2">
               <button
@@ -330,7 +328,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
               </button>
             </nav>
 
-            {/* Stats Card (Optional) */}
+            {}
             {(role === "doctor" || role === "admin") && (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Tổng quan</h3>
@@ -348,7 +346,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
             )}
           </div>
 
-          {/* Right Content Area */}
+          {}
           <div className="lg:col-span-9">
             {activeTab === "info" ? (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -360,7 +358,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
                 </div>
 
                 <div className="space-y-8">
-                  {/* Personal Information Group */}
+                  {}
                   <section>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-5">Thông tin cơ bản</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -453,7 +451,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
                     </div>
                   </section>
 
-                  {/* Address Information Group */}
+                  {}
                   <section>
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-5">Địa chỉ liên hệ</h3>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -497,7 +495,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
                      </div>
                   </section>
 
-                   {/* Professional Information (Doctors/Staff) */}
+                   {}
                    {(role === "doctor" || role === "admin" || role === "receptionist") && (
                      <section>
                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-5">Thông tin công việc</h3>
@@ -579,7 +577,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
                      </section>
                    )}
 
-                  {/* Actions */}
+                  {}
                   <div className="flex justify-end gap-4 pt-6 mt-6 border-t border-gray-100">
                     <button
                       onClick={() => window.history.back()}
@@ -610,7 +608,7 @@ export default function ProfilePage({ role }: ProfilePageProps) {
                 </div>
               </div>
             ) : (
-              // Password Tab
+              
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">

@@ -2,20 +2,20 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Header } from "../../components/layout/header"
+import { Footer } from "../../components/layout/footer"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { Calendar } from "../../components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover"
 import { format } from "date-fns"
 import { CalendarIcon, User, Phone, Mail, MapPin, Loader2, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useAuth } from "@/auth/authContext"
-import { setupPatientProfile } from "@/services/patient.service"
+import { cn } from "../../lib/utils"
+import { useAuth } from "../../features/auth/context/authContext"
+import { setupPatientProfile } from "../../features/patient/services/patient.service"
 import { toast } from "sonner"
 
 export default function SetupPatientProfilePage() {
@@ -24,20 +24,20 @@ export default function SetupPatientProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Form states
+  
   const [fullName, setFullName] = useState("")
   const [gender, setGender] = useState<"MALE" | "FEMALE" | "OTHER" | "">("")
   const [dateOfBirth, setDateOfBirth] = useState<Date>()
   const [cccd, setCccd] = useState("")
   
-  // Profile states
+  
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
   const [address, setAddress] = useState("")
   const [city, setCity] = useState("")
   const [ward, setWard] = useState("")
 
-  // Check if user is authenticated and doesn't have patientId
+  
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error("Vui lòng đăng nhập để tiếp tục")
@@ -46,7 +46,7 @@ export default function SetupPatientProfilePage() {
     }
 
     if (user?.patientId) {
-      // User already has a patient profile, redirect to dashboard
+      
       toast.info("Bạn đã có hồ sơ bệnh nhân")
       navigate("/patient/dashboard")
       return
@@ -68,15 +68,15 @@ export default function SetupPatientProfilePage() {
       newErrors.dateOfBirth = "Vui lòng chọn ngày sinh"
     } else {
       const today = new Date()
-      today.setHours(0, 0, 0, 0) // Reset time to compare dates only
+      today.setHours(0, 0, 0, 0) 
       const dob = new Date(dateOfBirth)
       dob.setHours(0, 0, 0, 0)
       
-      // Check if date is in the future
+      
       if (dob > today) {
         newErrors.dateOfBirth = "Ngày sinh không được là ngày trong tương lai"
       } else {
-        // Check if date is too old (more than 150 years)
+        
         const age = today.getFullYear() - dob.getFullYear()
         if (age > 150) {
           newErrors.dateOfBirth = "Ngày sinh không hợp lệ (tuổi không được vượt quá 150)"
@@ -92,7 +92,7 @@ export default function SetupPatientProfilePage() {
       newErrors.cccd = "CCCD/CMND chỉ được chứa số"
     }
 
-    // At least one contact method is required
+    
     if (!phone.trim() && !email.trim() && !address.trim()) {
       newErrors.contact = "Vui lòng cung cấp ít nhất một phương thức liên hệ (số điện thoại, email hoặc địa chỉ)"
     }
@@ -120,7 +120,7 @@ export default function SetupPatientProfilePage() {
     try {
       setIsSubmitting(true)
 
-      // Build profiles array
+      
       const profiles: Array<{
         type: "phone" | "email" | "address"
         value: string
@@ -145,13 +145,13 @@ export default function SetupPatientProfilePage() {
         })
       }
 
-      // Validate profiles before sending
+      
       if (profiles.length === 0) {
         toast.error("Vui lòng cung cấp ít nhất một phương thức liên hệ (số điện thoại, email hoặc địa chỉ)")
         setIsSubmitting(false)
         return
       }
-      // Validate dateOfBirth one more time before sending
+      
       if (dateOfBirth) {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
@@ -172,21 +172,21 @@ export default function SetupPatientProfilePage() {
         cccd: cccd.trim(),
         profiles,
       })
-      // Refresh user profile to get updated patientId
+      
       try {
         const updatedUser = await refreshUser()
-        // Wait for state to update (increased delay to ensure state propagation)
+        
         await new Promise(resolve => setTimeout(resolve, 1000))
         
-        // Verify patientId was updated
+        
         if (updatedUser?.patientId) {
-          console.log("✅ Patient profile setup successful, patientId:", updatedUser.patientId)
+          console.log(" Patient profile setup successful, patientId:", updatedUser.patientId)
           toast.success("Tạo hồ sơ bệnh nhân thành công!")
-          // Use window.location to force full page reload and ensure context is updated
+          
           window.location.href = "/patient/dashboard"
         } else {
-          // If patientId still not updated, force page reload
-          console.warn("⚠️ PatientId not updated in user context, forcing reload")
+          
+          console.warn("️ PatientId not updated in user context, forcing reload")
           toast.success("Tạo hồ sơ bệnh nhân thành công! Đang tải lại trang...")
           setTimeout(() => {
             window.location.href = "/patient/dashboard"
@@ -195,7 +195,7 @@ export default function SetupPatientProfilePage() {
       } catch (refreshError: any) {
         console.error("Error refreshing user:", refreshError)
         
-        // Still show success and redirect - user can refresh page manually if needed
+        
         toast.success("Tạo hồ sơ bệnh nhân thành công! Vui lòng refresh trang nếu cần.")
         setTimeout(() => {
           navigate("/patient/dashboard")
@@ -209,13 +209,13 @@ export default function SetupPatientProfilePage() {
         status: error.response?.status,
       })
       
-      // Hiển thị lỗi cụ thể từ backend
+      
       const errorData = error.response?.data
       let errorMessage = "Không thể tạo hồ sơ bệnh nhân. Vui lòng thử lại."
       
       if (errorData?.message) {
         errorMessage = errorData.message
-        // Map error codes to Vietnamese messages
+        
         const errorMap: Record<string, string> = {
           "FULLNAME_INVALID": "Họ tên không hợp lệ (2-100 ký tự)",
           "GENDER_INVALID": "Giới tính không hợp lệ",
@@ -242,7 +242,7 @@ export default function SetupPatientProfilePage() {
     }
   }
 
-  // Show loading if checking auth
+  
   if (!isAuthenticated || user?.patientId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -273,7 +273,7 @@ export default function SetupPatientProfilePage() {
 
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Error Alert */}
+                {}
                 {errors.contact && (
                   <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
@@ -281,7 +281,7 @@ export default function SetupPatientProfilePage() {
                   </div>
                 )}
 
-                {/* Full Name */}
+                {}
                 <div className="space-y-2">
                   <Label htmlFor="fullName">
                     Họ và Tên <span className="text-red-500">*</span>
@@ -305,7 +305,7 @@ export default function SetupPatientProfilePage() {
                   )}
                 </div>
 
-                {/* Gender and Date of Birth */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="gender">
@@ -359,7 +359,7 @@ export default function SetupPatientProfilePage() {
                           toYear={new Date().getFullYear()}
                           onSelect={(date) => {
                             if (date) {
-                              // Validate immediately when date is selected
+                              
                               const today = new Date()
                               today.setHours(0, 0, 0, 0)
                               const selectedDate = new Date(date)
@@ -375,7 +375,7 @@ export default function SetupPatientProfilePage() {
                           }}
                           disabled={(date) => {
                             const today = new Date()
-                            // Reset to start of today for comparison
+                            
                             today.setHours(0, 0, 0, 0)
                             const dateToCheck = new Date(date)
                             dateToCheck.setHours(0, 0, 0, 0)
@@ -383,8 +383,8 @@ export default function SetupPatientProfilePage() {
                             const minDate = new Date("1900-01-01")
                             minDate.setHours(0, 0, 0, 0)
                             
-                            // Disable future dates (including today) and dates before 1900
-                            // Note: date > today means date is in the future
+                            
+                            
                             return dateToCheck > today || dateToCheck < minDate
                           }}
                           initialFocus
@@ -397,7 +397,7 @@ export default function SetupPatientProfilePage() {
                   </div>
                 </div>
 
-                {/* CCCD */}
+                {}
                 <div className="space-y-2">
                   <Label htmlFor="cccd">
                     CCCD/CMND <span className="text-red-500">*</span>
@@ -419,14 +419,14 @@ export default function SetupPatientProfilePage() {
                   )}
                 </div>
 
-                {/* Contact Information */}
+                {}
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="text-lg font-semibold">Thông tin liên hệ</h3>
                   <p className="text-sm text-muted-foreground">
                     Vui lòng cung cấp ít nhất một phương thức liên hệ
                   </p>
 
-                  {/* Phone */}
+                  {}
                   <div className="space-y-2">
                     <Label htmlFor="phone">Số điện thoại</Label>
                     <div className="relative">
@@ -449,7 +449,7 @@ export default function SetupPatientProfilePage() {
                     )}
                   </div>
 
-                  {/* Email */}
+                  {}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
@@ -471,7 +471,7 @@ export default function SetupPatientProfilePage() {
                     )}
                   </div>
 
-                  {/* Address */}
+                  {}
                   <div className="space-y-2">
                     <Label htmlFor="address">Địa chỉ</Label>
                     <div className="relative">
@@ -489,7 +489,7 @@ export default function SetupPatientProfilePage() {
                     </div>
                   </div>
 
-                  {/* City and Ward */}
+                  {}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">Thành phố/Tỉnh</Label>
@@ -512,7 +512,7 @@ export default function SetupPatientProfilePage() {
                   </div>
                 </div>
 
-                {/* Submit Button */}
+                {}
                 <div className="flex gap-4 pt-4">
                   <Button
                     type="button"

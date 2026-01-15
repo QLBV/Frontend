@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
-import AdminSidebar from "@/components/sidebar/admin";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import AdminSidebar from "../../components/layout/sidebar/admin";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Download, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
-// --- Interfaces ---
+
 interface ProfitOverTime {
   period: string;
   revenue: number;
@@ -60,7 +60,7 @@ export default function ProfitReport() {
     { value: "12", label: "Tháng 12" },
   ];
 
-  // Fetch profit report
+  
   const fetchProfitReport = async () => {
     try {
       setLoading(true);
@@ -89,22 +89,22 @@ export default function ProfitReport() {
     }
   };
 
-  // Load report on mount
+  
   useEffect(() => {
     fetchProfitReport();
   }, []);
 
-  // Format currency
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
       minimumFractionDigits: 0,
     }).format(value) + " VND";
   };
 
-  // Format chart data
+  
   const chartData = reportData?.overTime || [];
 
-  // Calculate statistics
+  
   const summaryData = reportData?.summary || {
     totalRevenue: 0,
     totalExpense: 0,
@@ -153,7 +153,7 @@ export default function ProfitReport() {
     <AdminSidebar>
       <div className="p-8">
         <div className="space-y-8">
-          {/* Header */}
+          {}
           <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Báo cáo lợi nhuận</h1>
             <p className="text-gray-500 dark:text-gray-400">
@@ -161,7 +161,7 @@ export default function ProfitReport() {
             </p>
           </div>
 
-          {/* Filters */}
+          {}
           <Card className="border-gray-200 dark:border-gray-800">
             <CardHeader>
               <CardTitle className="text-lg">Bộ lọc</CardTitle>
@@ -226,7 +226,7 @@ export default function ProfitReport() {
             </CardContent>
           </Card>
 
-          {/* Summary Cards */}
+          {}
           {reportData && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
@@ -291,10 +291,10 @@ export default function ProfitReport() {
             </div>
           )}
 
-          {/* Charts */}
+          {}
           {reportData && chartData.length > 0 && (
             <div className="grid grid-cols-1 gap-6">
-              {/* Profit Over Time Line Chart */}
+              {}
               <Card className="border-gray-200 dark:border-gray-800">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function ProfitReport() {
                 </CardContent>
               </Card>
 
-              {/* Revenue vs Expense Bar Chart */}
+              {}
               <Card className="border-gray-200 dark:border-gray-800">
                 <CardHeader>
                   <CardTitle>So sánh Doanh thu và Chi phí</CardTitle>
@@ -391,7 +391,7 @@ export default function ProfitReport() {
             </div>
           )}
 
-          {/* Empty State */}
+          {}
           {!loading && !reportData && (
             <Card className="border-gray-200 dark:border-gray-800">
               <CardContent className="pt-6">
@@ -403,7 +403,7 @@ export default function ProfitReport() {
             </Card>
           )}
 
-          {/* Loading State */}
+          {}
           {loading && (
             <Card className="border-gray-200 dark:border-gray-800">
               <CardContent className="pt-6">

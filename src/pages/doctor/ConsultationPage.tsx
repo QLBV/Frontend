@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
+import DoctorSidebar from "../../components/layout/sidebar/doctor"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Textarea } from "../../components/ui/textarea"
+import { Badge } from "../../components/ui/badge"
 import {
   ArrowLeft,
   Loader2,
@@ -15,7 +15,7 @@ import {
   Thermometer,
   Stethoscope
 } from "lucide-react"
-import api from "@/lib/api"
+import api from "../../lib/api"
 import { toast } from "sonner"
 
 interface PatientData {
@@ -73,7 +73,7 @@ export default function ConsultationPage() {
            
            setPatientData({
              id: patient.id,
-             // Prioritize custom patient details from booking (for relatives)
+             
              fullName: appointment.patientName || patient.user?.fullName || patient.fullName || "Unknown",
              dateOfBirth: appointment.patientDob || patient.dateOfBirth || "",
              gender: appointment.patientGender || patient.gender || "MALE",
@@ -83,7 +83,7 @@ export default function ConsultationPage() {
              status: visit.status
            })
 
-           // Pre-fill vital signs if they exist (so we can edit/update them)
+           
            if (visit.vitalSigns) {
                setVitalSigns(prevVitals => prevVitals.map(v => ({
                  ...v,
@@ -91,7 +91,7 @@ export default function ConsultationPage() {
                })))
            }
            
-           // Pre-fill diagnosis if exists
+           
            if (visit.diagnosis) {
                setDiagnosis(visit.diagnosis)
            }
@@ -125,7 +125,7 @@ export default function ConsultationPage() {
   const handleCompleteConsultation = async () => {
      if (!visitId) return
 
-     // Validation
+     
      if (!consultationNote.trim()) {
         toast.error("Vui lòng nhập kết quả kiểm tra/tư vấn")
         return
@@ -149,7 +149,7 @@ export default function ConsultationPage() {
          visitId: Number(visitId),
          note: consultationNote,
          vitalSignsUpdate: vitalsObj,
-         diagnosis: diagnosis.trim() || undefined // Include diagnosis if provided
+         diagnosis: diagnosis.trim() || undefined 
        }
 
        await api.put(`/visits/referral/complete`, payload)
@@ -180,7 +180,7 @@ export default function ConsultationPage() {
   return (
     <DoctorSidebar>
        <div className="min-h-screen bg-slate-50/50 p-4 lg:p-8 space-y-8">
-          {/* Header */}
+          {}
           <div className="flex items-center justify-between">
               <Button variant="ghost" onClick={() => navigate("/doctor/medicalList")}>
                  <ArrowLeft className="w-4 h-4 mr-2" />
@@ -188,7 +188,7 @@ export default function ConsultationPage() {
               </Button>
           </div>
 
-          {/* Patient Info Card - Simplified */}
+          {}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between">
              <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-2xl font-bold">
@@ -215,7 +215,7 @@ export default function ConsultationPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
              <div className="lg:col-span-2 space-y-6">
                 
-                {/* Vital Signs Input */}
+                {}
                 <Card className="border-0 shadow-sm">
                    <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export default function ConsultationPage() {
                    </CardContent>
                 </Card>
 
-                {/* Consultation Note */}
+                {}
                 <Card className="border-0 shadow-sm">
                    <CardHeader>
                       <CardTitle className="flex items-center gap-2">

@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
+import { useAuth } from "../features/auth/context/authContext"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Label } from "../components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -14,20 +14,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../components/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
+} from "../components/ui/select"
+import { Calendar } from "../components/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "../components/ui/popover"
 import {
   ArrowLeft,
   CalendarIcon,
@@ -41,19 +41,19 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn } from "../lib/utils"
 import {
   getAppointmentById,
   updateAppointment,
   cancelAppointment,
   markNoShow,
   type Appointment,
-} from "@/services/appointment.service"
-import api from "@/lib/api"
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import PatientSidebar from "@/components/sidebar/patient"
+} from "../features/appointment/services/appointment.service"
+import api from "../lib/api"
+import AdminSidebar from "../components/layout/sidebar/admin"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
+import PatientSidebar from "../components/layout/sidebar/patient"
 
 interface Doctor {
   id: number
@@ -81,20 +81,20 @@ export default function AppointmentDetailPage() {
   const [isCancelling, setIsCancelling] = useState(false)
   const [isMarkingNoShow, setIsMarkingNoShow] = useState(false)
 
-  // Reschedule dialog
+  
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false)
   const [rescheduleDoctorId, setRescheduleDoctorId] = useState<number | null>(null)
   const [rescheduleShiftId, setRescheduleShiftId] = useState<number | null>(null)
   const [rescheduleDate, setRescheduleDate] = useState<Date>()
 
-  // Cancel dialog
+  
   const [isCancelOpen, setIsCancelOpen] = useState(false)
 
-  // Options
+  
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
 
-  // Fetch appointment
+  
   useEffect(() => {
     const fetchAppointment = async () => {
       if (!id) return
@@ -119,7 +119,7 @@ export default function AppointmentDetailPage() {
     fetchAppointment()
   }, [id, navigate])
 
-  // Fetch doctors and shifts for reschedule
+  
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -134,7 +134,7 @@ export default function AppointmentDetailPage() {
           setShifts(shiftsRes.data.data || [])
         }
       } catch (error) {
-        // Silent fail
+        
       }
     }
     if (isRescheduleOpen) {
@@ -161,7 +161,7 @@ export default function AppointmentDetailPage() {
       await updateAppointment(appointment.id, updateData)
       toast.success("Đổi lịch hẹn thành công!")
       setIsRescheduleOpen(false)
-      // Refresh appointment data
+      
       const updated = await getAppointmentById(appointment.id)
       setAppointment(updated)
     } catch (error: any) {
@@ -198,7 +198,7 @@ export default function AppointmentDetailPage() {
     try {
       await markNoShow(appointment.id)
       toast.success("Đã đánh dấu không đến!")
-      // Refresh appointment data
+      
       const updated = await getAppointmentById(appointment.id)
       setAppointment(updated)
     } catch (error: any) {
@@ -241,7 +241,7 @@ export default function AppointmentDetailPage() {
     )
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    
     if (role === "admin" || role === "1") {
       return <AdminSidebar>{loadingContent}</AdminSidebar>
     } else if (role === "doctor" || role === "4") {
@@ -267,7 +267,7 @@ export default function AppointmentDetailPage() {
     )
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    
     if (role === "admin" || role === "1") {
       return <AdminSidebar>{errorContent}</AdminSidebar>
     } else if (role === "doctor" || role === "4") {
@@ -280,16 +280,16 @@ export default function AppointmentDetailPage() {
     return null
   }
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
   const canCancel =
     appointment.status === "WAITING" &&
-    (user?.roleId === 3 || user?.roleId === 2) // Patient or Receptionist
+    (user?.roleId === 3 || user?.roleId === 2) 
   const canReschedule =
     appointment.status === "WAITING" &&
-    (user?.roleId === 3 || user?.roleId === 2 || user?.roleId === 1) // Patient, Receptionist, or Admin
+    (user?.roleId === 3 || user?.roleId === 2 || user?.roleId === 1) 
   const canMarkNoShow =
     appointment.status === "WAITING" &&
-    (user?.roleId === 1 || user?.roleId === 2) // Admin or Receptionist
+    (user?.roleId === 1 || user?.roleId === 2) 
 
   if (!user) {
     return null
@@ -300,7 +300,7 @@ export default function AppointmentDetailPage() {
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
       <div className="space-y-6">
-        {/* Back Button */}
+        {}
         <div>
           <Button 
             variant="ghost" 
@@ -312,7 +312,7 @@ export default function AppointmentDetailPage() {
           </Button>
         </div>
 
-        {/* Appointment Header Card */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5 mb-8 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
             <div className="flex items-start justify-between">
@@ -385,7 +385,7 @@ export default function AppointmentDetailPage() {
             </div>
           </div>
 
-          {/* Quick Info */}
+          {}
           <div className="grid grid-cols-4 divide-x bg-white">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-2">
@@ -452,9 +452,9 @@ export default function AppointmentDetailPage() {
           </div>
         </Card>
 
-        {/* Details Cards */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Patient Information */}
+          {}
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
               <CardTitle className="flex items-center gap-2">
@@ -504,7 +504,7 @@ export default function AppointmentDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Doctor Information */}
+          {}
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
               <CardTitle className="flex items-center gap-2">
@@ -531,7 +531,7 @@ export default function AppointmentDetailPage() {
           </Card>
         </div>
 
-        {/* Appointment Details */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
             <CardTitle className="flex items-center gap-2">
@@ -587,7 +587,7 @@ export default function AppointmentDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Reschedule Dialog */}
+        {}
       <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
         <DialogContent>
           <DialogHeader>
@@ -693,7 +693,7 @@ export default function AppointmentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Cancel Dialog */}
+      {}
       <Dialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
         <DialogContent>
           <DialogHeader>
@@ -731,7 +731,7 @@ export default function AppointmentDetailPage() {
       </div>
     )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
   if (role === "admin" || role === "1") {
     return <AdminSidebar>{content}</AdminSidebar>
   } else if (role === "doctor" || role === "4") {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { format } from "date-fns"
-import ReceptionistSidebar from '@/components/sidebar/recep'
+import ReceptionistSidebar from '../../components/layout/sidebar/recep'
 import {
   ArrowLeft,
   Phone,
@@ -31,12 +31,12 @@ import {
   History,
   FileSearch
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
+import { Input } from "../../components/ui/input"
 import { toast } from "sonner"
 import {
   getPatientById,
@@ -46,10 +46,10 @@ import {
   type Patient,
   type Visit,
   type Prescription,
-} from "@/services/patient.service"
-import { InvoiceService, type Invoice, PaymentStatus } from "@/services/invoice.service"
+} from "../../features/patient/services/patient.service"
+import { InvoiceService, type Invoice, PaymentStatus } from "../../features/finance/services/invoice.service"
 
-// Helper to clean note text (remove system generated headers)
+
 const cleanNoteText = (noteText: string) => {
   if (!noteText) return "Không có ghi chú";
   let cleanedText = noteText;
@@ -89,7 +89,7 @@ export default function RecepPatientDetail() {
         setIsLoading(true)
         const data = await getPatientById(Number(id))
         setPatient(data)
-        // Auto-fetch medical history for last visit display
+        
         await fetchMedicalHistory()
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Không thể tải thông tin bệnh nhân")
@@ -155,7 +155,7 @@ export default function RecepPatientDetail() {
     setIsUploadingAvatar(true)
     try {
       const result = await uploadPatientAvatar(Number(id), file)
-      // Add timestamp to bust cache
+      
       const newAvatarUrl = `${result.avatar}?t=${new Date().getTime()}`
       setPatient((prev) => (prev ? { ...prev, avatar: newAvatarUrl } : null))
       toast.success("Upload avatar thành công!")
@@ -215,7 +215,7 @@ export default function RecepPatientDetail() {
       <div className="min-h-screen bg-slate-50/50 pb-12">
         <div className="container mx-auto px-6 py-8 max-w-[1600px]">
           
-          {/* Breadcrumb / Back */}
+          {}
           <div className="mb-6">
             <Button variant="ghost" className="rounded-xl px-0 hover:bg-transparent group" asChild>
               <Link to="/recep/patients" className="flex items-center gap-2 text-slate-500 font-bold hover:text-indigo-600 transition-colors">
@@ -227,7 +227,7 @@ export default function RecepPatientDetail() {
             </Button>
           </div>
 
-          {/* Premium Header Card */}
+          {}
           <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden mb-8">
             <div className="relative h-32 bg-gradient-to-r from-indigo-600 to-blue-700 overflow-hidden">
                <div className="absolute inset-0 opacity-20">
@@ -252,44 +252,49 @@ export default function RecepPatientDetail() {
                       </Avatar>
                       <label htmlFor="avatar-upload" className="absolute bottom-2 right-2 p-2 bg-indigo-600 text-white rounded-xl shadow-lg cursor-pointer hover:bg-indigo-700 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
                          {isUploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-                         <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
-                      </label>
+                          <input
+                             id="avatar-upload"
+                             type="file"
+                             accept="image/*"
+                             className="hidden"
+                             onChange={handleAvatarUpload}
+                          />
+                       </label>
                     </div>
-
-                    <div className="text-center sm:text-left pb-2">
-                       <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                    
+                    <div className="text-center sm:text-left mb-2">
+                       <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2 flex flex-col sm:flex-row items-center gap-3">
                           {patient.fullName}
-                          {patient.isActive && <div className="w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />}
-                       </h1>
-                       <div className="flex flex-wrap justify-center sm:justify-start items-center gap-4 mt-2 text-slate-500 font-bold">
-                          <div className="flex items-center gap-1.5 text-xs bg-slate-100 px-2.5 py-1 rounded-lg">
-                             <IdCard className="w-3.5 h-3.5" />
+                          <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200 text-sm px-3 py-1">
                              {patient.patientCode}
-                          </div>
-                          <div className="text-xs uppercase tracking-wider">
-                             {patient.dateOfBirth ? `${calculateAge(patient.dateOfBirth)} Tuổi` : "N/A"} • {patient.gender === "MALE" ? "Nam" : "Nữ"}
-                          </div>
-                          <Badge className={patient.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-slate-100 text-slate-500"} variant="outline">
-                             {patient.isActive ? "Đang hoạt động" : "Tạm dừng"}
                           </Badge>
+                       </h1>
+                       <div className="flex items-center justify-center sm:justify-start gap-4 text-slate-500 font-bold text-sm">
+                          <div className="flex items-center gap-1.5">
+                             <Calendar className="w-4 h-4 text-indigo-400" />
+                             {format(new Date(patient.dateOfBirth), "dd/MM/yyyy")}
+                             <span className="text-slate-300 mx-1">•</span>
+                             {calculateAge(patient.dateOfBirth)} tuổi
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                             {patient.gender === 'MALE' ? <User className="w-4 h-4 text-blue-500" /> : <User className="w-4 h-4 text-rose-500" />}
+                             {patient.gender === 'MALE' ? 'Nam' : patient.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
+                          </div>
                        </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap justify-center gap-3 pb-2">
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all">
-                       <Edit className="w-4 h-4 mr-2" />
-                       Chỉnh sửa hồ sơ
-                    </Button>
-                    <Button variant="outline" className="rounded-xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
-                       <FileText className="w-4 h-4 mr-2 text-indigo-500" />
-                       Xuất bệnh án
-                    </Button>
+                  <div className="flex items-center gap-3 mb-4 lg:mb-2">
+                     <Button className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 shadow-sm font-bold rounded-xl" onClick={() => window.print()}>
+                        <FileText className="w-4 h-4 mr-2" /> Xuất hồ sơ
+                     </Button>
+                     <Button className="bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 font-bold rounded-xl">
+                        <Edit className="w-4 h-4 mr-2" /> Chỉnh sửa
+                     </Button>
                   </div>
                </div>
             </div>
 
-            {/* Visual Health Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 border-t border-slate-100 divide-x divide-slate-100">
                {[
                  { label: "Nhóm máu", value: patient.bloodType || "N/A", icon: Droplet, color: "rose" },
@@ -312,7 +317,7 @@ export default function RecepPatientDetail() {
             </div>
           </Card>
 
-          {/* Main Info Tabs */}
+          {}
           <Tabs defaultValue="overview" className="space-y-8">
             <TabsList className="bg-white p-1 rounded-2xl ring-1 ring-slate-200 shadow-sm inline-flex w-auto overflow-x-auto max-w-full no-scrollbar">
               <TabsTrigger value="overview" className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Tổng quan</TabsTrigger>
@@ -321,11 +326,11 @@ export default function RecepPatientDetail() {
               <TabsTrigger value="invoices" onClick={fetchInvoices} className="rounded-xl font-bold px-6 py-2.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Hóa đơn</TabsTrigger>
             </TabsList>
 
-            {/* --- OVERVIEW TAB --- */}
+            {}
             <TabsContent value="overview">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                  
-                 {/* Left Column: Essential Contacts */}
+                 {}
                  <div className="lg:col-span-4 space-y-8">
                     <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-8 py-5">
@@ -360,7 +365,7 @@ export default function RecepPatientDetail() {
                     </Card>
                  </div>
 
-                 {/* Right Column: Health Timeline / Summary */}
+                 {}
                  <div className="lg:col-span-8 space-y-8">
                     <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-8 py-6 flex flex-row items-center justify-between">
@@ -414,7 +419,7 @@ export default function RecepPatientDetail() {
               </div>
             </TabsContent>
 
-             {/* --- MEDICAL HISTORY TAB --- */}
+             {}
              <TabsContent value="medical-history">
                 <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
                    <CardHeader className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -519,7 +524,7 @@ export default function RecepPatientDetail() {
                 </Card>
             </TabsContent>
 
-            {/* --- INVOICES TAB --- */}
+            {}
             <TabsContent value="invoices">
                <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
                   <CardHeader className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
@@ -578,7 +583,7 @@ export default function RecepPatientDetail() {
                </Card>
             </TabsContent>
 
-            {/* Other tabs can follow same design language... */}
+            {}
             <TabsContent value="prescriptions">
               <Card className="border-0 shadow-lg bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
                 <CardHeader className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
@@ -646,7 +651,7 @@ export default function RecepPatientDetail() {
                                              </div>
                                              <div className="text-[10px] text-slate-500 mt-1 font-bold uppercase tracking-tight truncate">
                                                 {item.medicineName ? (
-                                                   // New format with details
+                                                   
                                                    <>
                                                       {Number(item.dosageMorning) > 0 && `Sáng ${Number(item.dosageMorning)} `}
                                                       {Number(item.dosageNoon) > 0 && `Trưa ${Number(item.dosageNoon)} `}
@@ -655,7 +660,7 @@ export default function RecepPatientDetail() {
                                                       {!item.dosageMorning && !item.dosageNoon && !item.dosageAfternoon && !item.dosageEvening && item.instruction}
                                                    </>
                                                 ) : (
-                                                   // Old format fallback
+                                                   
                                                    `${item.dosage || ''} • ${item.frequency || ''}`
                                                 )}
                                              </div>

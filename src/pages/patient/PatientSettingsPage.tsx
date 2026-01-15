@@ -2,22 +2,22 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Label } from "../../components/ui/label"
+import { Switch } from "../../components/ui/switch"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { toast } from "sonner"
-import PatientSidebar from "@/components/sidebar/patient"
-import { useAuth } from "@/auth/authContext"
+import PatientSidebar from "../../components/layout/sidebar/patient"
+import { useAuth } from "../../features/auth/context/authContext"
 import { Bell, Monitor, Loader2, Save } from "lucide-react"
-import { UserService } from "@/services/user.service"
+import { UserService } from "../../features/auth/services/user.service"
 
 export default function PatientSettingsPage() {
   const navigate = useNavigate()
@@ -25,9 +25,9 @@ export default function PatientSettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // System settings state
+  
   const [settings, setSettings] = useState({
-    // Notification settings matches backend
+    
     emailEnabled: true,
     smsEnabled: false,
     pushEnabled: true,
@@ -35,7 +35,7 @@ export default function PatientSettingsPage() {
     appointmentReminders: true,
     prescriptionReminders: true,
 
-    // Display settings (local state for now)
+    
     language: "vi",
     timezone: "Asia/Ho_Chi_Minh",
     dateFormat: "DD/MM/YYYY",
@@ -57,8 +57,8 @@ export default function PatientSettingsPage() {
         }))
       } catch (error) {
         console.error("Failed to fetch settings:", error)
-        // Keep defaults or show toast?
-        // toast.error("Không thể tải cài đặt thông báo")
+        
+        
       } finally {
         setLoading(false)
       }
@@ -87,7 +87,7 @@ export default function PatientSettingsPage() {
     try {
       setIsSaving(true)
 
-      // Call API to save settings
+      
       await UserService.updateNotificationSettings({
         emailEnabled: settings.emailEnabled,
         smsEnabled: settings.smsEnabled,
@@ -97,8 +97,8 @@ export default function PatientSettingsPage() {
         prescriptionReminders: settings.prescriptionReminders,
       })
 
-      // Simulate saving other settings (display settings) appropriately if they had an API
-      // await new Promise(resolve => setTimeout(resolve, 500))
+      
+      
 
       toast.success("Cập nhật cài đặt thành công!")
     } catch (error: any) {
@@ -114,7 +114,7 @@ export default function PatientSettingsPage() {
       userName={user?.fullName || user?.email}
     >
       <div className="space-y-6">
-        {/* Page Header */}
+        {}
         <div>
           <h1 className="text-3xl font-bold">Cài đặt hệ thống</h1>
           <p className="text-muted-foreground mt-1">
@@ -128,7 +128,7 @@ export default function PatientSettingsPage() {
            </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Notification Settings Card */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -212,7 +212,7 @@ export default function PatientSettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Display Settings Card */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export default function PatientSettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Submit Button */}
+            {}
             <div className="flex justify-end">
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? (

@@ -28,7 +28,7 @@ const HelpCenterPage = () => {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Contact form state
+  
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -148,13 +148,13 @@ const HelpCenterPage = () => {
     try {
       setIsSendingMessage(true);
 
-      // TODO: Call API to send contact message when backend endpoint is ready
-      // await sendContactMessage(contactForm);
+      
+      
 
-      // Simulate API call
+      
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Reset form
+      
       setContactForm({
         name: "",
         email: "",
@@ -173,10 +173,10 @@ const HelpCenterPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-12">
         <div className="max-w-6xl mx-auto px-6">
-          {/* Back Button */}
+          {}
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-white/90 hover:text-white mb-6 transition-colors"
@@ -190,7 +190,7 @@ const HelpCenterPage = () => {
             Chúng tôi luôn sẵn sàng hỗ trợ bạn. Tìm câu trả lời cho câu hỏi của bạn hoặc liên hệ với chúng tôi.
           </p>
 
-          {/* Search Bar */}
+          {}
           <div className="relative max-w-2xl">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -206,7 +206,7 @@ const HelpCenterPage = () => {
 
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Categories */}
+          {}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Danh mục</h3>
@@ -229,9 +229,9 @@ const HelpCenterPage = () => {
             </div>
           </div>
 
-          {/* Main Content */}
+          {}
           <div className="lg:col-span-3 space-y-6">
-            {/* FAQ Section */}
+            {}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Câu hỏi thường gặp</h2>
 
@@ -271,9 +271,9 @@ const HelpCenterPage = () => {
               )}
             </div>
 
-            {/* Contact Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Phone Contact */}
+              {}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -289,7 +289,7 @@ const HelpCenterPage = () => {
                 </a>
               </div>
 
-              {/* Email Contact */}
+              {}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -305,7 +305,7 @@ const HelpCenterPage = () => {
                 </a>
               </div>
 
-              {/* Address */}
+              {}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -319,7 +319,7 @@ const HelpCenterPage = () => {
                 <p className="text-gray-700">123 Đường ABC, Phường XYZ, Quận 1, TP.HCM</p>
               </div>
 
-              {/* Working Hours */}
+              {}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -341,10 +341,10 @@ const HelpCenterPage = () => {
         </div>
       </div>
 
-      {/* Footer - Contact Form */}
+      {}
       <footer className="bg-white border-t border-gray-200 py-16 mt-16">
         <div className="max-w-6xl mx-auto px-6">
-          {/* Header Section */}
+          {}
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-3">Còn thắc mắc?</h2>
             <p className="text-lg text-gray-600">
@@ -352,12 +352,12 @@ const HelpCenterPage = () => {
             </p>
           </div>
 
-          {/* Contact Form Card */}
+          {}
           <div className="max-w-3xl mx-auto">
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 shadow-sm border border-primary/20">
               <form onSubmit={handleSubmitContactForm} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name Field */}
+                  {}
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
                       Họ và tên
@@ -374,7 +374,7 @@ const HelpCenterPage = () => {
                     />
                   </div>
 
-                  {/* Email Field */}
+                  {}
                   <div>
                     <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                       Email
@@ -392,7 +392,7 @@ const HelpCenterPage = () => {
                   </div>
                 </div>
 
-                {/* Subject Field */}
+                {}
                 <div>
                   <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-2">
                     Tiêu đề
@@ -409,7 +409,7 @@ const HelpCenterPage = () => {
                   />
                 </div>
 
-                {/* Message Field */}
+                {}
                 <div>
                   <label htmlFor="message" className="block text-sm font-semibold text-gray-700 mb-2">
                     Nội dung
@@ -426,7 +426,7 @@ const HelpCenterPage = () => {
                   />
                 </div>
 
-                {/* Submit Button */}
+                {}
                 <div className="flex justify-end">
                   <button
                     type="submit"
@@ -454,7 +454,7 @@ const HelpCenterPage = () => {
             </div>
           </div>
 
-          {/* Footer Bottom */}
+          {}
           <div className="mt-16 pt-8 border-t border-gray-200 text-center">
             <p className="text-gray-500 text-sm">© 2024 HealthCare. Tất cả quyền được bảo lưu.</p>
           </div>

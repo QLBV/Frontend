@@ -4,15 +4,15 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowLeft, Pill, User, Calendar, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
-import PatientSidebar from "@/components/sidebar/patient"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/auth/authContext"
-import { PrescriptionService } from "@/services/prescription.service"
-import type { Prescription } from "@/types/prescription.types"
-import { formatCurrency, formatDate } from "@/utils/prescriptionHelpers"
+import PatientSidebar from "../../components/layout/sidebar/patient"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Skeleton } from "../../components/ui/skeleton"
+import { useAuth } from "../../features/auth/context/authContext"
+import { PrescriptionService } from "../../features/appointment/services/prescription.service"
+import type { Prescription } from "../../types/prescription.types"
+import { formatCurrency, formatDate } from "../../utils/prescriptionHelpers"
 
 export default function PatientPrescriptionDetailPage() {
   const { id } = useParams()
@@ -46,7 +46,7 @@ export default function PatientPrescriptionDetailPage() {
         if (response.success && response.data) {
           const transformed = PrescriptionService.transformPrescriptionData(response.data)
 
-          // Bảo vệ: chỉ cho phép bệnh nhân xem đơn thuốc của chính mình
+          
           if (transformed.patientId !== user.patientId) {
             setError("Bạn không có quyền xem đơn thuốc này")
             return

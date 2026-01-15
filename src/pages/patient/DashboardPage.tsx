@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
 import { Calendar, Clock, FileText, Pill, Plus, Heart, ChevronRight, Activity, Thermometer, User, Stethoscope, ChevronLeft } from "lucide-react"
-import { useAuth } from "@/auth/authContext"
-import { getMyAppointments, type Appointment } from "@/services/appointment.service"
-import { getPatientById, getPatientMedicalHistory, type Visit } from "@/services/patient.service"
+import { useAuth } from "../../features/auth/context/authContext"
+import { getMyAppointments, type Appointment } from "../../features/appointment/services/appointment.service"
+import { getPatientById, getPatientMedicalHistory, type Visit } from "../../features/patient/services/patient.service"
 import { toast } from "sonner"
-import { Skeleton } from "@/components/ui/skeleton"
-import PatientSidebar from "@/components/sidebar/patient"
+import { Skeleton } from "../../components/ui/skeleton"
+import PatientSidebar from "../../components/layout/sidebar/patient"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-import { AppointmentCard } from "@/components/appointment/AppointmentCard"
-import { PremiumPagination } from "@/components/ui/premium-pagination"
-import type { IAppointment } from "@/types/appointment"
+import { AppointmentCard } from "../../features/appointment/components/AppointmentCard"
+import { PremiumPagination } from "../../components/ui/premium-pagination"
+import type { IAppointment } from "../../types/appointment"
 
 export default function PatientDashboardPage() {
   const navigate = useNavigate()
@@ -78,7 +78,7 @@ export default function PatientDashboardPage() {
       try {
         setIsLoading(true)
 
-        // Fetch patient profile for patient code
+        
         try {
           const patient = await getPatientById(user.patientId)
           setPatientCode(patient.patientCode || "")
@@ -86,7 +86,7 @@ export default function PatientDashboardPage() {
           console.error("Error fetching patient profile:", error)
         }
 
-        // Fetch appointments
+        
         const appointments = await getMyAppointments()
 
         const now = new Date()
@@ -104,10 +104,10 @@ export default function PatientDashboardPage() {
 
         setRecentAppointments(past)
         setUpcomingAppointments(upcoming)
-        // Reset index when data refreshes
+        
         setCurrentIndex(0)
 
-        // Fetch latest visit for vital signs
+        
         try {
           const historyData = await getPatientMedicalHistory(user.patientId, 1, 1)
           if (historyData.data && historyData.data.length > 0) {
@@ -115,7 +115,7 @@ export default function PatientDashboardPage() {
           }
         } catch (error: any) {
           console.error("Error fetching latest visit:", error)
-          // Silent fail - vital signs will show "Chưa có dữ liệu"
+          
         }
       } catch (error: any) {
         console.error("Error fetching dashboard data:", error)
@@ -166,7 +166,7 @@ export default function PatientDashboardPage() {
       patientCode={patientCode}
     >
       <div className="space-y-8 animate-in fade-in duration-500">
-        {/* Welcome Section */}
+        {}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
@@ -186,16 +186,16 @@ export default function PatientDashboardPage() {
           </Button>
         </div>
 
-        {/* Top Stats Grid */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upcoming Appointment Card - Premium Gradient */}
+          {}
           <div className="lg:col-span-2 group">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 text-white shadow-xl shadow-blue-100 p-1 h-full transition-all duration-300 hover:shadow-2xl hover:shadow-blue-200">
               <div className="absolute top-0 right-0 p-3 opacity-10">
                 <Calendar className="w-64 h-64 -mr-16 -mt-16 text-white" />
               </div>
 
-              {/* Navigation Buttons (only if > 1 appointment) */}
+              {}
               {upcomingAppointments.length > 1 && (
                 <>
                   <button 
@@ -211,7 +211,7 @@ export default function PatientDashboardPage() {
                     <ChevronRight className="w-6 h-6" />
                   </button>
                   
-                  {/* Dots Indicator */}
+                  {}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                     {upcomingAppointments.map((_, idx) => (
                       <div 
@@ -301,7 +301,7 @@ export default function PatientDashboardPage() {
             </div>
           </div>
 
-          {/* Health Metrics Card - Modern Grid */}
+          {}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-100 p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -355,7 +355,7 @@ export default function PatientDashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
            {[
              { title: "Đơn thuốc", desc: "Danh sách đơn thuốc", icon: Pill, color: "text-emerald-600", bg: "bg-emerald-50", link: "/patient/prescriptions" },
@@ -380,9 +380,9 @@ export default function PatientDashboardPage() {
            ))}
         </div>
 
-        {/* Recent Activity & Info */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           {/* Recent Appointments List - Framed */}
+           {}
            <div className="lg:col-span-2">
              <div className="bg-white rounded-2xl border border-gray-100 shadow-lg shadow-gray-100 p-6 h-full flex flex-col">
                  <div className="flex items-center justify-between mb-6 shrink-0">
@@ -417,7 +417,7 @@ export default function PatientDashboardPage() {
                         ))}
                      </div>
                       
-                      {/* Premium Pagination - Fixed at Bottom */}
+                      {}
                       <div className="mt-4 shrink-0">
                         <PremiumPagination 
                           currentPage={historyPage}
@@ -443,9 +443,9 @@ export default function PatientDashboardPage() {
              </div>
            </div>
 
-           {/* Right Info Column */}
+           {}
            <div className="space-y-6">
-             {/* Promo Card */}
+             {}
              <div className="rounded-2xl overflow-hidden shadow-lg relative group h-48">
                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600"></div>
                <img 
@@ -461,7 +461,7 @@ export default function PatientDashboardPage() {
                </div>
              </div>
 
-             {/* Live Calendar with Appointments */}
+             {}
              <div className="bg-white rounded-2xl border border-gray-100 shadow-lg shadow-gray-100 p-6">
                <div className="flex items-center justify-between mb-4">
                  <h3 className="font-bold text-gray-900 capitalize">{format(new Date(), "MMMM yyyy", { locale: vi })}</h3>
@@ -489,24 +489,24 @@ export default function PatientDashboardPage() {
                    const start = new Date(today.getFullYear(), today.getMonth(), 1)
                    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
                    
-                   // Calculate offset for Monday start (getDay: Sunday=0, Monday=1...)
-                   // If starts on Monday (1), offset is 0. If Sunday (0), offset is 6.
+                   
+                   
                    let startDay = start.getDay()
                    let offset = startDay === 0 ? 6 : startDay - 1
                    
                    const days = []
                    
-                   // Empty cells for offset
+                   
                    for (let i = 0; i < offset; i++) {
                      days.push(<div key={`empty-${i}`} className="h-8 w-8"></div>)
                    }
                    
-                   // Days of month
+                   
                    for (let d = 1; d <= end.getDate(); d++) {
                      const date = new Date(today.getFullYear(), today.getMonth(), d)
                      const isToday = d === today.getDate()
                      
-                     // Check appointments (find actual object)
+                     
                      const upcomingAppt = upcomingAppointments.find(a => new Date(a.date).toDateString() === date.toDateString())
                      const pastAppt = recentAppointments.find(a => new Date(a.date).toDateString() === date.toDateString())
                      const relevantAppt = upcomingAppt || pastAppt
@@ -544,7 +544,7 @@ export default function PatientDashboardPage() {
                  })()}
                </div>
 
-               {/* Calendar Footer Summary */}
+               {}
                <div className="mt-4 pt-4 border-t border-gray-100 text-center">
                   <p className="text-xs text-gray-500">
                     Bạn có <span className="font-bold text-gray-900">{upcomingAppointments.length}</span> lịch hẹn sắp tới trong tháng này.

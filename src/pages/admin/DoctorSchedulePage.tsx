@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 
-import AdminSidebar from "@/components/sidebar/admin"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import ScheduleEventModal from "./ModalChooseDay"
-import api from "@/lib/api"
+import api from "../../lib/api"
 import { toast } from "sonner"
 
 import {
@@ -12,9 +12,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+} from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -22,9 +22,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+} from "../../components/ui/dialog"
+import { Textarea } from "../../components/ui/textarea"
+import { Label } from "../../components/ui/label"
 
 import {
   ChevronLeft,
@@ -39,7 +39,7 @@ import {
   Filter,
 } from "lucide-react"
 
-/* ================= TYPES ================= */
+
 interface Shift {
   id: number
   name: string
@@ -72,14 +72,14 @@ interface DoctorShift {
   shift: Shift
 }
 
-/* ================= MOCK DATA (REMOVED) ================= */
-// Removed unused mock data
 
-/* ================= PAGE ================= */
+
+
+
 export default function DoctorSchedulePage() {
 
 
-  // States
+  
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null)
@@ -96,7 +96,7 @@ export default function DoctorSchedulePage() {
   const [cancelReason, setCancelReason] = useState("")
   const [previewData, setPreviewData] = useState<any>(null)
 
-  // Data states
+  
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
   const [doctorShifts, setDoctorShifts] = useState<DoctorShift[]>([])
@@ -106,7 +106,7 @@ export default function DoctorSchedulePage() {
     consultations: true,
     onLeave: true,
   })
-  // Fetch data from API
+  
   const fetchDoctors = async () => {
     try {
       console.log('Fetching doctors...')
@@ -131,7 +131,7 @@ export default function DoctorSchedulePage() {
         setShifts(response.data.data)
         console.log('Shifts loaded:', response.data.data.length)
       } else {
-        // Fallback shifts data
+        
         setShifts([
           { id: 1, name: "MORNING", startTime: "08:00", endTime: "12:00" },
           { id: 2, name: "AFTERNOON", startTime: "13:00", endTime: "17:00" },
@@ -140,7 +140,7 @@ export default function DoctorSchedulePage() {
       }
     } catch (err) {
       console.error('Error fetching shifts:', err)
-      // Fallback shifts data
+      
       setShifts([
         { id: 1, name: "MORNING", startTime: "08:00", endTime: "12:00" },
         { id: 2, name: "AFTERNOON", startTime: "13:00", endTime: "17:00" },
@@ -173,7 +173,7 @@ export default function DoctorSchedulePage() {
         await Promise.all([
           fetchDoctors(),
           fetchShifts(),
-          fetchDoctorShifts() // Fetch tất cả doctor shifts, không cần doctorId
+          fetchDoctorShifts() 
         ])
       } catch (err) {
         setError('Không thể tải dữ liệu')
@@ -183,9 +183,9 @@ export default function DoctorSchedulePage() {
     }
     
     loadData()
-  }, []) // Bỏ doctorId dependency vì giờ fetch tất cả
+  }, []) 
 
-  // Helper functions for date calculations
+  
   const getWeekDates = () => {
     const start = new Date(currentWeek)
     const day = start.getDay()
@@ -193,7 +193,7 @@ export default function DoctorSchedulePage() {
     start.setDate(diff)
     
     const dates = []
-    for (let i = 0; i < 7; i++) { // Monday to Sunday (7 days)
+    for (let i = 0; i < 7; i++) { 
       const date = new Date(start)
       date.setDate(start.getDate() + i)
       dates.push(date)
@@ -201,7 +201,7 @@ export default function DoctorSchedulePage() {
     return dates
   }
 
-  /* ================= HELPERS ================= */
+  
   const getAvatarColor = (name: string) => {
     const colors = [
       "bg-blue-500",
@@ -226,7 +226,7 @@ export default function DoctorSchedulePage() {
       .slice(0, 2)
   }
 
-  // Remove unused isEventVisible function
+  
 
   const toggleFilter = (key: "consultations" | "onLeave") => {
     setFilters(prev => ({ ...prev, [key]: !prev[key] }))
@@ -243,14 +243,14 @@ export default function DoctorSchedulePage() {
 
   const getShiftIcon = (shiftName: string) => {
     switch (shiftName.toUpperCase()) {
-      case 'MORNING': return '🌅'
-      case 'AFTERNOON': return '☀️'
-      case 'EVENING': return '🌙'
+      case 'MORNING': return ''
+      case 'AFTERNOON': return '️'
+      case 'EVENING': return ''
       default: return '⏰'
     }
   }
 
-  /* ================= HANDLERS ================= */
+  
   const handleDoctorSelect = (doctor: Doctor) => {
     setSelectedDoctor(doctor)
     setShowDatePicker(true)
@@ -299,12 +299,12 @@ export default function DoctorSchedulePage() {
       if (response.data.success) {
         const result = response.data.data
         
-        // Update UI - mark as cancelled instead of removing
+        
         setDoctorShifts(prev => prev.map(ds => 
           ds.id === selectedShiftToCancel.id ? { ...ds, status: 'CANCELLED' as const } : ds
         ))
         
-        // Show success message
+        
         let successMsg = `Đã hủy ca trực thành công!`
         if (result.totalAppointments > 0) {
           successMsg += ` ${result.rescheduledCount || 0}/${result.totalAppointments} lịch hẹn đã được xử lý.`
@@ -340,7 +340,7 @@ export default function DoctorSchedulePage() {
       const response = await api.post(`/doctor-shifts/${selectedShiftToRestore.id}/restore`)
 
       if (response.data.success) {
-        // Update UI - mark as active
+        
         setDoctorShifts(prev => prev.map(ds => 
           ds.id === selectedShiftToRestore.id ? { ...ds, status: 'ACTIVE' as const } : ds
         ))
@@ -365,11 +365,11 @@ export default function DoctorSchedulePage() {
     shiftId: number
     workDate: string
   }) => {
-    // Thêm doctor shift mới vào UI
+    
     if (scheduleData && selectedDoctor) {
       const selectedShift = shifts.find(s => s.id === scheduleData.shiftId)
       const newDoctorShift = {
-        id: Date.now(), // fake ID
+        id: Date.now(), 
         doctorId: scheduleData.doctorId,
         shiftId: scheduleData.shiftId,
         workDate: scheduleData.workDate,
@@ -378,11 +378,11 @@ export default function DoctorSchedulePage() {
         shift: selectedShift || { id: 1, name: "MORNING", startTime: "08:00", endTime: "12:00" }
       }
       
-      // Thêm vào danh sách hiện tại
+      
       setDoctorShifts(prev => [...prev, newDoctorShift])
     }
     
-    // Đóng modal và reset state
+    
     setShowDatePicker(false)
     setSelectedDoctor(null)
     setSelectedDate("")
@@ -398,7 +398,7 @@ export default function DoctorSchedulePage() {
     setCurrentWeek(new Date())
   }
 
-  /* ================= RENDER ================= */
+  
   if (loading) {
     return (
       <AdminSidebar>
@@ -429,19 +429,19 @@ export default function DoctorSchedulePage() {
 
   const weekDates = getWeekDates()
   const weekStart = weekDates[0]
-  const weekEnd = weekDates[6] // Changed from weekDates[4] to weekDates[6] for Sunday
+  const weekEnd = weekDates[6] 
 
   return (
     <AdminSidebar>
       <div className="relative min-h-screen p-4 lg:p-8 max-w-[1600px] mx-auto space-y-8">
         
-        {/* Background Gradients */}
+        {}
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] animate-pulse" />
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
-        {/* Header Section */}
+        {}
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-indigo-100/50">
           <div className="flex items-start gap-4">
             <div className="hidden lg:flex p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/30 text-white">
@@ -483,7 +483,7 @@ export default function DoctorSchedulePage() {
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-          {/* ================= MAIN SCHEDULE ================= */}
+          {}
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6 bg-white/60 backdrop-blur-md p-2 rounded-2xl border border-white/60 shadow-sm">
               <div className="flex items-center gap-2">
@@ -502,11 +502,11 @@ export default function DoctorSchedulePage() {
               <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">
                 {weekStart.toLocaleDateString('vi-VN', { month: 'long', day: 'numeric' })} <span className="text-slate-400 mx-1">—</span> {weekEnd.toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}
               </h2>
-              <div className="w-[100px]" /> {/* Spacer for centering if needed, or keeping structure */}
+              <div className="w-[100px]" /> {}
             </div>
 
             <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white/80 backdrop-blur-xl overflow-hidden rounded-[24px] ring-1 ring-slate-200/50">
-              {/* ===== WEEK HEADER ===== */}
+              {}
               <div className="grid grid-cols-8 border-b border-indigo-50 bg-indigo-50/30">
                 <div className="p-4 border-r border-indigo-50 text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center justify-center">
                   Ca trực
@@ -540,7 +540,7 @@ export default function DoctorSchedulePage() {
                 })}
               </div>
 
-              {/* ===== TIME SLOTS ===== */}
+              {}
               <CardContent className="p-0">
                 {shifts.map((shift) => (
                   <div key={shift.id} className="grid grid-cols-8 border-b border-slate-100 min-h-[180px] hover:bg-slate-50/30 transition-colors">
@@ -566,7 +566,7 @@ export default function DoctorSchedulePage() {
                       
                       return (
                         <div key={dayIndex} className="p-2 border-r border-slate-100 relative group/cell">
-                          {/* Active shifts */}
+                          {}
                           {filters.consultations && activeShifts.map(doctorShift => {
                             const doctorName = doctorShift.doctor?.user?.fullName || 'N/A';
                             return (
@@ -574,25 +574,25 @@ export default function DoctorSchedulePage() {
                               key={doctorShift.id}
                               className="p-2 mb-2 rounded-xl text-xs bg-white border border-slate-100 shadow-sm shadow-slate-200/50 hover:shadow-md hover:shadow-blue-200 hover:border-blue-300 transition-all relative group/card flex flex-col items-center text-center gap-1.5 min-h-[80px] justify-center"
                             >
-                              {/* Status Dot */}
+                              {}
                               <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${doctorShift.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
 
-                              {/* Avatar */}
+                              {}
                               <div className={`w-8 h-8 min-w-[32px] rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm ${getAvatarColor(doctorName)}`}>
                                    {getAvatarInitials(doctorName)}
                               </div>
                               
-                              {/* Name */}
+                              {}
                               <span className="font-bold text-slate-800 text-[11px] leading-tight w-full break-words" title={doctorName}>
                                   {doctorName}
                               </span>
                              
-                              {/* Specialty */}
+                              {}
                               <div className="text-slate-500 text-[9px] w-full truncate px-1 bg-slate-50 rounded-md py-0.5">
                                 {doctorShift.doctor?.specialty?.name || 'Đa khoa'}
                               </div>
 
-                              {/* Cancel button */}
+                              {}
                               {showAddEvent && (
                                 <button
                                   onClick={() => handleCancelShiftClick(doctorShift)}
@@ -614,7 +614,7 @@ export default function DoctorSchedulePage() {
                             </div>
                           )})}
                           
-                          {/* Cancelled shifts */}
+                          {}
                           {filters.onLeave && cancelledShifts.map(doctorShift => (
                             <div
                               key={doctorShift.id}
@@ -645,7 +645,7 @@ export default function DoctorSchedulePage() {
                             </div>
                           ))}
                           
-                          {/* Add button placeholder if empty and editing */}
+                          {}
                           {showAddEvent && activeShifts.length === 0 && (
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 pointer-events-none">
                                 <div className="text-slate-300 text-xs font-bold">+ Trống</div>
@@ -660,11 +660,11 @@ export default function DoctorSchedulePage() {
             </Card>
           </div>
 
-          {/* ================= SIDEBAR ================= */}
+          {}
           <div className="space-y-6">
             {!showAddEvent ? (
               <>
-                {/* Mini Calendar */}
+                {}
                 <Card className="border-0 shadow-lg shadow-slate-200/20 bg-white/60 backdrop-blur-xl rounded-[24px]">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-black text-slate-800 uppercase tracking-widest">THÁNG {currentWeek.getMonth() + 1}, {currentWeek.getFullYear()}</CardTitle>
@@ -696,7 +696,7 @@ export default function DoctorSchedulePage() {
                   </CardContent>
                 </Card>
 
-                {/* Filters */}
+                {}
                 <Card className="border-0 shadow-lg shadow-slate-200/20 bg-white/60 backdrop-blur-xl rounded-[24px]">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
@@ -736,13 +736,13 @@ export default function DoctorSchedulePage() {
                   </CardContent>
                 </Card>
 
-                {/* Upcoming */}
+                {}
                 <Card className="border-0 shadow-lg shadow-slate-200/20 bg-white/60 backdrop-blur-xl rounded-[24px]">
                   <CardHeader className="pb-2"><CardTitle className="text-sm font-black text-slate-800 uppercase tracking-widest">Sắp diễn ra</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
                     {doctorShifts
                         .filter(ds => ds.status === 'ACTIVE')
-                        .sort((a, b) => new Date(a.workDate).getTime() - new Date(b.workDate).getTime()) // Sort by date
+                        .sort((a, b) => new Date(a.workDate).getTime() - new Date(b.workDate).getTime()) 
                         .slice(0, 3)
                         .map(ds => (
                       <div key={ds.id} className="flex gap-3 p-3 bg-white rounded-2xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
@@ -765,7 +765,7 @@ export default function DoctorSchedulePage() {
                 </Card>
               </>
             ) : (
-              /* Doctor list */
+              
               <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white backdrop-blur-xl rounded-[24px]">
                 <CardHeader><CardTitle className="text-lg font-black text-slate-800">Chọn Bác Sĩ</CardTitle></CardHeader>
                 <CardContent className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -803,7 +803,7 @@ export default function DoctorSchedulePage() {
         </div>
       </div>
 
-      {/* Cancel Shift Dialog */}
+      {}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -832,17 +832,17 @@ export default function DoctorSchedulePage() {
                     </p>
                     {previewData.hasReplacementDoctor ? (
                       <p className="text-sm text-green-700">
-                        ✅ Đã tìm thấy bác sĩ thay thế cùng chuyên khoa. 
+                         Đã tìm thấy bác sĩ thay thế cùng chuyên khoa. 
                         Tất cả lịch hẹn sẽ được tự động chuyển sang bác sĩ thay thế.
                       </p>
                     ) : (
                       <p className="text-sm text-amber-700">
-                        ⚠️ CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa! 
+                        ️ CẢNH BÁO: Không tìm thấy bác sĩ thay thế cùng chuyên khoa! 
                         {previewData.affectedAppointments} lịch hẹn sẽ không thể tự động chuyển.
                       </p>
                     )}
                     {previewData.warning && (
-                      <p className="text-sm text-amber-700 mt-2">⚠️ {previewData.warning}</p>
+                      <p className="text-sm text-amber-700 mt-2">️ {previewData.warning}</p>
                     )}
                   </div>
                 </div>
@@ -894,7 +894,7 @@ export default function DoctorSchedulePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Restore Shift Dialog */}
+      {}
       <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -939,7 +939,7 @@ export default function DoctorSchedulePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal */}
+      {}
       <ScheduleEventModal
         open={showDatePicker}
         doctor={selectedDoctor}

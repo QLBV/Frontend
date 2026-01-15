@@ -1,14 +1,14 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Header } from "../../components/layout/header"
+import { Footer } from "../../components/layout/footer"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
 import { Lock, Mail, Heart, User, Loader2 } from "lucide-react"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../../features/auth/context/authContext"
 import { toast } from "sonner"
 
 export default function SignupPage() {
@@ -36,7 +36,7 @@ export default function SignupPage() {
     setError("")
     setLoading(true)
 
-    // 1. Basic Validation
+    
     if (formData.password !== formData.confirmPassword) {
       setError("Mật khẩu không khớp")
       setLoading(false)
@@ -49,7 +49,7 @@ export default function SignupPage() {
       return
     }
 
-    // Check password complexity
+    
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/
     if (!passwordRegex.test(formData.password)) {
       setError("Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ hoa và 1 số")
@@ -64,17 +64,17 @@ export default function SignupPage() {
     }
 
     try {
-      // 3. Gọi API register
+      
       await register(formData.email, formData.password, formData.fullName)
-      // Success toast
+      
       toast.success("Đăng ký thành công! Vui lòng xác thực email để tiếp tục.")
       
-      // 4. Chuyển hướng đến trang xác thực email với email đã nhập
+      
       navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`) 
 
     } catch (err: any) {
       console.error("Lỗi đăng ký:", err)
-      // Xử lý lỗi thân thiện với người dùng
+      
       const errorMessage = err.response?.data?.message || err.message || "Không thể tạo tài khoản. Vui lòng thử lại."
       
       if (errorMessage.includes("EMAIL_INVALID")) {
@@ -118,14 +118,14 @@ export default function SignupPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
                 
-                {/* Error Alert */}
+                {}
                 {error && (
                   <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
                     {error}
                   </div>
                 )}
 
-                {/* Name Field */}
+                {}
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Họ và Tên</Label>
                   <div className="relative">
@@ -143,7 +143,7 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Email */}
+                {}
                 <div className="space-y-2">
                   <Label htmlFor="email">Địa chỉ Email</Label>
                   <div className="relative">
@@ -161,7 +161,7 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Passwords */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="password">Mật khẩu</Label>
@@ -203,7 +203,7 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Terms */}
+                {}
                 <div className="flex items-start space-x-2 pt-2">
                   <input
                     type="checkbox"
@@ -223,7 +223,7 @@ export default function SignupPage() {
                   </Label>
                 </div>
 
-                {/* Submit Button */}
+                {}
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
                   {loading ? (
                     <>

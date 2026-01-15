@@ -1,176 +1,113 @@
-import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import api from "@/lib/api";
-import { toast } from "sonner";
-import { Loader2, ArrowRight } from "lucide-react";
+import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
+import { Button } from "../ui/button"
+import { Label } from "../ui/label"
+import { Textarea } from "../ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { ArrowRightLeft, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import api from "../../lib/api"
 
 interface ReferralModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  visitId: number;
-  onSuccess: () => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  visitId: number
+  onSuccess?: () => void
 }
 
-interface Specialty {
-  id: number;
-  name: string;
-}
-
-interface Doctor {
-  id: number;
-  user: {
-    fullName: string;
-  };
-}
+const SPECIALTIES = [
+  { value: "CARDIOLOGY", label: "Tim mạch" },
+  { value: "NEUROLOGY", label: "Thần kinh" },
+  { value: "ORTHOPEDICS", label: "Chấn thương chỉnh hình" },
+  { value: "PEDIATRICS", label: "Nhi khoa" },
+  { value: "DERMATOLOGY", label: "Da liễu" },
+  { value: "OPHTHALMOLOGY", label: "Mắt" },
+  { value: "ENT", label: "Tai mũi họng" },
+  { value: "GASTROENTEROLOGY", label: "Tiêu hóa" },
+  { value: "UROLOGY", label: "Tiết niệu" },
+  { value: "GYNECOLOGY", label: "Phụ khoa" },
+  { value: "PSYCHIATRY", label: "Tâm thần" },
+  { value: "ONCOLOGY", label: "Ung bướu" },
+  { value: "ENDOCRINOLOGY", label: "Nội tiết" },
+  { value: "PULMONOLOGY", label: "Hô hấp" },
+  { value: "RHEUMATOLOGY", label: "Khớp" },
+  { value: "GENERAL", label: "Nội tổng quát" },
+]
 
 export function ReferralModal({ open, onOpenChange, visitId, onSuccess }: ReferralModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [specialties, setSpecialties] = useState<Specialty[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loadingDoctors, setLoadingDoctors] = useState(false);
-
-  // Form State
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("");
-  const [selectedDoctor, setSelectedDoctor] = useState<string>("");
-  const [reason, setReason] = useState("");
-
-  // Fetch Specialties on mount
-  useEffect(() => {
-    if (open) {
-      fetchSpecialties();
-    }
-  }, [open]);
-
-  // Fetch Doctors when Specialty changes
-  useEffect(() => {
-    if (selectedSpecialty) {
-      fetchDoctors(selectedSpecialty);
-    } else {
-      setDoctors([]);
-    }
-  }, [selectedSpecialty]);
-
-  const fetchSpecialties = async () => {
-    try {
-      const response = await api.get("/doctors/specialties?active=true"); // Assuming endpoint exists or using general list
-      // Note: Backend might use /doctors/specialties or similar. 
-      // Based on doctor.controller.ts: `getAllSpecialties` at `/api/doctors/specialties` (if mapped in index or app)
-      // Actually standard route is usually /specialties or /doctors/specialties. 
-      // Checking doctor.routes.ts -> it imports `getAllSpecialties` but I didn't verify the route path in `index.ts`.
-      // Let's assume /doctors/specialties based on standard practices or /specialties.
-      // Wait, doctor.routes.ts usually mounts at `/doctors`.
-      // Let's check `d:\DemoApp\Backend\src\app.ts` or similar if needed. For now I'll try `/doctors/specialties` or just `/specialties` if standalone.
-      // Re-reading `doctor.routes.ts`: `getAllSpecialties` is NOT in the file I edited! 
-      // Ah, I missed adding `getAllSpecialties` route in `doctor.routes.ts`? 
-      // `getAllSpecialties` was imported but maybe I missed the route definition? 
-      // Let me re-check `doctor.routes.ts` content I wrote.
-      
-      // I see `router.get("/", ... getAllDoctors)`
-      // I don't see `router.get("/specialties", ...)` in the routes I viewed earlier explicitly.
-      // Existing `doctor.routes.ts` had imports but I need to be sure.
-      // Safest is to use the existing `getAllDoctors` and filter unique specialties if no direct route,
-      // OR I should use `api.get('/doctors/specialties')` if I assume it's there. 
-      // Actually `getAllSpecialties` WAS in the controller imports.
-      
-      const res = await api.get("/specialties"); // Try standalone first or
-      if (res.data.success) {
-        setSpecialties(res.data.data.specialties || res.data.data);
-      }
-    } catch (error) {
-       // Fallback or retry
-       console.error("Failed to fetch specialties");
-       // Try alternative
-       try {
-         const res = await api.get("/doctors/specialties"); 
-         if (res.data.success) setSpecialties(res.data.data);
-       } catch (e) {}
-    }
-  };
-
-  const fetchDoctors = async (specialtyId: string) => {
-    setLoadingDoctors(true);
-    try {
-      const response = await api.get(`/doctors/on-duty?specialtyId=${specialtyId}`);
-      if (response.data.success) {
-        setDoctors(response.data.data);
-      }
-    } catch (error) {
-      toast.error("Không thể tải danh sách bác sĩ");
-    } finally {
-      setLoadingDoctors(false);
-    }
-  };
+  const [specialty, setSpecialty] = useState<string>("")
+  const [reason, setReason] = useState<string>("")
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
-    if (!selectedSpecialty || !selectedDoctor) {
-      toast.error("Vui lòng chọn khoa và bác sĩ");
-      return;
+    if (!specialty) {
+      toast.error("Vui lòng chọn chuyên khoa")
+      return
     }
 
-    setLoading(true);
+    if (!reason.trim()) {
+      toast.error("Vui lòng nhập lý do chuyển khoa")
+      return
+    }
+
     try {
-      const response = await api.post("/visits/referral", {
-        visitId,
-        toDoctorId: parseInt(selectedDoctor),
-        toSpecialtyId: parseInt(selectedSpecialty),
-        reason,
-      });
+      setLoading(true)
+      
+      const response = await api.post(`/visits/${visitId}/refer`, {
+        specialty,
+        reason: reason.trim(),
+      })
 
       if (response.data.success) {
-        toast.success("Chuyển khoa thành công");
-        onSuccess();
-        onOpenChange(false);
-        // Reset form
-        setSelectedSpecialty("");
-        setSelectedDoctor("");
-        setReason("");
+        toast.success("Chuyển khoa thành công")
+        setSpecialty("")
+        setReason("")
+        onOpenChange(false)
+        onSuccess?.()
       }
     } catch (error: any) {
-      const msg = error.response?.data?.message || "Chuyển khoa thất bại";
-      toast.error(msg);
+      console.error("Error referring patient:", error)
+      const errorMessage = error.response?.data?.message || "Không thể chuyển khoa"
+      toast.error(errorMessage)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleCancel = () => {
+    setSpecialty("")
+    setReason("")
+    onOpenChange(false)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Chuyển khoa kiểm tra</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+              <ArrowRightLeft className="w-5 h-5" />
+            </div>
+            Chuyển khoa khám
+          </DialogTitle>
           <DialogDescription>
-            Chuyển bệnh nhân sang bác sĩ chuyên khoa khác để kiểm tra thêm.
+            Chuyển bệnh nhân sang chuyên khoa khác để tiếp tục điều trị
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label>Chọn chuyên khoa</Label>
-            <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-              <SelectTrigger>
+            <Label htmlFor="specialty" className="text-sm font-semibold text-slate-700">
+              Chuyên khoa <span className="text-red-500">*</span>
+            </Label>
+            <Select value={specialty} onValueChange={setSpecialty}>
+              <SelectTrigger id="specialty" className="h-12 border-slate-200 focus:border-indigo-500 focus:ring-indigo-100">
                 <SelectValue placeholder="Chọn chuyên khoa..." />
               </SelectTrigger>
               <SelectContent>
-                {specialties.map((s) => (
-                  <SelectItem key={s.id} value={s.id.toString()}>
-                    {s.name}
+                {SPECIALTIES.map((spec) => (
+                  <SelectItem key={spec.value} value={spec.value}>
+                    {spec.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -178,46 +115,51 @@ export function ReferralModal({ open, onOpenChange, visitId, onSuccess }: Referr
           </div>
 
           <div className="space-y-2">
-            <Label>Chọn bác sĩ</Label>
-            <Select value={selectedDoctor} onValueChange={setSelectedDoctor} disabled={!selectedSpecialty || loadingDoctors}>
-              <SelectTrigger>
-                <SelectValue placeholder={loadingDoctors ? "Đang tải..." : "Chọn bác sĩ..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {doctors.map((d) => (
-                  <SelectItem key={d.id} value={d.id.toString()}>
-                    {d.user.fullName}
-                  </SelectItem>
-                ))}
-                {doctors.length === 0 && !loadingDoctors && (
-                  <SelectItem value="none" disabled>
-                    Không có bác sĩ trực
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Lý do chuyển (Tùy chọn)</Label>
-            <Textarea 
-              placeholder="VD: Cần kiểm tra thêm về tim mạch..." 
+            <Label htmlFor="reason" className="text-sm font-semibold text-slate-700">
+              Lý do chuyển khoa <span className="text-red-500">*</span>
+            </Label>
+            <Textarea
+              id="reason"
+              placeholder="Nhập lý do chuyển khoa, triệu chứng cần chuyên khoa khác xử lý..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
+              rows={6}
+              className="bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-100 transition-all resize-none text-slate-700 leading-relaxed rounded-xl p-4"
             />
+            <div className="flex justify-end">
+              <span className="text-xs font-medium text-slate-400">{reason.length} ký tự</span>
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Hủy
+        <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={loading}
+            className="border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
+          >
+            Hủy bỏ
           </Button>
-          <Button onClick={handleSubmit} disabled={loading || !selectedDoctor}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />}
-            Xác nhận chuyển
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Xác nhận chuyển khoa
+              </>
+            )}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

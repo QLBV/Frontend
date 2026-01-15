@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, type KeyboardEvent, type ClipboardEvent } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '../../lib/utils'
 
 interface OTPInputProps {
   length?: number
@@ -19,7 +19,7 @@ export function OTPInput({
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''))
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // Sync external value with internal state
+  
   useEffect(() => {
     if (value !== otp.join('')) {
       setOtp(value.split('').concat(Array(length).fill('')).slice(0, length))
@@ -29,7 +29,7 @@ export function OTPInput({
   const handleChange = (index: number, digit: string) => {
     if (disabled) return
 
-    // Only allow digits
+    
     if (digit && !/^\d$/.test(digit)) return
 
     const newOtp = [...otp]
@@ -37,7 +37,7 @@ export function OTPInput({
     setOtp(newOtp)
     onChange(newOtp.join(''))
 
-    // Auto-focus next input
+    
     if (digit && index < length - 1) {
       inputRefs.current[index + 1]?.focus()
     }
@@ -50,13 +50,13 @@ export function OTPInput({
       e.preventDefault()
       
       if (otp[index]) {
-        // Clear current box
+        
         const newOtp = [...otp]
         newOtp[index] = ''
         setOtp(newOtp)
         onChange(newOtp.join(''))
       } else if (index > 0) {
-        // Move to previous box and clear it
+        
         const newOtp = [...otp]
         newOtp[index - 1] = ''
         setOtp(newOtp)
@@ -78,7 +78,7 @@ export function OTPInput({
     e.preventDefault()
     const pastedData = e.clipboardData.getData('text/plain').trim()
     
-    // Extract only digits
+    
     const digits = pastedData.replace(/\D/g, '').slice(0, length)
     
     if (digits) {
@@ -86,7 +86,7 @@ export function OTPInput({
       setOtp(newOtp)
       onChange(newOtp.join(''))
       
-      // Focus last filled input or last input
+      
       const lastFilledIndex = Math.min(digits.length, length - 1)
       inputRefs.current[lastFilledIndex]?.focus()
     }

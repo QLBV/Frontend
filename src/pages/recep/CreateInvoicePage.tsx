@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../../features/auth/context/authContext"
 import { 
   ArrowLeft, 
   Loader2, 
@@ -18,23 +18,23 @@ import {
   CheckCircle2,
   Trash2
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Badge } from "../../components/ui/badge"
 import { toast } from "sonner"
-import { InvoiceService } from "@/services/invoice.service"
-import { getVisits, type Visit } from "@/services/visit.service"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import AdminSidebar from "@/components/sidebar/admin"
+import { InvoiceService } from "../../features/finance/services/invoice.service"
+import { getVisits, type Visit } from "../../features/appointment/services/visit.service"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 
@@ -113,7 +113,7 @@ export default function CreateInvoicePage() {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-           {/* Left Column: Context Card */}
+           {}
            <div className="lg:col-span-4 space-y-6">
               <div className="bg-emerald-600 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-emerald-100 relative overflow-hidden">
                  <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
@@ -146,7 +146,7 @@ export default function CreateInvoicePage() {
               </div>
            </div>
 
-           {/* Right Column: Creation Form */}
+           {}
            <div className="lg:col-span-8">
               <Card className="border-0 shadow-xl rounded-[3rem] bg-white ring-1 ring-slate-100 overflow-hidden">
                  <CardHeader className="p-10 border-b border-slate-50 bg-slate-50/30">
@@ -160,7 +160,7 @@ export default function CreateInvoicePage() {
                  <CardContent className="p-10">
                     <form onSubmit={handleSubmit} className="space-y-8">
                        
-                       {/* Visit Picker */}
+                       {}
                        <div className="space-y-3">
                           <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Chọn phiên khám thành công *</Label>
                           {isLoadingVisits ? (
@@ -190,7 +190,7 @@ export default function CreateInvoicePage() {
                           )}
                        </div>
 
-                       {/* Preview Selection */}
+                       {}
                        {selectedVisit && (
                           <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 border-dashed animate-in fade-in slide-in-from-top-4 duration-300">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -221,7 +221,7 @@ export default function CreateInvoicePage() {
                           </div>
                        )}
 
-                       {/* Fee Input */}
+                       {}
                        <div className="space-y-3">
                           <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Phí khám bệnh niêm yết (VND) *</Label>
                           <div className="relative group">
@@ -239,7 +239,7 @@ export default function CreateInvoicePage() {
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide ml-1">Nhập số tiền phí khám định danh cho loại hình dịch vụ này.</p>
                        </div>
 
-                       {/* Form Actions */}
+                       {}
                        <div className="flex flex-col sm:flex-row gap-4 pt-10 border-t border-slate-50">
                           <Button type="submit" disabled={isLoading || !selectedVisitId || !examinationFee} className="flex-1 h-16 bg-emerald-600 hover:bg-black rounded-[2rem] text-lg font-black text-white shadow-xl shadow-emerald-100 transition-all uppercase tracking-widest gap-2 group">
                              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" /> TẠO HÓA ĐƠN</>}

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
+import { Skeleton } from "../../components/ui/skeleton"
 import { 
   FileText, 
   Printer, 
@@ -26,11 +26,11 @@ import {
   Scale
 } from "lucide-react"
 import { toast } from "sonner"
-import { getPatientById, getPatientMedicalHistory, type Patient, type Visit } from "@/services/patient.service"
-import { getVisitById, type Visit as VisitDetail } from "@/services/visit.service"
-import { PrescriptionService } from "@/services/prescription.service"
-import PatientSidebar from "@/components/sidebar/patient"
-import { useAuth } from "@/auth/authContext"
+import { getPatientById, getPatientMedicalHistory, type Patient, type Visit } from "../../features/patient/services/patient.service"
+import { getVisitById, type Visit as VisitDetail } from "../../features/appointment/services/visit.service"
+import { PrescriptionService } from "../../features/appointment/services/prescription.service"
+import PatientSidebar from "../../components/layout/sidebar/patient"
+import { useAuth } from "../../features/auth/context/authContext"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import {
@@ -40,23 +40,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "../../components/ui/table"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { AppointmentCard } from "@/components/appointment/AppointmentCard"
-import { PremiumPagination } from "@/components/ui/premium-pagination"
-import type { IAppointment } from "@/types/appointment"
+} from "../../components/ui/select"
+import { AppointmentCard } from "../../features/appointment/components/AppointmentCard"
+import { PremiumPagination } from "../../components/ui/premium-pagination"
+import type { IAppointment } from "../../types/appointment"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 
 interface CurrentPrescriptionItem {
   id: number
@@ -114,12 +114,12 @@ export default function MedicalHistoryPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Wait for auth to finish loading
+      
       if (authLoading) {
         return
       }
 
-      // Check if user is authenticated and has patientId
+      
       if (!user) {
         setIsLoading(false)
         toast.error("Vui lòng đăng nhập để xem hồ sơ sức khỏe")
@@ -129,7 +129,7 @@ export default function MedicalHistoryPage() {
 
       if (!user.patientId) {
         setIsLoading(false)
-        // Don't show error if user just set up profile - redirect to setup instead
+        
         if (window.location.pathname !== "/patient/setup") {
           toast.error("Không tìm thấy thông tin bệnh nhân. Vui lòng thiết lập hồ sơ bệnh nhân.")
           navigate("/patient/setup")
@@ -140,32 +140,32 @@ export default function MedicalHistoryPage() {
       try {
         setIsLoading(true)
         
-        // Fetch patient profile
+        
         console.log("Fetching patient data for patientId:", user.patientId)
         const patientData = await getPatientById(user.patientId)
         console.log("Patient data received:", patientData)
         setPatient(patientData)
 
-        // Fetch medical history (visits)
+        
         const historyData = await getPatientMedicalHistory(user.patientId, 1, 100)
         setVisits(historyData.data || [])
 
-        // Fetch prescriptions
+        
         const prescriptionsResponse = await PrescriptionService.getPrescriptionsByPatient(user.patientId)
         if (prescriptionsResponse.success && prescriptionsResponse.data) {
           const allPrescriptions = Array.isArray(prescriptionsResponse.data) 
             ? prescriptionsResponse.data 
             : []
           
-          // Filter for active prescriptions (not cancelled)
+          
           const active = allPrescriptions.filter((p: any) => 
             p.status !== "CANCELLED"
           )
           
-          // Transform to CurrentPrescriptionItem format
+          
           const transformed: CurrentPrescriptionItem[] = active.flatMap((prescription: any) => 
             (prescription.details || []).map((detail: any) => {
-              // Format dosage
+              
               const dosages = []
               if (detail.dosageMorning > 0) dosages.push(`${detail.dosageMorning} sáng`)
               if (detail.dosageNoon > 0) dosages.push(`${detail.dosageNoon} trưa`)
@@ -183,14 +183,14 @@ export default function MedicalHistoryPage() {
             })
           )
           
-          setCurrentPrescriptions(transformed.slice(0, 5)) // Show max 5
+          setCurrentPrescriptions(transformed.slice(0, 5)) 
         }
       } catch (error: any) {
         console.error("Error fetching medical history:", error)
         const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải hồ sơ sức khỏe"
         toast.error(errorMessage)
         
-        // If patient not found, show specific message
+        
         if (error?.response?.status === 404) {
           toast.error("Không tìm thấy thông tin bệnh nhân")
         } else if (error?.response?.status === 401) {
@@ -277,7 +277,7 @@ export default function MedicalHistoryPage() {
        return <div className="font-medium text-gray-900 whitespace-pre-line">{note}</div>
     }
 
-    // Parse specific format
+    
     const sections = [
       { key: "CLINICAL OBSERVATIONS", label: "Quan sát lâm sàng", icon: <User className="w-3.5 h-3.5" />, color: "text-blue-500" },
       { key: "VITAL SIGNS", label: "Chỉ số sinh tồn (Ghi nhanh)", icon: <Activity className="w-3.5 h-3.5" />, color: "text-teal-600" },
@@ -305,7 +305,7 @@ export default function MedicalHistoryPage() {
           if (startIdx === -1) return null;
           
           let content = "";
-          // Find end of this section (start of next section)
+          
           let endIdx = -1;
           const potentialEndIndices = sections
             .slice(idx + 1)
@@ -325,7 +325,7 @@ export default function MedicalHistoryPage() {
 
           if (!content) return null;
 
-          // Special handling for VITAL SIGNS to render as grid
+          
           if (section.key === "VITAL SIGNS") {
             const vitals = content.split("•").filter(i => i.trim());
             return (
@@ -386,7 +386,7 @@ export default function MedicalHistoryPage() {
       userName={user?.fullName || user?.email}
     >
       <div className="space-y-6">
-          {/* Premium Gradient Header */}
+          {}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 p-8 shadow-xl">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
@@ -436,7 +436,7 @@ export default function MedicalHistoryPage() {
             </div>
           </div>
 
-          {/* Patient Profile Summary */}
+          {}
           <Card>
             <CardContent className="p-6">
               {isLoading ? (
@@ -450,7 +450,7 @@ export default function MedicalHistoryPage() {
                 </div>
               ) : patient ? (
                 <div className="flex items-start gap-6">
-                  {/* Avatar */}
+                  {}
                   <div className="relative h-32 w-32">
                     <div className="absolute inset-0 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
                       {patient.fullName.charAt(0).toUpperCase()}
@@ -464,7 +464,7 @@ export default function MedicalHistoryPage() {
                     )}
                   </div>
 
-                  {/* Patient Info */}
+                  {}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h2 className="text-2xl font-bold">{patient.fullName}</h2>
@@ -484,7 +484,7 @@ export default function MedicalHistoryPage() {
                       </div>
                     </div>
 
-                    {/* Health Metrics Cards */}
+                    {}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <Card>
                         <CardContent className="p-4">
@@ -551,7 +551,7 @@ export default function MedicalHistoryPage() {
             </CardContent>
           </Card>
 
-          {/* Vital Signs Section */}
+          {}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -623,7 +623,7 @@ export default function MedicalHistoryPage() {
             </CardContent>
           </Card>
 
-          {/* Current Prescriptions Section */}
+          {}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -680,7 +680,7 @@ export default function MedicalHistoryPage() {
             </CardContent>
           </Card>
 
-          {/* Medical Visit History Section */}
+          {}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -724,7 +724,7 @@ export default function MedicalHistoryPage() {
                     ))}
                   </div>
                   
-                  {/* Premium Pagination */}
+                  {}
                   <div className="mt-6">
                     <PremiumPagination 
                       currentPage={visitPage}
@@ -744,7 +744,7 @@ export default function MedicalHistoryPage() {
             </CardContent>
           </Card>
 
-          {/* Medical History & Allergies Section */}
+          {}
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-bold mb-4">Tiền sử & Dị ứng</h3>
@@ -774,7 +774,7 @@ export default function MedicalHistoryPage() {
           </Card>
         </div>
 
-        {/* Visit Detail Modal */}
+        {}
         <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -792,7 +792,7 @@ export default function MedicalHistoryPage() {
               </div>
             ) : selectedVisit ? (
               <div className="space-y-6">
-                {/* Visit Info Header */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
@@ -830,7 +830,7 @@ export default function MedicalHistoryPage() {
                   </div>
                 </div>
 
-                {/* Diagnosis & Notes */}
+                {}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-lg flex items-center gap-2">
                     <FileText className="h-5 w-5 text-teal-500" />
@@ -858,7 +858,7 @@ export default function MedicalHistoryPage() {
                   </div>
                 </div>
 
-                {/* Vital Signs */}
+                {}
                 {selectedVisit.vitalSigns && (
                   <div className="space-y-4">
                     <h4 className="font-semibold text-lg flex items-center gap-2">
@@ -926,7 +926,7 @@ export default function MedicalHistoryPage() {
                   </div>
                 )}
 
-                {/* Prescription */}
+                {}
                 {selectedVisit.prescription && selectedVisit.prescription.details && selectedVisit.prescription.details.length > 0 && (
                   <div className="space-y-4">
                     <h4 className="font-semibold text-lg flex items-center gap-2">
@@ -970,7 +970,7 @@ export default function MedicalHistoryPage() {
                   </div>
                 )}
 
-                {/* Status */}
+                {}
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">Trạng thái:</span>

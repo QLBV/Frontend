@@ -1,23 +1,23 @@
 
 import { useState } from "react"
-import AdminSidebar from "@/components/sidebar/admin"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import { Search, Eye, CheckCircle, XCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 
 export default function RefundsPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Mock data for refunds
+  
   const refunds = [
     {
       id: "RF-2024-001",
@@ -67,7 +67,7 @@ export default function RefundsPage() {
           <p className="text-gray-500">Xem và xử lý các yêu cầu hoàn tiền từ bệnh nhân</p>
         </div>
 
-        {/* Filters */}
+        {}
         <div className="flex items-center gap-4 mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -91,7 +91,7 @@ export default function RefundsPage() {
           </Select>
         </div>
 
-        {/* Refunds Table */}
+        {}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             <table className="w-full">

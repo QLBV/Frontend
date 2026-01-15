@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import AdminSidebar from '@/components/sidebar/admin'
+import AdminSidebar from '../../components/layout/sidebar/admin'
 import { 
   Search,
   Plus,
@@ -9,18 +9,18 @@ import {
   Save,
   X,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Badge } from "../../components/ui/badge"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -28,11 +28,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Checkbox } from "@/components/ui/checkbox"
+} from "../../components/ui/dialog"
+import { Checkbox } from "../../components/ui/checkbox"
 import { toast } from "sonner"
-import { PermissionService, type Permission, type Module, type RolePermission } from "@/services/permission.service"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PermissionService, type Permission, type Module, type RolePermission } from "../../features/auth/services/permission.service"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 
 const ROLES = [
   { id: 1, name: "Admin" },
@@ -52,7 +52,7 @@ export default function PermissionPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   
-  // Create permission form
+  
   const [newPermission, setNewPermission] = useState({
     name: "",
     module: "",
@@ -60,7 +60,7 @@ export default function PermissionPage() {
     description: "",
   })
   
-  // Selected permissions for role
+  
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([])
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function PermissionPage() {
   const fetchRolePermissions = async (roleId: number) => {
     try {
       const data = await PermissionService.getRolePermissions(roleId)
-      // setRolePermissions(data)
+      
       setSelectedPermissionIds(data.permissions.map(p => p.id))
     } catch (error: any) {
       if (error.response?.status !== 429) {
@@ -218,7 +218,7 @@ export default function PermissionPage() {
             <TabsTrigger value="role-permissions">Phân quyền theo Role</TabsTrigger>
           </TabsList>
 
-          {/* Permissions List Tab */}
+          {}
           <TabsContent value="permissions">
             <Card>
               <CardHeader>
@@ -268,7 +268,7 @@ export default function PermissionPage() {
             </Card>
           </TabsContent>
 
-          {/* Role Permissions Tab */}
+          {}
           <TabsContent value="role-permissions">
             <Card>
               <CardHeader>
@@ -339,7 +339,7 @@ export default function PermissionPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Create Permission Dialog */}
+        {}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent>
             <DialogHeader>

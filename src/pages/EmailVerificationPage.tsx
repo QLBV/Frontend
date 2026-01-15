@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { OTPInput } from "@/components/ui/otp-input"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
+import { OTPInput } from "../components/ui/otp-input"
 import { Mail, ArrowLeft, CheckCircle2, Loader2, Clock, Shield } from "lucide-react"
-import { OTPService } from "@/services/otp.service"
+import { OTPService } from "../features/auth/services/otp.service"
 import { toast } from "sonner"
 
 type Step = "email" | "otp" | "success"
@@ -21,26 +21,26 @@ export default function EmailVerificationPage() {
   const [otp, setOtp] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [timeLeft, setTimeLeft] = useState(300) // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(300) 
   const [canResend, setCanResend] = useState(false)
-  const hasSentOTP = useRef(false) // Use ref to persist across re-renders
+  const hasSentOTP = useRef(false) 
 
-  // Auto-send OTP if email is provided in URL (from registration)
+  
   useEffect(() => {
     const emailFromUrl = searchParams.get("email")
     
-    // Only send if:
-    // 1. Email exists in URL
-    // 2. Email is valid
-    // 3. Haven't sent before (using ref to survive StrictMode)
+    
+    
+    
+    
     if (emailFromUrl && 
         !hasSentOTP.current && 
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFromUrl)) {
       
-      hasSentOTP.current = true // Mark as sent BEFORE async call
+      hasSentOTP.current = true 
       setEmail(emailFromUrl)
       
-      // Auto-send OTP
+      
       const sendOTPAuto = async () => {
         setIsLoading(true)
         try {
@@ -52,13 +52,13 @@ export default function EmailVerificationPage() {
             setCanResend(false)
           } else {
             setError(response.message || "Có lỗi xảy ra")
-            hasSentOTP.current = false // Reset on error to allow retry
+            hasSentOTP.current = false 
           }
         } catch (err: any) {
           const message = err.response?.data?.message || err.message || "Không thể gửi OTP"
           setError(message)
           toast.error(message)
-          hasSentOTP.current = false // Reset on error to allow retry
+          hasSentOTP.current = false 
         } finally {
           setIsLoading(false)
         }
@@ -66,9 +66,9 @@ export default function EmailVerificationPage() {
       
       sendOTPAuto()
     }
-  }, [searchParams]) // Remove autoSent from dependencies
+  }, [searchParams]) 
 
-  // Countdown timer
+  
   useEffect(() => {
     if (step !== "otp" || timeLeft <= 0) return
 
@@ -85,14 +85,14 @@ export default function EmailVerificationPage() {
     return () => clearInterval(timer)
   }, [step, timeLeft])
 
-  // Format time as MM:SS
+  
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  // Send OTP
+  
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -125,7 +125,7 @@ export default function EmailVerificationPage() {
     }
   }
 
-  // Verify OTP
+  
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) {
       setError("Vui lòng nhập đủ 6 số")
@@ -156,14 +156,14 @@ export default function EmailVerificationPage() {
     }
   }
 
-  // Auto-verify when OTP is complete
+  
   useEffect(() => {
     if (otp.length === 6 && !isLoading) {
       handleVerifyOTP()
     }
   }, [otp])
 
-  // Resend OTP
+  
   const handleResend = async () => {
     if (!canResend) return
 
@@ -193,11 +193,11 @@ export default function EmailVerificationPage() {
 
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2 overflow-hidden bg-white">
-      {/* LEFT COLUMN - Similar to LoginPage */}
+      {}
       <div className="hidden lg:flex relative flex-col justify-center items-center bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-600 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-10"></div>
         
-        {/* Animated blurs */}
+        {}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-pink-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"></div>
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"></div>
 
@@ -226,14 +226,14 @@ export default function EmailVerificationPage() {
         </div>
       </div>
 
-      {/* RIGHT COLUMN - Main Content */}
+      {}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12 md:p-20 relative bg-white">
         <Link to="/login" className="absolute top-8 left-8 text-slate-500 hover:text-purple-600 transition-colors flex items-center gap-2 font-medium group">
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Quay lại
         </Link>
 
         <div className="w-full max-w-md space-y-8">
-          {/* STEP 1: Email Input */}
+          {}
           {step === "email" && (
             <>
               <div className="text-center space-y-2">
@@ -282,7 +282,7 @@ export default function EmailVerificationPage() {
             </>
           )}
 
-          {/* STEP 2: OTP Input */}
+          {}
           {step === "otp" && (
             <>
               <div className="text-center space-y-2">
@@ -320,7 +320,7 @@ export default function EmailVerificationPage() {
                   )}
                 </div>
 
-                {/* Countdown Timer */}
+                {}
                 <div className="flex items-center justify-center gap-2 text-slate-600">
                   <Clock className="h-4 w-4" />
                   <span className="text-sm font-medium">
@@ -332,7 +332,7 @@ export default function EmailVerificationPage() {
                   </span>
                 </div>
 
-                {/* Resend Button */}
+                {}
                 <div className="text-center">
                   <button
                     onClick={handleResend}
@@ -353,7 +353,7 @@ export default function EmailVerificationPage() {
             </>
           )}
 
-          {/* STEP 3: Success */}
+          {}
           {step === "success" && (
             <>
               <div className="text-center space-y-6">

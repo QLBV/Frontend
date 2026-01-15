@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { CalendarIcon, Users, Clock, Activity, Phone, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Link } from "react-router-dom"
-import { Calendar } from "@/components/ui/calendar"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import UpcomingAppointmentsWidget from "@/components/UpcomingAppointmentsWidget"
-import { getAppointments } from "@/services/appointment.service"
+import { Calendar } from "../../components/ui/calendar"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import UpcomingAppointmentsWidget from "../../features/appointment/components/UpcomingAppointmentsWidget"
+import { getAppointments } from "../../features/appointment/services/appointment.service"
 import { format } from "date-fns"
 
 export default function ReceptionistDashboardPage() {
@@ -35,28 +35,28 @@ export default function ReceptionistDashboardPage() {
       const today = format(new Date(), "yyyy-MM-dd")
       const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
 
-      // Fetch today's appointments
+      
       const todayAppts = await getAppointments({ date: today })
       const todayApptsCount = todayAppts.length
       const todayPatientsSet = new Set(todayAppts.map(apt => apt.patientId))
       const todayPatientsCount = todayPatientsSet.size
 
-      // Fetch yesterday's appointments for comparison
+      
       const yesterdayAppts = await getAppointments({ date: yesterday })
       const yesterdayPatientsSet = new Set(yesterdayAppts.map(apt => apt.patientId))
       const yesterdayPatientsCount = yesterdayPatientsSet.size
 
-      // Calculate patient change percentage
+      
       let change = 0
       if (yesterdayPatientsCount > 0) {
         change = ((todayPatientsCount - yesterdayPatientsCount) / yesterdayPatientsCount) * 100
       } else if (todayPatientsCount > 0) {
-        change = 100 // 100% increase if yesterday had 0
+        change = 100 
       }
 
       setTodayAppointments(todayApptsCount)
       setTodayPatients(todayPatientsCount)
-      setPatientChange(Math.round(change * 10) / 10) // Round to 1 decimal place
+      setPatientChange(Math.round(change * 10) / 10) 
     } catch (error: any) {
       console.error("Error fetching dashboard stats:", error)
       setTodayAppointments(0)
@@ -83,7 +83,7 @@ export default function ReceptionistDashboardPage() {
       <div className="min-h-screen bg-slate-50/50 pb-12">
         <div className="container mx-auto px-6 py-8 max-w-[1600px]">
           
-          {/* --- Page Header --- */}
+          {}
           <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Xin chào, Lễ tân</h1>
@@ -106,13 +106,13 @@ export default function ReceptionistDashboardPage() {
 
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 items-start">
             
-            {/* --- Main Section (3/4) --- */}
+            {}
             <div className="xl:col-span-3 space-y-6">
               
-              {/* --- Statistics Row (Compact/Shorter) --- */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 
-                {/* Bookings Card - Compact */}
+                {}
                 <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-300 bg-white group rounded-2xl ring-1 ring-slate-200/50">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
@@ -134,7 +134,7 @@ export default function ReceptionistDashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Patients Card - Compact */}
+                {}
                 <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-300 bg-white group rounded-2xl ring-1 ring-slate-200/50">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
@@ -163,7 +163,7 @@ export default function ReceptionistDashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Quick Registration Card - Action Style */}
+                {}
                 <Link to="/recep/patients/create" className="block">
                   <Card className="border-0 shadow-sm bg-indigo-600 text-white group rounded-2xl hover:bg-indigo-700 transition-all duration-300 overflow-hidden relative h-full">
                     <div className="absolute right-0 top-0 w-12 h-12 bg-white/10 rounded-bl-full -mr-3 -mt-3 transition-transform group-hover:scale-150 duration-500" />
@@ -183,17 +183,17 @@ export default function ReceptionistDashboardPage() {
                 </Link>
               </div>
 
-              {/* --- Upcoming Appointments Widget (Pushed Up) --- */}
+              {}
               <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/50 overflow-hidden">
                 <UpcomingAppointmentsWidget limit={8} />
               </div>
 
             </div>
 
-            {/* --- Sidebar Section (1/4) --- */}
+            {}
             <div className="space-y-6">
               
-              {/* Calendar Sidebar */}
+              {}
               <Card className="border-0 shadow-sm bg-white overflow-hidden rounded-2xl ring-1 ring-slate-200/50">
                 <CardHeader className="pb-0 border-b border-slate-50 px-5 pt-4 bg-white">
                   <CardTitle className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
@@ -232,7 +232,7 @@ export default function ReceptionistDashboardPage() {
                 </div>
               </Card>
 
-              {/* Sidebar Quick Links */}
+              {}
               <Card className="border-0 shadow-sm bg-white rounded-2xl ring-1 ring-slate-200/50 overflow-hidden">
                 <CardHeader className="pb-3 border-b border-slate-50 px-5 pt-4">
                   <CardTitle className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Truy cập nhanh</CardTitle>

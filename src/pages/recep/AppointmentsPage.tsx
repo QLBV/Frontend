@@ -2,20 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import AdminSidebar from "@/components/sidebar/admin"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { useAuth } from "../../features/auth/context/authContext"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   Search,
   Calendar as CalendarIcon,
@@ -47,10 +47,10 @@ import {
   markNoShow,
   cancelAppointment,
   type Appointment,
-} from "@/services/appointment.service"
-import { checkInAppointment } from "@/services/visit.service"
-import { SearchService } from "@/services/search.service"
-import { Label } from "@/components/ui/label"
+} from "../../features/appointment/services/appointment.service"
+import { checkInAppointment } from "../../features/appointment/services/visit.service"
+
+import { Label } from "../../components/ui/label"
 import { format } from "date-fns"
 
 export default function ReceptionistAppointmentsPage() {
@@ -60,7 +60,7 @@ export default function ReceptionistAppointmentsPage() {
   const [isCheckingIn, setIsCheckingIn] = useState<number | null>(null)
   const [isMarkingNoShow, setIsMarkingNoShow] = useState<number | null>(null)
 
-  // Filters
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterDate, setFilterDate] = useState<string>(
@@ -82,17 +82,17 @@ export default function ReceptionistAppointmentsPage() {
     createdTo: "",
   })
 
-  // Check-in dialog
+  
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null)
   
-  // No-show dialog
+  
   const [isNoShowDialogOpen, setIsNoShowDialogOpen] = useState(false)
   const [appointmentToMarkNoShow, setAppointmentToMarkNoShow] =
     useState<Appointment | null>(null)
 
-  // Fetch appointments
+  
   const fetchAppointments = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -164,20 +164,17 @@ export default function ReceptionistAppointmentsPage() {
   const handleAdvancedSearch = async () => {
     try {
       setIsSearching(true)
+      // Note: Advanced search filters (date range, bookingType) are temporarily limited
+      // Falling back to basic getAppointments
       const filters: any = { page: 1, limit: 100 }
-      if (advancedFilters.keyword) filters.keyword = advancedFilters.keyword
       if (advancedFilters.status && advancedFilters.status !== "all") filters.status = advancedFilters.status
-      if (advancedFilters.bookingType && advancedFilters.bookingType !== "all") filters.bookingType = advancedFilters.bookingType
-      if (advancedFilters.bookedBy && advancedFilters.bookedBy !== "all") filters.bookedBy = advancedFilters.bookedBy
       if (advancedFilters.doctorId) filters.doctorId = parseInt(advancedFilters.doctorId)
-      if (advancedFilters.patientId) filters.patientId = parseInt(advancedFilters.patientId)
-      if (advancedFilters.dateFrom) filters.dateFrom = advancedFilters.dateFrom
-      if (advancedFilters.dateTo) filters.dateTo = advancedFilters.dateTo
+      if (advancedFilters.dateFrom) filters.date = advancedFilters.dateFrom
 
-      const response = await SearchService.searchAppointments(filters)
-      setAppointments(response.data || [])
+      const data = await getAppointments(filters)
+      setAppointments(data || [])
       setIsAdvancedSearchOpen(false)
-      toast.success(`Tìm thấy ${response.data?.length || 0} lịch hẹn`)
+      toast.success(`Tìm thấy ${data?.length || 0} lịch hẹn`)
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tìm kiếm lịch hẹn")
     } finally {
@@ -193,16 +190,9 @@ export default function ReceptionistAppointmentsPage() {
 
     try {
       setIsSearching(true)
-      const response = await SearchService.searchAppointments({
-        keyword: searchQuery,
-        dateFrom: filterDate,
-        dateTo: filterDate,
-        status: filterStatus !== "all" ? filterStatus : undefined,
-        page: 1,
-        limit: 100,
-      })
-      setAppointments(response.data || [])
-      toast.success(`Tìm thấy ${response.data?.length || 0} lịch hẹn`)
+      // Use standard fetch and let client-side filtering handle the keyword
+      await fetchAppointments()
+      toast.success(`Đã cập nhật dữ liệu`)
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tìm kiếm lịch hẹn")
     } finally {
@@ -281,7 +271,7 @@ export default function ReceptionistAppointmentsPage() {
   const content = (
     <div className="min-h-screen bg-slate-50/50 pb-12">
       <div className="container mx-auto px-6 py-8 max-w-[1600px]">
-        {/* Header Section */}
+        {}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -301,7 +291,7 @@ export default function ReceptionistAppointmentsPage() {
           </Button>
         </div>
 
-        {/* Unified Filter Bar */}
+        {}
         <Card className="border-0 shadow-sm bg-white rounded-2xl ring-1 ring-slate-200 mb-8 overflow-hidden">
           <CardContent className="p-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -363,7 +353,7 @@ export default function ReceptionistAppointmentsPage() {
           </CardContent>
         </Card>
 
-        {/* Appointments List */}
+        {}
         <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-slate-50/50 to-white px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
             <div>
@@ -500,7 +490,7 @@ export default function ReceptionistAppointmentsPage() {
         </Card>
       </div>
 
-      {/* Confirmation Dialogs - Refined Design */}
+      {}
       <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
         <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
            <div className="bg-indigo-600 p-8 text-white">
@@ -542,7 +532,7 @@ export default function ReceptionistAppointmentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* No-Show Dialog - Destructive Style */}
+      {}
       <Dialog open={isNoShowDialogOpen} onOpenChange={setIsNoShowDialogOpen}>
         <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
            <div className="bg-amber-500 p-8 text-white">
@@ -564,7 +554,7 @@ export default function ReceptionistAppointmentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Advanced Search Modal */}
+      {}
       <Dialog open={isAdvancedSearchOpen} onOpenChange={setIsAdvancedSearchOpen}>
           <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
             <div className="bg-indigo-600 px-8 py-6 text-white">

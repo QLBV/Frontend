@@ -17,14 +17,14 @@ import {
   Clock
 } from "lucide-react"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { PrescriptionService } from "@/services/prescription.service"
-import type { Prescription } from "@/types/prescription.types"
-import { formatCurrency, formatDate } from "@/utils/prescriptionHelpers"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Skeleton } from "../../components/ui/skeleton"
+import { PrescriptionService } from "../../features/appointment/services/prescription.service"
+import type { Prescription } from "../../types/prescription.types"
+import { formatCurrency, formatDate } from "../../utils/prescriptionHelpers"
 
 export default function AdminPrescriptionDetailPage() {
   const { id } = useParams()
@@ -79,7 +79,7 @@ export default function AdminPrescriptionDetailPage() {
       setIsExporting(true)
       const blob = await PrescriptionService.exportPrescriptionPDF(prescription.id)
       
-      // Create download link
+      
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -188,7 +188,7 @@ export default function AdminPrescriptionDetailPage() {
           </div>
         ))}
         
-        {/* Total */}
+        {}
         <div className="pt-4 flex justify-between items-center">
           <span className="font-bold text-slate-900">Tổng cộng</span>
           <span className="text-xl font-black text-emerald-600">{formatCurrency(prescription.totalAmount)}</span>
@@ -230,10 +230,10 @@ export default function AdminPrescriptionDetailPage() {
 
     return (
       <div className="space-y-4">
-        {/* Main Info Card */}
+        {}
         <Card className="border shadow-sm">
           <CardContent className="p-5">
-            {/* Header Row */}
+            {}
             <div className="flex items-start justify-between mb-4 pb-4 border-b">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-xl bg-cyan-500 flex items-center justify-center">
@@ -264,9 +264,9 @@ export default function AdminPrescriptionDetailPage() {
               </div>
             </div>
 
-            {/* Info Grid - 2 columns */}
+            {}
             <div className="grid grid-cols-2 gap-4">
-              {/* Patient */}
+              {}
               <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
                 <div className="flex items-center gap-2 mb-2">
                   <User className="h-4 w-4 text-emerald-600" />
@@ -297,7 +297,7 @@ export default function AdminPrescriptionDetailPage() {
                 </Button>
               </div>
 
-              {/* Doctor */}
+              {}
               <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Heart className="h-4 w-4 text-blue-600" />
@@ -322,7 +322,7 @@ export default function AdminPrescriptionDetailPage() {
               </div>
             </div>
 
-            {/* Visit Info - if exists */}
+            {}
             {prescription.visit && (
               <div className="mt-4 bg-amber-50/50 rounded-xl p-4 border border-amber-100">
                 <div className="flex items-center gap-2 mb-2">
@@ -340,7 +340,7 @@ export default function AdminPrescriptionDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Medicines Card */}
+        {}
         <Card className="border shadow-sm">
           <CardHeader className="py-4 px-5 border-b bg-slate-50/50">
             <div className="flex items-center justify-between">
@@ -355,7 +355,7 @@ export default function AdminPrescriptionDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Note - if exists */}
+        {}
         {prescription.note && (
           <Card className="border shadow-sm">
             <CardHeader className="py-3 px-5 border-b bg-slate-50/50">
@@ -376,7 +376,7 @@ export default function AdminPrescriptionDetailPage() {
   return (
     <AdminSidebar>
       <div className="p-6 max-w-5xl mx-auto">
-        {/* Back Button */}
+        {}
         <Button 
           variant="ghost" 
           className="mb-4 pl-0 text-slate-600 hover:text-cyan-600" 
@@ -386,7 +386,7 @@ export default function AdminPrescriptionDetailPage() {
           Quay lại
         </Button>
 
-        {/* Content */}
+        {}
         {renderContent()}
       </div>
     </AdminSidebar>

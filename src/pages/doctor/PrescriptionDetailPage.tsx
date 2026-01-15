@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
-import DoctorSidebar from '@/components/sidebar/doctor'
-import ReceptionistSidebar from '@/components/sidebar/recep'
-import AdminSidebar from '@/components/sidebar/admin'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useAuth } from "../../features/auth/context/authContext"
+import DoctorSidebar from '../../components/layout/sidebar/doctor'
+import ReceptionistSidebar from '../../components/layout/sidebar/recep'
+import AdminSidebar from '../../components/layout/sidebar/admin'
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import { toast } from "sonner"
 import { 
   ArrowLeft, 
@@ -37,15 +37,15 @@ import {
   XCircle
 } from "lucide-react"
 
-// Import types and utilities
-import type { Prescription } from '@/types/prescription.types'
-import { PrescriptionService } from '@/services/prescription.service'
+
+import type { Prescription } from '../../types/prescription.types'
+import { PrescriptionService } from '../../features/appointment/services/prescription.service'
 import { 
   formatDate, 
   formatCurrency, 
   calculateAge, 
   printPrescription
-} from '@/utils/prescriptionHelpers'
+} from '../../utils/prescriptionHelpers'
 
 export default function PrescriptionDetail() {
   const { id } = useParams()
@@ -61,7 +61,7 @@ export default function PrescriptionDetail() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [dispenseDialogOpen, setDispenseDialogOpen] = useState(false)
 
-  // Helper functions for JSX elements
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'DRAFT':
@@ -88,7 +88,7 @@ export default function PrescriptionDetail() {
     }
   }
 
-  // Fetch prescription data from API
+  
   useEffect(() => {
     const fetchPrescriptionDetail = async () => {
       try {
@@ -103,11 +103,11 @@ export default function PrescriptionDetail() {
         console.log('Fetching prescription with ID:', id)
         
         try {
-          // Try to call API service first
+          
           const response = await PrescriptionService.getPrescriptionById(parseInt(id))
           
           if (response.success && response.data) {
-            // Transform API data to match our interface
+            
             const transformedPrescription = PrescriptionService.transformPrescriptionData(response.data)
             setPrescription(transformedPrescription)
             console.log('Prescription loaded successfully from API:', transformedPrescription)
@@ -150,7 +150,7 @@ export default function PrescriptionDetail() {
     }
   }, [id])
 
-  // Handle PDF export using backend API
+  
   const handleExportPDF = async () => {
     if (!prescription) return
 
@@ -161,10 +161,10 @@ export default function PrescriptionDetail() {
       
       console.log('Exporting PDF for prescription:', prescription.id)
       
-      // Call service to generate and download PDF
+      
       const blob = await PrescriptionService.exportPrescriptionPDF(prescription.id)
       
-      // Create blob URL and trigger download
+      
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -177,7 +177,7 @@ export default function PrescriptionDetail() {
       setSuccessMessage('Đã tải xuống PDF thành công!')
       toast.success('Đã tải xuống PDF thành công!')
       
-      // Clear success message after 3 seconds
+      
       setTimeout(() => {
         setSuccessMessage(null)
       }, 3000)
@@ -196,7 +196,7 @@ export default function PrescriptionDetail() {
     }
   }
 
-  // Handle cancel prescription
+  
   const handleCancelConfirm = async () => {
     if (!prescription) return
 
@@ -207,13 +207,13 @@ export default function PrescriptionDetail() {
       const response = await PrescriptionService.cancelPrescription(prescription.id)
       
       if (response.success) {
-        // Update prescription status locally
+        
         setPrescription(prev => prev ? { ...prev, status: 'CANCELLED' } : null)
         setSuccessMessage('Đã hủy đơn thuốc thành công!')
         toast.success('Đã hủy đơn thuốc thành công!')
         setCancelDialogOpen(false)
         
-        // Clear success message after 3 seconds
+        
         setTimeout(() => {
           setSuccessMessage(null)
         }, 3000)
@@ -241,15 +241,15 @@ export default function PrescriptionDetail() {
     }
   }
 
-  // Handle edit prescription
+  
   const handleEditPrescription = () => {
     if (!prescription) return
     
-    // Navigate to edit page (you'll need to create this route)
+    
     navigate(`/doctor/prescriptions/${prescription.id}/edit`)
   }
 
-  // Handle dispense prescription (Receptionist/Admin)
+  
   const handleDispenseConfirm = async () => {
     if (!prescription) return
 
@@ -261,7 +261,7 @@ export default function PrescriptionDetail() {
       const response = await PrescriptionService.dispensePrescription(prescription.id)
 
       if (response.success) {
-        // Use response data if available, otherwise update status manually
+        
         if (response.data) {
           const transformedPrescription = PrescriptionService.transformPrescriptionData(response.data)
           setPrescription(transformedPrescription)
@@ -306,7 +306,7 @@ export default function PrescriptionDetail() {
     }
   }
 
-  // Get sidebar based on role
+  
   const getSidebarComponent = () => {
     if (!user) return DoctorSidebar
     const role = String(user.roleId || user.role || "").toLowerCase()
@@ -325,14 +325,14 @@ export default function PrescriptionDetail() {
     }
   }
 
-  const canEdit = prescription?.status === "DRAFT" && (user?.roleId === 2) // Doctor
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
-  const canCancel = prescription?.status === "DRAFT" && (user?.roleId === 4) // Doctor
+  const canEdit = prescription?.status === "DRAFT" && (user?.roleId === 2) 
+  
+  const canCancel = prescription?.status === "DRAFT" && (user?.roleId === 4) 
   const canDispense =
     prescription?.status === "LOCKED" &&
-    (user?.roleId === 1 || user?.roleId === 2) // Admin or Receptionist
+    (user?.roleId === 1 || user?.roleId === 2) 
 
-  // Handle print prescription
+  
   const handlePrint = () => {
     if (!prescription) return
     printPrescription(prescription, setError)
@@ -383,7 +383,7 @@ export default function PrescriptionDetail() {
     <SidebarComponent userName={userName}>
       <div className="space-y-6">
         
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -407,7 +407,7 @@ export default function PrescriptionDetail() {
           </div>
         </div>
 
-        {/* Success Message */}
+        {}
         {successMessage && (
           <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-600 flex items-start gap-3">
             <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -418,7 +418,7 @@ export default function PrescriptionDetail() {
           </div>
         )}
 
-        {/* Error Message */}
+        {}
         {error && (
           <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-600 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -429,7 +429,7 @@ export default function PrescriptionDetail() {
           </div>
         )}
 
-        {/* Prescription Info */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -545,7 +545,7 @@ export default function PrescriptionDetail() {
           </CardContent>
         </Card>
 
-        {/* Patient Info */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -606,7 +606,7 @@ export default function PrescriptionDetail() {
           </CardContent>
         </Card>
 
-        {/* Doctor Info */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -641,7 +641,7 @@ export default function PrescriptionDetail() {
           </CardContent>
         </Card>
 
-        {/* Visit Info */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -697,7 +697,7 @@ export default function PrescriptionDetail() {
           </CardContent>
         </Card>
 
-        {/* Medicine Details */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -786,7 +786,7 @@ export default function PrescriptionDetail() {
           </CardContent>
         </Card>
 
-        {/* Notes */}
+        {}
         {prescription.note && (
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -803,7 +803,7 @@ export default function PrescriptionDetail() {
           </Card>
         )}
 
-        {/* Action Buttons */}
+        {}
         <div className="flex gap-4 justify-end pb-6">
           <Button
             variant="outline"
@@ -832,7 +832,7 @@ export default function PrescriptionDetail() {
           )}
         </div>
 
-        {/* Cancel Confirmation Dialog */}
+        {}
         <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -860,7 +860,7 @@ export default function PrescriptionDetail() {
           </DialogContent>
         </Dialog>
 
-        {/* Dispense Confirmation Dialog */}
+        {}
         <Dialog open={dispenseDialogOpen} onOpenChange={setDispenseDialogOpen}>
           <DialogContent>
             <DialogHeader>

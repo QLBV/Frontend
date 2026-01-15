@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../../features/auth/context/authContext"
 import { ArrowLeft, Loader2, DollarSign, FileText, TrendingUp, Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 import { toast } from "sonner"
-import { InvoiceService, type InvoiceStatistics } from "@/services/invoice.service"
-import AdminSidebar from "@/components/sidebar/admin"
+import { InvoiceService, type InvoiceStatistics } from "../../features/finance/services/invoice.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import { useNavigate } from "react-router-dom"
 
 export default function InvoiceStatisticsPage() {
@@ -63,7 +63,7 @@ export default function InvoiceStatisticsPage() {
           <p className="text-slate-600">Xem thống kê và báo cáo doanh thu hóa đơn</p>
         </div>
 
-        {/* Filters */}
+        {}
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <CardTitle>Bộ lọc</CardTitle>
@@ -104,7 +104,7 @@ export default function InvoiceStatisticsPage() {
           </div>
         ) : statistics ? (
           <>
-            {/* Summary Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50/30">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -149,7 +149,7 @@ export default function InvoiceStatisticsPage() {
               </Card>
             </div>
 
-            {/* Additional Stats */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="border-0 shadow-xl">
                 <CardHeader>
@@ -179,7 +179,7 @@ export default function InvoiceStatisticsPage() {
                 </CardContent>
               </Card>
 
-              {/* Revenue by Date */}
+              {}
               {statistics.revenueByDate && statistics.revenueByDate.length > 0 && (
                 <Card className="border-0 shadow-xl">
                   <CardHeader>
@@ -205,7 +205,7 @@ export default function InvoiceStatisticsPage() {
                 </Card>
               )}
 
-              {/* Revenue by Doctor */}
+              {}
               {statistics.revenueByDoctor && statistics.revenueByDoctor.length > 0 && (
                 <Card className="border-0 shadow-xl">
                   <CardHeader>

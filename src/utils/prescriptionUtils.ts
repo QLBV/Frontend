@@ -1,12 +1,10 @@
 import jsPDF from 'jspdf'
 import { convertVietnameseToAscii } from './vietnameseUtils'
-import type { Prescription } from '@/types/prescription.types'
+import type { Prescription } from '../types/prescription.types'
 
-/**
- * Utility functions for prescription handling
- */
 
-// Helper functions
+
+
 export const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('vi-VN', {
     year: 'numeric',
@@ -35,7 +33,7 @@ export const calculateAge = (dateOfBirth: string) => {
   return age
 }
 
-// PDF Export Handler
+
 export const handleExportPDF = async (
   prescription: Prescription,
   setExportingPDF: (loading: boolean) => void,
@@ -51,13 +49,13 @@ export const handleExportPDF = async (
     
     console.log('Generating PDF for prescription:', prescription.id)
     
-    // Simulate API delay
+    
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Create new PDF document
+    
     const doc = new jsPDF('p', 'mm', 'a4')
     
-    // Set font to Times for better character support
+    
     doc.setFont('times', 'normal')
     
     let yPosition = 20
@@ -65,7 +63,7 @@ export const handleExportPDF = async (
     const margin = 20
     const contentWidth = pageWidth - (margin * 2)
     
-    // Header
+    
     doc.setFontSize(20)
     doc.setFont('times', 'bold')
     doc.text('DON THUOC', pageWidth / 2, yPosition, { align: 'center' })
@@ -76,16 +74,16 @@ export const handleExportPDF = async (
     doc.text(prescription.prescriptionCode, pageWidth / 2, yPosition, { align: 'center' })
     yPosition += 15
     
-    // Date
+    
     doc.setFontSize(10)
     doc.text(`Ngay ke: ${formatDate(prescription.createdAt)}`, pageWidth / 2, yPosition, { align: 'center' })
     yPosition += 15
     
-    // Draw line
+    
     doc.line(margin, yPosition, pageWidth - margin, yPosition)
     yPosition += 10
     
-    // Patient Information
+    
     doc.setFontSize(12)
     doc.setFont('times', 'bold')
     doc.text('THONG TIN BENH NHAN', margin, yPosition)
@@ -94,7 +92,7 @@ export const handleExportPDF = async (
     doc.setFont('times', 'normal')
     doc.setFontSize(10)
     
-    // Convert Vietnamese text to ASCII for PDF compatibility
+    
     const patientName = convertVietnameseToAscii(prescription.patient.fullName)
     const patientAddress = prescription.patient.address ? convertVietnameseToAscii(prescription.patient.address) : ''
     
@@ -112,7 +110,7 @@ export const handleExportPDF = async (
     }
     yPosition += 5
     
-    // Doctor Information
+    
     doc.setFont('times', 'bold')
     doc.setFontSize(12)
     doc.text('THONG TIN BAC SI', margin, yPosition)
@@ -135,8 +133,8 @@ export const handleExportPDF = async (
     }
     yPosition += 5
     
-    // Diagnosis (if available)
-    if (prescription.visit.diagnosis || prescription.visit.symptoms) {
+    
+    if (prescription.visit?.diagnosis || prescription.visit?.symptoms) {
       doc.setFont('times', 'bold')
       doc.setFontSize(12)
       doc.text('THONG TIN KHAM BENH', margin, yPosition)
@@ -144,13 +142,13 @@ export const handleExportPDF = async (
       
       doc.setFont('times', 'normal')
       doc.setFontSize(10)
-      if (prescription.visit.diagnosis) {
+      if (prescription.visit?.diagnosis) {
         const diagnosis = convertVietnameseToAscii(prescription.visit.diagnosis)
         const diagnosisLines = doc.splitTextToSize(`Chan doan: ${diagnosis}`, contentWidth)
         doc.text(diagnosisLines, margin, yPosition)
         yPosition += diagnosisLines.length * 6
       }
-      if (prescription.visit.symptoms) {
+      if (prescription.visit?.symptoms) {
         const symptoms = convertVietnameseToAscii(prescription.visit.symptoms)
         const symptomsLines = doc.splitTextToSize(`Trieu chung: ${symptoms}`, contentWidth)
         doc.text(symptomsLines, margin, yPosition)
@@ -159,13 +157,13 @@ export const handleExportPDF = async (
       yPosition += 5
     }
     
-    // Medicine Details
+    
     doc.setFont('times', 'bold')
     doc.setFontSize(12)
     doc.text(`CHI TIET THUOC (${prescription.details.length} loai)`, margin, yPosition)
     yPosition += 10
     
-    // Table header
+    
     doc.setFontSize(9)
     doc.setFont('times', 'bold')
     const colWidths = [15, 50, 20, 15, 15, 15, 15, 15, 30]
@@ -178,13 +176,13 @@ export const handleExportPDF = async (
     })
     yPosition += 8
     
-    // Draw header line
+    
     doc.line(margin, yPosition - 2, pageWidth - margin, yPosition - 2)
     
-    // Table content
+    
     doc.setFont('times', 'normal')
     prescription.details.forEach((detail, index) => {
-      if (yPosition > 250) { // Check if we need a new page
+      if (yPosition > 250) { 
         doc.addPage()
         yPosition = 20
       }
@@ -206,10 +204,10 @@ export const handleExportPDF = async (
       ]
       
       rowData.forEach((data, colIndex) => {
-        if (colIndex === 1) { // Medicine name column
+        if (colIndex === 1) { 
           const lines = doc.splitTextToSize(data, colWidths[colIndex] - 2)
           doc.text(lines, xPos, yPosition)
-        } else if (colIndex === 8) { // Price column - right align
+        } else if (colIndex === 8) { 
           doc.text(data, xPos + colWidths[colIndex] - 2, yPosition, { align: 'right' })
         } else {
           doc.text(data, xPos, yPosition)
@@ -218,7 +216,7 @@ export const handleExportPDF = async (
       })
       yPosition += 8
       
-      // Add instruction if available
+      
       if (detail.instruction) {
         doc.setFontSize(8)
         doc.setFont('times', 'italic')
@@ -232,7 +230,7 @@ export const handleExportPDF = async (
       yPosition += 2
     })
     
-    // Total
+    
     yPosition += 5
     doc.line(margin, yPosition, pageWidth - margin, yPosition)
     yPosition += 8
@@ -242,7 +240,7 @@ export const handleExportPDF = async (
     doc.text(formatCurrency(prescription.totalAmount).replace('₫', 'VND'), pageWidth - margin, yPosition, { align: 'right' })
     yPosition += 15
     
-    // Notes
+    
     if (prescription.note) {
       doc.setFont('times', 'bold')
       doc.setFontSize(10)
@@ -255,7 +253,7 @@ export const handleExportPDF = async (
       yPosition += noteLines.length * 6 + 10
     }
     
-    // Signature
+    
     yPosition += 10
     doc.setFont('times', 'bold')
     doc.setFontSize(10)
@@ -263,12 +261,12 @@ export const handleExportPDF = async (
     yPosition += 20
     doc.text(doctorName, pageWidth - margin - 40, yPosition, { align: 'center' })
     
-    // Save the PDF
+    
     doc.save(`Prescription_${prescription.prescriptionCode}.pdf`)
     
     setSuccessMessage('Đã tải xuống PDF thành công!')
     
-    // Clear success message after 3 seconds
+    
     setTimeout(() => {
       setSuccessMessage(null)
     }, 3000)
@@ -282,14 +280,14 @@ export const handleExportPDF = async (
   }
 }
 
-// Print Handler
+
 export const handlePrint = (
   prescription: Prescription,
   setError: (error: string | null) => void
 ) => {
   if (!prescription) return
 
-  // Create a print-friendly version of the prescription
+  
   const printWindow = window.open('', '_blank')
   if (!printWindow) {
     setError('Không thể mở cửa sổ in. Vui lòng kiểm tra popup blocker.')
@@ -409,19 +407,19 @@ export const handlePrint = (
         ` : ''}
       </div>
 
-      ${prescription.visit.diagnosis || prescription.visit.symptoms ? `
+      ${prescription.visit?.diagnosis || prescription.visit?.symptoms ? `
       <div class="info-section">
         <h3>Thông tin khám bệnh</h3>
-        ${prescription.visit.diagnosis ? `
+        ${prescription.visit?.diagnosis ? `
         <div class="info-row">
           <span class="info-label">Chẩn đoán:</span>
-          <span>${prescription.visit.diagnosis}</span>
+          <span>${prescription.visit?.diagnosis}</span>
         </div>
         ` : ''}
-        ${prescription.visit.symptoms ? `
+        ${prescription.visit?.symptoms ? `
         <div class="info-row">
           <span class="info-label">Triệu chứng:</span>
-          <span>${prescription.visit.symptoms}</span>
+          <span>${prescription.visit?.symptoms}</span>
         </div>
         ` : ''}
       </div>
@@ -486,7 +484,7 @@ export const handlePrint = (
   printWindow.document.write(printContent)
   printWindow.document.close()
   
-  // Wait for content to load then print
+  
   printWindow.onload = () => {
     printWindow.print()
     printWindow.close()

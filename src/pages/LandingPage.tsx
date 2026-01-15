@@ -1,10 +1,10 @@
-import { Header } from "@/components/header"
-import { Hero } from "@/components/hero"
-import { Features } from "@/components/features"
-import { Services } from "@/components/services"
-import { Stats } from "@/components/stats"
-import ContactForm  from "@/components/ContactForm"
-import { Footer } from "@/components/footer"
+import { Header } from "../components/layout/header"
+import { Hero } from "../features/landing/components/Hero"
+import { Features } from "../features/landing/components/Features"
+import { Services } from "../features/landing/components/Services"
+import { Stats } from "../features/landing/components/Stats"
+import ContactForm  from "../features/landing/components/ContactForm"
+import { Footer } from "../components/layout/footer"
 
 export default function Home() {
   return (
@@ -14,7 +14,7 @@ export default function Home() {
       <Stats />
       <Services />
       
-      {/* Process Section (Simple Visual) */}
+      {}
       <section id="process" className="py-20 bg-blue-900 text-white relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">

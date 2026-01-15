@@ -21,10 +21,10 @@ import {
   ChevronRight,
   MoreHorizontal
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -40,35 +40,35 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "../../components/ui/table"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "../../components/ui/dropdown-menu"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import {
   ShiftTemplateService,
   type ShiftTemplate,
   DAY_OF_WEEK_LABELS,
   DAY_OF_WEEK_LABELS_SHORT,
-} from "@/services/shiftTemplate.service"
-import { ShiftService, type Shift } from "@/services/shift.service"
-import api from "@/lib/api"
+} from "../../features/shift/services/shiftTemplate.service"
+import { ShiftService, type Shift } from "../../features/shift/services/shift.service"
+import api from "../../lib/api"
 
-// Doctor type for select
+
 interface Doctor {
   id: number
   user: {
@@ -97,14 +97,14 @@ export default function ShiftTemplatesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Dialog states
+  
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<ShiftTemplate | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Form states
+  
   const [formData, setFormData] = useState({
     doctorId: "",
     shiftId: "",
@@ -259,9 +259,9 @@ export default function ShiftTemplatesPage() {
     }
   }
 
-  // Filter templates
+  
   const filteredTemplates = templates.filter((template) => {
-    // Search filter
+    
     const searchLower = searchQuery.toLowerCase()
     const matchesSearch =
       !searchQuery ||
@@ -269,19 +269,19 @@ export default function ShiftTemplatesPage() {
       template.shift?.name?.toLowerCase().includes(searchLower) ||
       template.notes?.toLowerCase().includes(searchLower)
 
-    // Day of week filter
+    
     const matchesDay =
       filterDayOfWeek === "all" || template.dayOfWeek === parseInt(filterDayOfWeek)
 
-    // Doctor filter
+    
     const matchesDoctor =
       filterDoctor === "all" || template.doctorId === parseInt(filterDoctor)
 
-    // Shift filter
+    
     const matchesShift =
       filterShift === "all" || template.shiftId === parseInt(filterShift)
 
-    // Active filter
+    
     const matchesActive =
       filterActive === "all" ||
       (filterActive === "active" && template.isActive) ||
@@ -290,7 +290,7 @@ export default function ShiftTemplatesPage() {
     return matchesSearch && matchesDay && matchesDoctor && matchesShift && matchesActive
   })
 
-  // Pagination for List View
+  
   const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage)
   const paginatedTemplates = filteredTemplates.slice(
     (currentPage - 1) * itemsPerPage,
@@ -301,8 +301,8 @@ export default function ShiftTemplatesPage() {
     setCurrentPage(1)
   }, [searchQuery, filterDayOfWeek, filterDoctor, filterShift, filterActive, viewMode])
 
-  // Group templates by day of week for grid view
-  // We use filteredTemplates for grid view as it groups by day naturally
+  
+  
   const templatesByDay = ShiftTemplateService.groupTemplatesByDay(filteredTemplates)
 
   const formatTime = (time: string) => {
@@ -314,7 +314,7 @@ export default function ShiftTemplatesPage() {
     }
   }
 
-  // Stats
+  
   const totalTemplates = templates.length
   const activeTemplates = templates.filter((t) => t.isActive).length
   const uniqueDoctors = new Set(templates.map((t) => t.doctorId)).size
@@ -323,7 +323,7 @@ export default function ShiftTemplatesPage() {
     <AdminSidebar>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
-          {/* Simplified Header Section */}
+          {}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -360,7 +360,7 @@ export default function ShiftTemplatesPage() {
             </div>
           </div>
 
-          {/* Simplified Stats Cards */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-indigo-200 transition-colors">
               <CardContent className="p-5 flex items-center gap-4">
@@ -408,10 +408,10 @@ export default function ShiftTemplatesPage() {
             </Card>
           </div>
 
-          {/* Simplified Filters and View Toggle */}
+          {}
           <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
             <div className="flex flex-col xl:flex-row gap-3">
-              {/* Search input with focus effects */}
+              {}
               <div className="relative flex-grow group">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
@@ -424,7 +424,7 @@ export default function ShiftTemplatesPage() {
                 />
               </div>
 
-              {/* Filters grid */}
+              {}
               <div className="flex flex-wrap items-center gap-2">
                 <Select value={filterDayOfWeek} onValueChange={setFilterDayOfWeek}>
                   <SelectTrigger className="w-[140px] h-11 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500/50 rounded-xl text-sm font-medium">
@@ -507,7 +507,7 @@ export default function ShiftTemplatesPage() {
             </div>
           </div>
 
-          {/* Main Content */}
+          {}
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
@@ -531,7 +531,7 @@ export default function ShiftTemplatesPage() {
               </CardContent>
             </Card>
           ) : viewMode === "grid" ? (
-            /* Grid View - By Day of Week */
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Object.entries(templatesByDay).map(([day, dayTemplates]) => (
                 <Card
@@ -671,7 +671,7 @@ export default function ShiftTemplatesPage() {
               ))}
             </div>
           ) : (
-            /* List View */
+            
             <div className="space-y-4">
               <Card className="border-0 shadow-sm bg-white overflow-hidden border border-slate-100 rounded-2xl">
                 <Table>
@@ -771,7 +771,7 @@ export default function ShiftTemplatesPage() {
                   </TableBody>
                 </Table>
 
-                {/* Pagination Controls */}
+                {}
                 {filteredTemplates.length > 0 && (
                   <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
                     <div className="flex items-center gap-2">
@@ -838,7 +838,7 @@ export default function ShiftTemplatesPage() {
             </div>
           )}
 
-          {/* Create Dialog */}
+          {}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
@@ -964,7 +964,7 @@ export default function ShiftTemplatesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Edit Dialog */}
+          {}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
@@ -1055,7 +1055,7 @@ export default function ShiftTemplatesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Delete Dialog */}
+          {}
           <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>

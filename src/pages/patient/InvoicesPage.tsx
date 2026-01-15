@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
+import { Skeleton } from "../../components/ui/skeleton"
+import { Input } from "../../components/ui/input"
 import {
   FileText,
   Calendar,
@@ -19,9 +19,9 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "sonner"
-import { InvoiceService, type Invoice, PaymentStatus } from "@/services/invoice.service"
-import PatientSidebar from "@/components/sidebar/patient"
-import { useAuth } from "@/auth/authContext"
+import { InvoiceService, type Invoice, PaymentStatus } from "../../features/finance/services/invoice.service"
+import PatientSidebar from "../../components/layout/sidebar/patient"
+import { useAuth } from "../../features/auth/context/authContext"
 
 const ITEMS_PER_PAGE = 10
 
@@ -45,7 +45,7 @@ function PremiumPagination({
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  // Generate page numbers
+  
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     if (totalPages <= 7) {
@@ -158,7 +158,7 @@ export default function InvoicesPage() {
     fetchInvoices()
   }, [user?.patientId])
 
-  // Filter invoices
+  
   const filteredInvoices = useMemo(() => {
     return invoices.filter(invoice => {
       const matchesSearch = invoice.invoiceCode.toLowerCase().includes(searchQuery.toLowerCase())
@@ -167,7 +167,7 @@ export default function InvoicesPage() {
     })
   }, [invoices, searchQuery, filterStatus])
 
-  // Pagination
+  
   const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE)
   const paginatedInvoices = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
@@ -212,7 +212,7 @@ export default function InvoicesPage() {
       userName={user?.fullName || user?.email}
     >
       <div className="space-y-6 pb-20">
-        {/* Premium Gradient Header */}
+        {}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 p-8 shadow-xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
@@ -243,7 +243,7 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {}
         {isLoading ? (
           <Card>
             <CardContent className="p-0">
@@ -266,7 +266,7 @@ export default function InvoicesPage() {
             <Card className="overflow-hidden border-gray-100 shadow-sm">
               <div className="p-4 border-b bg-gray-50/40">
                 <div className="flex flex-col md:flex-row gap-3">
-                  {/* Search */}
+                  {}
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -280,7 +280,7 @@ export default function InvoicesPage() {
                     />
                   </div>
 
-                  {/* Filter */}
+                  {}
                   <div className="flex gap-2">
                     <Button
                       variant={filterStatus === "ALL" ? "default" : "outline"}
@@ -327,7 +327,7 @@ export default function InvoicesPage() {
                       className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/invoices/${invoice.id}`)}
                     >
-                      {/* Icon with colored background */}
+                      {}
                       <div 
                         className="p-3.5 rounded-xl text-white flex-shrink-0"
                         style={{
@@ -341,7 +341,7 @@ export default function InvoicesPage() {
                         <Receipt className="h-5 w-5" />
                       </div>
 
-                      {/* Invoice Info */}
+                      {}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-base">
@@ -372,7 +372,7 @@ export default function InvoicesPage() {
                         </div>
                       </div>
 
-                      {/* Action Button */}
+                      {}
                       <Button 
                         size="sm"
                         className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
@@ -385,7 +385,7 @@ export default function InvoicesPage() {
                 </div>
               </CardContent>
 
-              {/* Pagination Footer */}
+              {}
               <div className="border-t border-gray-100 bg-gray-50/50">
                 <PremiumPagination
                   currentPage={currentPage}

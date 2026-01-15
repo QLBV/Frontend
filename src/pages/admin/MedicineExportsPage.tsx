@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { ArrowLeft, Search, Calendar, Package, Loader2, FileText, Eye } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import { MedicineService, type MedicineExport } from "@/services/medicine.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { MedicineService, type MedicineExport } from "../../features/inventory/services/medicine.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 
@@ -66,7 +66,7 @@ export default function MedicineExportsPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Lịch sử xuất kho</h1>
@@ -78,7 +78,7 @@ export default function MedicineExportsPage() {
           </Button>
         </div>
 
-        {/* Summary Card */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export default function MedicineExportsPage() {
           </CardContent>
         </Card>
 
-        {/* Search and Filters */}
+        {}
         <Card>
           <CardContent className="pt-6">
             <div className="flex gap-4">
@@ -127,7 +127,7 @@ export default function MedicineExportsPage() {
           </CardContent>
         </Card>
 
-        {/* Table */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle>Danh sách xuất kho</CardTitle>
@@ -204,7 +204,7 @@ export default function MedicineExportsPage() {
               </div>
             )}
 
-            {/* Pagination */}
+            {}
             {!isLoading && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
                 <p className="text-sm text-slate-600">

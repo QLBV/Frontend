@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin'
+import AdminSidebar from '../../components/layout/sidebar/admin'
 import { 
   Search,
   ChevronLeft,
@@ -15,10 +15,10 @@ import {
   Sparkles,
   Filter,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Input } from "../../components/ui/input"
 
 
 import {
@@ -27,7 +27,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -35,9 +35,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import { toast } from "sonner"
-import { UserService, type User } from "@/services/user.service"
+import { UserService, type User } from "../../features/auth/services/user.service"
 
 type RoleFilter = "all" | "admin" | "doctor" | "receptionist" | "patient" | "employee"
 type StatusFilter = "all" | "active" | "inactive"
@@ -138,7 +138,7 @@ export default function UserManagementPage() {
   }, [currentPage, roleFilter, statusFilter])
 
   useEffect(() => {
-    // Reset to page 1 when search or filters change
+    
     const timeoutId = setTimeout(() => {
       if (currentPage === 1) {
         fetchUsers()
@@ -223,7 +223,7 @@ export default function UserManagementPage() {
       receptionist: { label: "Lễ tân", className: "bg-green-100 text-green-800 border-green-200" },
       patient: { label: "Bệnh nhân", className: "bg-gray-100 text-gray-800 border-gray-200" },
     }
-    // role should already be a string after mapping, but add safety check
+    
     const roleName = typeof role === 'string' ? role.toLowerCase() : 'patient'
     const roleConfig = config[roleName] || config.patient
     
@@ -282,7 +282,7 @@ export default function UserManagementPage() {
   return (
     <AdminSidebar>
       <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
-        {/* Advanced Background Blobs */}
+        {}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/30 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-indigo-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -291,9 +291,9 @@ export default function UserManagementPage() {
         <div className="relative p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-8">
             
-            {/* Premium Compact Header */}
+            {}
             <div className="relative overflow-hidden rounded-[32px] bg-white/40 backdrop-blur-3xl p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
-              {/* Animated Background Gradients */}
+              {}
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
                 <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-indigo-400/5 rounded-full blur-[50px] -translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '3s' }} />
@@ -327,7 +327,7 @@ export default function UserManagementPage() {
                   </div>
                 </div>
 
-                {/* Quick Stats & Actions */}
+                {}
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="bg-white/60 backdrop-blur-xl rounded-[20px] px-5 py-2.5 border border-white/60 shadow-sm group/stat hover:bg-blue-50/50 transition-all duration-500">
                     <p className="text-blue-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 leading-none">
@@ -348,10 +348,10 @@ export default function UserManagementPage() {
               </div>
             </div>
 
-            {/* Premium Filter Bar */}
+            {}
             <div className="bg-white/60 backdrop-blur-xl p-3 rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
               <div className="flex flex-wrap items-center gap-3">
-                {/* Search */}
+                {}
                 <div className="relative flex-1 min-w-[300px]">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-slate-400" />
@@ -364,7 +364,7 @@ export default function UserManagementPage() {
                   />
                 </div>
 
-                {/* Role Filter */}
+                {}
                 <div className="flex items-center gap-3 px-4 h-12 bg-white rounded-2xl border border-slate-100 shadow-sm min-w-[160px]">
                   <Filter className="w-4 h-4 text-blue-500" />
                   <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as RoleFilter)}>
@@ -382,7 +382,7 @@ export default function UserManagementPage() {
                   </Select>
                 </div>
 
-                {/* Status Filter */}
+                {}
                 <div className="flex items-center gap-3 px-4 h-12 bg-white rounded-2xl border border-slate-100 shadow-sm min-w-[150px]">
                   <UserCheck className="w-4 h-4 text-emerald-500" />
                   <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
@@ -399,14 +399,14 @@ export default function UserManagementPage() {
               </div>
             </div>
 
-            {/* Results Count */}
+            {}
             <div className="mb-4">
               <span className="text-sm text-slate-500 font-medium whitespace-nowrap">
                 Hiển thị <span className="text-slate-900 font-bold">{users.length}</span> người dùng
               </span>
             </div>
 
-            {/* Premium Users Table */}
+            {}
             <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -507,7 +507,7 @@ export default function UserManagementPage() {
               </CardContent>
             </Card>
 
-        {/* Pagination */}
+        {}
         {users.length > 0 && (
           <div className="flex items-center justify-between mt-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2">
@@ -528,7 +528,7 @@ export default function UserManagementPage() {
               </Button>
               
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                // Show first, last, current, and pages around current
+                
                 if (
                   page === 1 || 
                   page === totalPages || 
@@ -551,7 +551,7 @@ export default function UserManagementPage() {
                   );
                 }
                 
-                // Show ellipses
+                
                 if (
                   (page === 2 && currentPage > 3) || 
                   (page === totalPages - 1 && currentPage < totalPages - 2)
@@ -575,7 +575,7 @@ export default function UserManagementPage() {
           </div>
         )}
 
-        {/* Delete Confirmation Dialog */}
+        {}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -617,7 +617,7 @@ export default function UserManagementPage() {
           </DialogContent>
         </Dialog>
         
-        {/* Status Toggle Dialog */}
+        {}
         <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
           <DialogContent>
             <DialogHeader>

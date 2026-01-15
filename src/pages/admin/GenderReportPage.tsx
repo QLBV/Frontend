@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
-import AdminSidebar from "@/components/sidebar/admin";
+import api from "../../lib/api";
+import AdminSidebar from "../../components/layout/sidebar/admin";
 
 interface PatientByGender {
   gender: string;
@@ -20,10 +20,10 @@ interface GenderReportResponse {
 }
 
 const COLORS = {
-  MALE: "#3b82f6", // Blue
-  FEMALE: "#ec4899", // Pink
-  OTHER: "#f59e0b", // Amber
-  UNKNOWN: "#6b7280", // Gray
+  MALE: "#3b82f6", 
+  FEMALE: "#ec4899", 
+  OTHER: "#f59e0b", 
+  UNKNOWN: "#6b7280", 
 };
 
 const getColorForGender = (gender: string): string => {
@@ -149,7 +149,7 @@ export default function GenderReport() {
           </div>
         </div>
 
-        {/* Summary Cards */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardHeader className="pb-2">
@@ -194,7 +194,7 @@ export default function GenderReport() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Pie Chart - Gender Distribution */}
+          {}
           <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -245,7 +245,7 @@ export default function GenderReport() {
             </CardContent>
           </Card>
 
-          {/* Bar Chart - Patient Count by Gender */}
+          {}
           <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -306,7 +306,7 @@ export default function GenderReport() {
           </Card>
         </div>
 
-        {/* Line Chart - Average Age by Gender */}
+        {}
         <Card className="dark:bg-slate-800 dark:border-slate-700 mt-8">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -357,7 +357,7 @@ export default function GenderReport() {
           </CardContent>
         </Card>
 
-        {/* Detail Table */}
+        {}
         <Card className="dark:bg-slate-800 dark:border-slate-700 mt-8">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">

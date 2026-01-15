@@ -2,24 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Header } from "../components/layout/header"
+import { Footer } from "../components/layout/footer"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "../components/ui/card"
 import { Lock, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { toast } from "sonner"
-import api from "@/lib/api"
+import api from "../lib/api"
 
 const resetPasswordSchema = yup.object({
   newPassword: yup
@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
         setIsSuccess(true)
         toast.success("Đặt lại mật khẩu thành công!")
         
-        // Redirect to login after 3 seconds
+        
         setTimeout(() => {
           navigate("/login")
         }, 3000)
@@ -96,7 +96,7 @@ export default function ResetPasswordPage() {
         "Không thể đặt lại mật khẩu. Token có thể đã hết hạn."
       toast.error(errorMessage)
       
-      // If token expired, redirect to forgot password
+      
       if (error.response?.status === 400) {
         setTimeout(() => {
           navigate("/forgot-password")
@@ -143,7 +143,7 @@ export default function ResetPasswordPage() {
   }
 
   if (!token) {
-    return null // Will redirect in useEffect
+    return null 
   }
 
   return (

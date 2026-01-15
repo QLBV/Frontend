@@ -18,10 +18,10 @@ import {
   TrendingUp,
   Filter
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
 import { Link } from "react-router-dom"
 import {
   Select,
@@ -29,7 +29,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -37,10 +37,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import { toast } from "sonner"
-import { PayrollService, type Payroll } from "@/services/payroll.service"
-import AdminSidebar from "@/components/sidebar/admin"
+import { PayrollService, type Payroll } from "../../features/finance/services/payroll.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 
 export default function SalaryPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -61,7 +61,7 @@ export default function SalaryPage() {
   const [isExportingExcel, setIsExportingExcel] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
 
-  // Filters
+  
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function SalaryPage() {
       const year = parseInt(yearStr)
       const month = parseInt(monthStr)
 
-      // Only pass necessary params
+      
       const params: any = {
         month,
         year,
@@ -87,8 +87,8 @@ export default function SalaryPage() {
       
       let fetchedPayrolls = response.payrolls || []
 
-      // Client-side status filtering if backend doesn't support it fully via getPayrollsByPeriod
-      // Note: Typically backend should handle this, but for safety in this demo:
+      
+      
       if (filterStatus !== "all") {
         fetchedPayrolls = fetchedPayrolls.filter(p => p.status === filterStatus)
       }
@@ -97,7 +97,7 @@ export default function SalaryPage() {
       setPagination({
         page: response.page || 1,
         limit: response.limit || 20,
-        total: response.total || fetchedPayrolls.length, // Update total if possible
+        total: response.total || fetchedPayrolls.length, 
         totalPages: response.totalPages || 1,
       })
     } catch (error: any) {
@@ -140,7 +140,7 @@ export default function SalaryPage() {
     }
   }
 
-  // Client-side search filtering
+  
   const filteredPayrolls = payrolls.filter(
     (payroll) =>
       payroll.employee?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -151,7 +151,7 @@ export default function SalaryPage() {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
   }
 
-  // Calculate summary statistics from loaded data
+  
   const totalSalaryPayout = filteredPayrolls.reduce((sum, p) => sum + p.totalSalary, 0)
   const totalDoctors = filteredPayrolls.filter((p) => p.employee?.role === "doctor" || p.employee?.role === "Doctor").length
 
@@ -216,7 +216,7 @@ export default function SalaryPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        {/* Simplified Header Section */}
+        {}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
@@ -267,8 +267,8 @@ export default function SalaryPage() {
           </div>
         </div>
 
-        {/* Stats */}
-        {/* Simplified Stats Cards */}
+        {}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-emerald-200 transition-colors">
             <CardContent className="p-5 flex items-center gap-4">
@@ -332,8 +332,8 @@ export default function SalaryPage() {
           </Card>
         </div>
 
-        {/* Action Bar (Calculate) */}
-        {/* Simplified Action Bar */}
+        {}
+        {}
         <div className="bg-blue-600/10 backdrop-blur-xl rounded-2xl p-4 border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4">
            <div className="flex items-center gap-3">
              <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
@@ -359,10 +359,10 @@ export default function SalaryPage() {
           </Button>
         </div>
 
-        {/* Simplified Filters Bar */}
+        {}
         <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mt-6 mb-6">
           <div className="flex flex-col xl:flex-row gap-3">
-            {/* Search input with focus effects */}
+            {}
             <div className="relative flex-grow group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -375,7 +375,7 @@ export default function SalaryPage() {
               />
             </div>
 
-            {/* Filters grid */}
+            {}
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center bg-slate-50 p-1 rounded-xl border border-slate-100">
                 <div className="px-3 flex items-center gap-2 border-r border-slate-200 mr-1">
@@ -389,9 +389,9 @@ export default function SalaryPage() {
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-100 shadow-xl">
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="DRAFT">📋 Bản nháp</SelectItem>
-                    <SelectItem value="APPROVED">✅ Đã phê duyệt</SelectItem>
-                    <SelectItem value="PAID">💰 Đã thanh toán</SelectItem>
+                    <SelectItem value="DRAFT"> Bản nháp</SelectItem>
+                    <SelectItem value="APPROVED"> Đã phê duyệt</SelectItem>
+                    <SelectItem value="PAID"> Đã thanh toán</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -413,7 +413,7 @@ export default function SalaryPage() {
           </div>
         </div>
 
-        {/* Premium Salary Table Overlay */}
+        {}
         <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white">
           <CardContent className="p-0">
             {isLoading ? (
@@ -604,7 +604,7 @@ export default function SalaryPage() {
           )}
         </Card>
 
-        {/* Confirm Dialog */}
+        {}
         <Dialog open={confirmCalculateOpen} onOpenChange={setConfirmCalculateOpen}>
             <DialogContent>
                 <DialogHeader>

@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useAuth } from "../features/auth/context/authContext"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
 import { Lock, Mail, Eye, EyeOff, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
 
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { logError } from "@/utils/logger"
+import { logError } from "../utils/logger"
 import { toast } from "sonner"
 
 const loginSchema = yup.object({
@@ -48,7 +48,7 @@ export default function Login() {
     resolver: yupResolver(loginSchema),
   })
 
-  // Navigation Logic
+  
   useEffect(() => {
     if (isAuthenticated && user && location.pathname === "/login" && !hasNavigated) {
       const rawRole = user.roleId || user.role || "patient"
@@ -87,7 +87,7 @@ export default function Login() {
     }
   }, [isAuthenticated, user, navigate, from, location.pathname, hasNavigated])
 
-  // Saved Email Logic
+  
   useEffect(() => {
     const savedEmail = localStorage.getItem("savedEmail")
     if (savedEmail) {
@@ -140,7 +140,7 @@ export default function Login() {
     } catch (err: any) {
       logError("Login Error", err)
       
-      // Check if email not verified
+      
       if (err.response?.data?.message === "EMAIL_NOT_VERIFIED" || err.response?.status === 403) {
         const emailToVerify = err.response?.data?.data?.email || data.email
         toast.error("Email chưa được xác thực. Đang chuyển hướng...")
@@ -171,12 +171,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2 overflow-hidden bg-white">
-      {/* LEFT COLUMN */}
+      {}
       <div className="hidden lg:flex relative flex-col justify-center items-center bg-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-indigo-900 opacity-90"></div>
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-20"></div>
         
-        {/* Blurs */}
+        {}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"></div>
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"></div>
 
@@ -207,7 +207,7 @@ export default function Login() {
         </div>
       </div>
 
-      {/* RIGHT COLUMN */}
+      {}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12 md:p-20 relative bg-white">
          <Link to="/" className="absolute top-8 left-8 text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group">
              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Trang chủ

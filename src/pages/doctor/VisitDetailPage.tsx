@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useAuth } from "../../features/auth/context/authContext"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import {
   ArrowLeft,
   CalendarIcon,
@@ -25,13 +25,13 @@ import {
   Ruler,
 } from "lucide-react"
 import { toast } from "sonner"
-import { getVisitById, type Visit } from "@/services/visit.service"
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import PatientSidebar from "@/components/sidebar/patient"
+import { getVisitById, type Visit } from "../../features/appointment/services/visit.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import DoctorSidebar from "../../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import PatientSidebar from "../../components/layout/sidebar/patient"
 
-// Helper to clean note text (remove system generated headers)
+
 const cleanNoteText = (noteText: string) => {
   if (!noteText) return "Không có ghi chú";
   let cleanedText = noteText;
@@ -75,7 +75,7 @@ export default function VisitDetailPage() {
     fetchVisit()
   }, [id, navigate])
 
-  // Get sidebar component based on role
+  
   const getSidebarComponent = () => {
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
@@ -165,7 +165,7 @@ export default function VisitDetailPage() {
   return (
     <SidebarComponent userName={userName}>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
-        {/* Navigation */}
+        {}
         <Button 
           variant="ghost" 
           className="pl-0 text-slate-600 hover:text-blue-600 hover:bg-transparent transition-colors" 
@@ -175,7 +175,7 @@ export default function VisitDetailPage() {
           Quay lại danh sách
         </Button>
 
-        {/* Header Section */}
+        {}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -195,7 +195,7 @@ export default function VisitDetailPage() {
           </div>
 
 
-          {/* Action Buttons */}
+          {}
           <div className="flex flex-wrap gap-2">
             {visit.patientId && (
               <Button variant="outline" size="sm" asChild className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300">
@@ -204,7 +204,7 @@ export default function VisitDetailPage() {
                     ? `/admin/patients/${visit.patientId}`
                     : (String(user?.roleId || user?.role || "").toLowerCase() === "receptionist" || String(user?.roleId || user?.role || "") === "4")
                     ? `/recep/patients/${visit.patientId}`
-                    : `/doctor/patients/${visit.patientId}` // Fallback for doctor
+                    : `/doctor/patients/${visit.patientId}` 
                 }>
                   <User className="h-4 w-4 mr-2" />
                   Hồ sơ
@@ -243,12 +243,12 @@ export default function VisitDetailPage() {
           </div>
         </div>
 
-        {/* Main Content Grid */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Left Column: Patient & Doctor Info */}
+          {}
           <div className="lg:col-span-1 space-y-6">
-            {/* Patient Info Card */}
+            {}
             <Card className="border shadow-sm overflow-hidden">
               <CardHeader className="bg-slate-50/50 border-b py-3 px-4">
                 <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function VisitDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Doctor Info Card */}
+            {}
              <Card className="border shadow-sm overflow-hidden">
               <CardHeader className="bg-slate-50/50 border-b py-3 px-4">
                 <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
@@ -292,7 +292,7 @@ export default function VisitDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Visit Meta Info */}
+            {}
              <Card className="border shadow-sm overflow-hidden">
               <CardContent className="p-4 space-y-3">
                  <div className="grid grid-cols-2 gap-4">
@@ -315,10 +315,10 @@ export default function VisitDetailPage() {
             </Card>
           </div>
 
-          {/* Right Column: Clinical Details */}
+          {}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Diagnosis & Symptoms */}
+            {}
             <Card className="border shadow-sm">
               <CardHeader className="bg-slate-50/50 border-b py-3 px-5">
                 <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
@@ -361,7 +361,7 @@ export default function VisitDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Vital Signs */}
+            {}
             {visit.vitalSigns && Object.keys(visit.vitalSigns).length > 0 && (
                <Card className="border shadow-sm">
                 <CardHeader className="bg-slate-50/50 border-b py-3 px-5">

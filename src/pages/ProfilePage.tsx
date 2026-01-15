@@ -1,31 +1,31 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/auth/authContext"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useAuth } from "../features/auth/context/authContext"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "../components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
 import { User, Mail, Lock, Camera, Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { toast } from "sonner"
-import api from "@/lib/api"
+import api from "../lib/api"
 import { useNavigate } from "react-router-dom"
-// Get sidebar based on role
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import PatientSidebar from "@/components/sidebar/patient"
+
+import AdminSidebar from "../components/layout/sidebar/admin"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
+import PatientSidebar from "../components/layout/sidebar/patient"
 
 const profileSchema = yup.object({
   fullName: yup.string().required("Họ tên bắt buộc nhập"),
@@ -95,7 +95,7 @@ export default function ProfilePage() {
     resolver: yupResolver(changePasswordSchema),
   })
 
-  // Fetch profile data
+  
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login")
@@ -169,13 +169,13 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
+    
     if (!file.type.startsWith("image/")) {
       toast.error("Vui lòng chọn file hình ảnh")
       return
     }
 
-    // Validate file size (10MB)
+    
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 10MB")
       return
@@ -194,7 +194,7 @@ export default function ProfilePage() {
 
       if (response.data.success) {
         toast.success("Upload avatar thành công!")
-        // Update profile with new avatar URL
+        
         setProfile({
           ...profile,
           avatar: response.data.data?.avatar || response.data.avatar,
@@ -208,7 +208,7 @@ export default function ProfilePage() {
       toast.error(errorMessage)
     } finally {
       setIsLoadingAvatar(false)
-      // Reset input
+      
       e.target.value = ""
     }
   }
@@ -228,7 +228,7 @@ export default function ProfilePage() {
 
   const role = String(user.roleId || user.role || "").toLowerCase()
   
-  // Render content
+  
   const renderContent = () => (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Thông tin cá nhân</h1>
@@ -239,7 +239,7 @@ export default function ProfilePage() {
               <TabsTrigger value="password">Đổi mật khẩu</TabsTrigger>
             </TabsList>
 
-            {/* Profile Tab */}
+            {}
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
@@ -249,7 +249,7 @@ export default function ProfilePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Avatar Section */}
+                  {}
                   <div className="flex items-center gap-6">
                     <Avatar className="w-24 h-24">
                       <AvatarImage
@@ -285,15 +285,9 @@ export default function ProfilePage() {
                         accept="image/*"
                         className="hidden"
                         onChange={handleAvatarUpload}
-                        disabled={isLoadingAvatar}
                       />
-                      <p className="text-sm text-gray-500">
-                        JPG, PNG hoặc GIF. Tối đa 10MB
-                      </p>
                     </div>
                   </div>
-
-                  {/* Profile Form */}
                   <form
                     onSubmit={handleSubmitProfile(onSubmitProfile)}
                     className="space-y-4"
@@ -375,7 +369,7 @@ export default function ProfilePage() {
               </Card>
             </TabsContent>
 
-            {/* Change Password Tab */}
+            {}
             <TabsContent value="password">
               <Card>
                 <CardHeader>
@@ -502,7 +496,7 @@ export default function ProfilePage() {
         </div>
   )
 
-  // Render with appropriate sidebar wrapper
+  
   switch (role) {
     case "admin":
     case "1":

@@ -1,4 +1,4 @@
-// Types and interfaces for prescription functionality
+
 
 export interface PrescriptionDetail {
   id: number
@@ -63,7 +63,7 @@ export interface Prescription {
   note?: string
   createdAt: string
   updatedAt: string
-  // Related data
+  
   patient: Patient
   doctor: Doctor
   visit?: Visit

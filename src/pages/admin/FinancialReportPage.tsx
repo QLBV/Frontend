@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import AdminSidebar from "@/components/sidebar/admin";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import AdminSidebar from "../../components/layout/sidebar/admin";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "../../components/ui/select";
+import { Badge } from "../../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { 
   AreaChart, 
   Area, 
@@ -47,9 +47,9 @@ import {
   TrendingDown
 } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
-// --- Interfaces ---
+
 interface RevenueOverTime {
   period: string;
   revenue: number;
@@ -122,7 +122,7 @@ interface ProfitReportData {
   overTime: ProfitOverTime[];
 }
 
-// --- Custom Components ---
+
 
 const CustomTooltip = ({ active, payload, label, isCurrency = true }: any) => {
   if (active && payload && payload.length) {
@@ -195,9 +195,9 @@ export default function FinancialReportPage() {
   }, [year, month, activeTab]);
 
   useEffect(() => {
-    // Luôn ưu tiên tải dữ liệu Lợi nhuận để điền vào Header
+    
     fetchData("profit");
-    // Nếu tab hiện tại không phải là Lợi nhuận, tải thêm dữ liệu của Tab đó
+    
     if (activeTab !== "profit") {
       fetchData(activeTab);
     }
@@ -248,7 +248,7 @@ export default function FinancialReportPage() {
   return (
     <AdminSidebar>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/20">
-        {/* Decorative Background Elements */}
+        {}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 -left-40 w-80 h-80 bg-gradient-to-br from-teal-400/10 to-emerald-400/10 rounded-full blur-3xl" />
@@ -258,14 +258,14 @@ export default function FinancialReportPage() {
         <div className="relative p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-8">
             
-            {/* Premium Header Section */}
-            {/* Compact Premium Header Section - Advanced Effects */}
+            {}
+            {}
             <div className="relative overflow-hidden rounded-[32px] bg-white/40 backdrop-blur-3xl p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
-              {/* Animated Background Blobs - Compact Version */}
+              {}
               <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-[80px] rounded-full animate-pulse transition-all duration-[6000ms]" />
               <div className="absolute bottom-[-50%] right-[-10%] w-[50%] h-[200%] bg-gradient-to-tl from-blue-500/10 via-emerald-500/10 to-transparent blur-[80px] rounded-full animate-pulse transition-all duration-[6000ms] delay-1000" />
               
-              {/* Subtle Grid Pattern Overlay */}
+              {}
               <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
                 backgroundImage: `radial-gradient(#4f46e5 0.5px, transparent 0.5px)`,
                 backgroundSize: `20px 20px`
@@ -304,7 +304,7 @@ export default function FinancialReportPage() {
                   </div>
                 </div>
 
-                {/* Compact Stats Cards with Hover Effects */}
+                {}
                 <div className="flex gap-4">
                   {[
                     { 
@@ -350,11 +350,11 @@ export default function FinancialReportPage() {
               </div>
             </div>
 
-            {/* Premium Filter Section */}
+            {}
             <div className="flex flex-col xl:flex-row items-center justify-between gap-6">
               <div className="w-full xl:flex-1 bg-white/60 backdrop-blur-xl p-3 rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {/* Year Select */}
+                  {}
                   <div className="flex-1">
                     <Select value={year} onValueChange={setYear}>
                       <SelectTrigger className="h-14 w-full rounded-2xl bg-white border-0 shadow-sm hover:shadow-md transition-all px-6 group data-[state=open]:ring-2 ring-blue-500/20 outline-none">
@@ -378,7 +378,7 @@ export default function FinancialReportPage() {
                     </Select>
                   </div>
 
-                  {/* Month Select */}
+                  {}
                   <div className="flex-1">
                     <Select value={month} onValueChange={setMonth}>
                       <SelectTrigger className="h-14 w-full rounded-2xl bg-white border-0 shadow-sm hover:shadow-md transition-all px-6 group data-[state=open]:ring-2 ring-indigo-500/20 outline-none">
@@ -404,7 +404,7 @@ export default function FinancialReportPage() {
                     </Select>
                   </div>
 
-                  {/* Action Buttons */}
+                  {}
                   <div className="flex gap-2">
                     <Button
                       onClick={() => fetchData()}
@@ -427,7 +427,7 @@ export default function FinancialReportPage() {
                 </div>
               </div>
 
-              {/* Export Buttons */}
+              {}
               <div className="flex gap-3 h-16">
                 <Button
                   onClick={() => handleExport('pdf')}
@@ -454,7 +454,7 @@ export default function FinancialReportPage() {
               </div>
             </div>
 
-            {/* Unified Navigation Tabs */}
+            {}
             <Tabs defaultValue="revenue" className="w-full space-y-8" onValueChange={setActiveTab}>
               <div className="flex items-center justify-center">
                 <TabsList className="bg-white/60 backdrop-blur-xl p-1.5 rounded-[28px] border border-white/60 shadow-xl shadow-slate-200/20 h-auto gap-2 flex w-full max-w-2xl">
@@ -470,11 +470,11 @@ export default function FinancialReportPage() {
                 </TabsList>
               </div>
 
-              {/* REVENUE TAB */}
+              {}
               <TabsContent value="revenue" className="space-y-8 focus:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {revenueData && !loading && (
                   <>
-                    {/* Revenue Quick Cards - Ultra Premium */}
+                    {}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                       {[
                         { label: "Tổng doanh thu", value: revenueData.summary.totalRevenue, icon: DollarSign, color: "blue", shadow: "shadow-blue-500/10", desc: "Tổng giá trị hóa đơn" },
@@ -508,7 +508,7 @@ export default function FinancialReportPage() {
                       ))}
                     </div>
 
-                    {/* Revenue Main Analysis */}
+                    {}
                     <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80 transition-all hover:shadow-blue-100/50">
                       <CardHeader className="p-10 border-b border-slate-50 flex flex-row items-center justify-between">
                         <div className="space-y-2">
@@ -567,7 +567,7 @@ export default function FinancialReportPage() {
                 )}
               </TabsContent>
 
-              {/* EXPENSE TAB */}
+              {}
               <TabsContent value="expense" className="space-y-8 focus:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {expenseData && !loading && (
                   <>
@@ -685,7 +685,7 @@ export default function FinancialReportPage() {
                 )}
               </TabsContent>
 
-              {/* PROFIT TAB */}
+              {}
               <TabsContent value="profit" className="space-y-8 focus:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {profitData && !loading && (
                   <>
@@ -772,7 +772,7 @@ export default function FinancialReportPage() {
               </TabsContent>
             </Tabs>
 
-            {/* Empty State */}
+            {}
             {!loading && !revenueData && !expenseData && !profitData && (
                <Card className="border-0 shadow-2xl shadow-slate-300/20 bg-white/60 backdrop-blur-xl rounded-[40px] p-32 text-center border border-white/60 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 via-transparent to-emerald-500/5" />
@@ -791,7 +791,7 @@ export default function FinancialReportPage() {
                </Card>
             )}
 
-            {/* Premium Loading Overlay */}
+            {}
             {loading && (
                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/60 backdrop-blur-3xl animate-in fade-in duration-700">
                   <div className="relative">

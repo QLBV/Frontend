@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../features/auth/context/authContext"
 import {
   Search,
   AlertTriangle,
@@ -20,10 +20,10 @@ import {
   Pill,
   Eye,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Card, CardContent } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -31,20 +31,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../components/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../components/ui/select"
 import { toast } from "sonner"
-import SidebarLayout from "@/components/SidebarLayout"
-import AdminSidebar from "@/components/sidebar/admin"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import { MedicineService, type Medicine, MedicineStatus, MedicineUnit } from "@/services/medicine.service"
+import SidebarLayout from "../components/layout/SidebarLayout"
+import AdminSidebar from "../components/layout/sidebar/admin"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import { MedicineService, type Medicine, MedicineStatus, MedicineUnit } from "../features/inventory/services/medicine.service"
 import { format } from "date-fns"
 
 const getUnitLabel = (unit: MedicineUnit): string => {
@@ -183,12 +183,12 @@ export default function PharmacyPage() {
     return matchesSearch && matchesGroup && matchesStatus
   })
 
-  // Pagination
+  
   const totalPages = Math.ceil(filteredMedications.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedMedications = filteredMedications.slice(startIndex, startIndex + itemsPerPage)
 
-  // Reset page when filters change
+  
   useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery, selectedGroup, selectedStatus])
@@ -227,7 +227,7 @@ export default function PharmacyPage() {
 
   const pageContent = (
     <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
-      {/* Background Blobs */}
+      {}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-200/30 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -236,7 +236,7 @@ export default function PharmacyPage() {
       <div className="relative p-4 md:p-6 lg:p-8">
         <div className="max-w-[1700px] mx-auto space-y-6">
             
-            {/* Premium Header */}
+            {}
             <div className="relative overflow-hidden rounded-2xl md:rounded-[32px] bg-white/40 backdrop-blur-3xl p-4 md:p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-cyan-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
@@ -297,7 +297,7 @@ export default function PharmacyPage() {
               </div>
             </div>
 
-            {/* Stats Cards */}
+            {}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <div 
                 className="bg-white/60 backdrop-blur-xl rounded-2xl p-4 border border-white/60 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
@@ -356,10 +356,10 @@ export default function PharmacyPage() {
               </div>
             </div>
 
-            {/* Filter Bar */}
+            {}
             <div className="bg-white/60 backdrop-blur-xl p-2 md:p-3 rounded-2xl md:rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
               <div className="flex flex-wrap items-center gap-3">
-                {/* Search */}
+                {}
                 <div className="relative flex-1 min-w-full md:min-w-[300px]">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-slate-400" />
@@ -372,7 +372,7 @@ export default function PharmacyPage() {
                   />
                 </div>
                 
-                {/* Group Filter */}
+                {}
                 <Select value={selectedGroup} onValueChange={setSelectedGroup}>
                   <SelectTrigger className="w-full md:w-[180px] h-12 bg-white border border-slate-100 rounded-2xl font-medium shadow-sm">
                     <SelectValue placeholder="Nhóm thuốc" />
@@ -385,7 +385,7 @@ export default function PharmacyPage() {
                   </SelectContent>
                 </Select>
 
-                {/* Status Filter */}
+                {}
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger className="w-full md:w-[160px] h-12 bg-white border border-slate-100 rounded-2xl font-medium shadow-sm">
                     <SelectValue placeholder="Trạng thái" />
@@ -401,14 +401,14 @@ export default function PharmacyPage() {
               </div>
             </div>
 
-            {/* Results Count */}
+            {}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500 font-medium">
                 Hiển thị <span className="text-slate-900 font-bold">{paginatedMedications.length}</span> / <span className="text-slate-900 font-bold">{filteredMedications.length}</span> thuốc
               </span>
             </div>
 
-            {/* Medicine Table */}
+            {}
             <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-2xl md:rounded-[40px] overflow-hidden border border-white/80">
               <CardContent className="p-0">
                 {isLoading ? (
@@ -515,7 +515,7 @@ export default function PharmacyPage() {
               </CardContent>
             </Card>
 
-            {/* Pagination */}
+            {}
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm gap-3">
                 <p className="text-sm text-slate-500 font-medium">
@@ -578,7 +578,7 @@ export default function PharmacyPage() {
             )}
           </div>
 
-        {/* Delete Dialog */}
+        {}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

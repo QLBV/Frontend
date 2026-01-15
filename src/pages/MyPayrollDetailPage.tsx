@@ -3,15 +3,15 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { ArrowLeft, Download, CheckCircle, DollarSign, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
 import { toast } from "sonner"
-import { useAuth } from "@/auth/authContext"
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import { PayrollService, type Payroll } from "@/services/payroll.service"
+import { useAuth } from "../features/auth/context/authContext"
+import AdminSidebar from "../components/layout/sidebar/admin"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
+import { PayrollService, type Payroll } from "../features/finance/services/payroll.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import {
@@ -21,7 +21,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../components/ui/dialog"
 
 export default function MyPayrollDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -163,7 +163,7 @@ export default function MyPayrollDetailPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Navigation & Actions */}
+          {}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <Button variant="ghost" className="-ml-4 text-slate-600 hover:text-slate-900" onClick={() => navigate("/my-payrolls")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -225,7 +225,7 @@ export default function MyPayrollDetailPage() {
             </div>
           </div>
 
-          {/* Header Information */}
+          {}
           <div className="bg-white rounded-xl border shadow-sm p-6">
             <div className="flex flex-col md:flex-row justify-between md:items-start gap-6">
               <div>
@@ -257,7 +257,7 @@ export default function MyPayrollDetailPage() {
             </div>
           </div>
 
-          {/* Summary Statistics */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="bg-slate-50 border-slate-200 shadow-sm">
               <CardContent className="p-6">
@@ -281,9 +281,9 @@ export default function MyPayrollDetailPage() {
             </Card>
           </div>
 
-          {/* Detailed Breakdown */}
+          {}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Income Section */}
+            {}
             <div className="lg:col-span-2 space-y-6">
               <Card className="shadow-sm border-slate-200 overflow-hidden">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
@@ -295,7 +295,7 @@ export default function MyPayrollDetailPage() {
                 <CardContent className="p-0">
                   <table className="w-full text-sm">
                     <tbody className="divide-y divide-slate-100">
-                      {/* Role Salary */}
+                      {}
                       <tr className="hover:bg-slate-50/50">
                         <td className="py-4 px-6">
                           <p className="font-medium text-slate-900">Lương theo hệ số</p>
@@ -308,7 +308,7 @@ export default function MyPayrollDetailPage() {
                         </td>
                       </tr>
                       
-                      {/* Experience Bonus */}
+                      {}
                       <tr className="hover:bg-slate-50/50">
                         <td className="py-4 px-6">
                           <p className="font-medium text-slate-900">Thưởng thâm niên</p>
@@ -321,7 +321,7 @@ export default function MyPayrollDetailPage() {
                         </td>
                       </tr>
 
-                      {/* Commission / Bonus */}
+                      {}
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-4 px-6">
                         <p className="font-medium text-slate-900">Thưởng & Hoa hồng</p>
@@ -355,7 +355,7 @@ export default function MyPayrollDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Deductions Section */}
+              {}
               <Card className="shadow-sm border-slate-200 overflow-hidden">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
                   <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
@@ -393,7 +393,7 @@ export default function MyPayrollDetailPage() {
               </Card>
             </div>
 
-            {/* Timeline & Metadata Info */}
+            {}
             <div className="space-y-6">
               <Card className="shadow-sm border-slate-200">
                  <CardHeader className="pb-3">
@@ -401,14 +401,14 @@ export default function MyPayrollDetailPage() {
                  </CardHeader>
                  <CardContent className="space-y-5">
                     <div className="relative pl-4 border-l-2 border-slate-200 space-y-6">
-                      {/* Created */}
+                      {}
                       <div className="relative">
                         <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-slate-300 ring-4 ring-white"></div>
                         <p className="text-sm font-medium text-slate-900">Đã tạo bảng lương</p>
                         <p className="text-xs text-slate-500">{format(new Date(payroll.createdAt), "HH:mm - dd/MM/yyyy", { locale: vi })}</p>
                       </div>
 
-                      {/* Approved */}
+                      {}
                        <div className="relative">
                         <div className={`absolute -left-[21px] top-1 w-3 h-3 rounded-full ring-4 ring-white ${payroll.approvedAt ? 'bg-blue-500' : 'bg-slate-200'}`}></div>
                         <p className={`text-sm font-medium ${payroll.approvedAt ? 'text-slate-900' : 'text-slate-400'}`}>Phê duyệt</p>
@@ -419,7 +419,7 @@ export default function MyPayrollDetailPage() {
                         )}
                       </div>
 
-                      {/* Paid */}
+                      {}
                        <div className="relative">
                         <div className={`absolute -left-[21px] top-1 w-3 h-3 rounded-full ring-4 ring-white ${payroll.paidAt ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
                         <p className={`text-sm font-medium ${payroll.paidAt ? 'text-slate-900' : 'text-slate-400'}`}>Thanh toán</p>
@@ -442,7 +442,7 @@ export default function MyPayrollDetailPage() {
             </div>
           </div>
 
-          {/* Action Dialogs */}
+          {}
           {isAdmin && (
             <>
             <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
@@ -485,7 +485,7 @@ export default function MyPayrollDetailPage() {
     </div>
   )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
   if (role === "admin" || role === "1") {
     return <AdminSidebar>{content}</AdminSidebar>
   } else if (role === "doctor" || role === "4") {

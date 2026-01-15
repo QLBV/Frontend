@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
+import { Skeleton } from "../../components/ui/skeleton"
 import { 
   Pill, 
   Calendar, 
@@ -25,15 +25,15 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
+} from "../../components/ui/select"
+import { Input } from "../../components/ui/input"
 import { toast } from "sonner"
-import type { Prescription } from "@/types/prescription.types"
-import { PrescriptionService } from "@/services/prescription.service"
-import PatientSidebar from "@/components/sidebar/patient"
-import { useAuth } from "@/auth/authContext"
+import type { Prescription } from "../../types/prescription.types"
+import { PrescriptionService } from "../../features/appointment/services/prescription.service"
+import PatientSidebar from "../../components/layout/sidebar/patient"
+import { useAuth } from "../../features/auth/context/authContext"
 
-// --- COMPONENTS ---
+
 
 interface PremiumPaginationProps {
   currentPage: number;
@@ -41,7 +41,7 @@ interface PremiumPaginationProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
-  className?: string; // Added className prop
+  className?: string; 
 }
 
 function PremiumPagination({ 
@@ -50,12 +50,12 @@ function PremiumPagination({
   totalItems, 
   itemsPerPage, 
   onPageChange,
-  className // Added className prop
+  className 
 }: PremiumPaginationProps) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  // Generate page numbers
+  
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     if (totalPages <= 7) {
@@ -132,7 +132,7 @@ function PremiumPagination({
   );
 }
 
-// --- MAIN PAGE ---
+
 
 export default function PrescriptionsPage() {
   const navigate = useNavigate()
@@ -140,7 +140,7 @@ export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
-  // Filters
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [currentPage, setCurrentPage] = useState(1)
@@ -179,7 +179,7 @@ export default function PrescriptionsPage() {
     setCurrentPage(1);
   }, [searchQuery, statusFilter]);
 
-  // Status Badge Logic
+  
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string; icon?: any }> = {
       DRAFT: { label: "Nháp", className: "bg-gray-100 text-gray-700 border-gray-200" },
@@ -197,7 +197,7 @@ export default function PrescriptionsPage() {
     )
   }
 
-  // Filtering Logic
+  
   const filteredPrescriptions = prescriptions.filter(p => {
     const matchesSearch = 
       p.prescriptionCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -208,7 +208,7 @@ export default function PrescriptionsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination Logic
+  
   const totalPages = Math.ceil(filteredPrescriptions.length / ITEMS_PER_PAGE);
   const currentPrescriptions = filteredPrescriptions.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -219,7 +219,7 @@ export default function PrescriptionsPage() {
     <PatientSidebar userName={user?.fullName || user?.email}>
       <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
         
-        {/* HEADER BANNER */}
+        {}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 p-8 shadow-xl">
            <div className="absolute inset-0 opacity-10">
              <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
@@ -252,9 +252,9 @@ export default function PrescriptionsPage() {
            </div>
         </div>
 
-        {/* UNIFIED CARD: FILTERS, LIST & PAGINATION */}
+        {}
         <Card className="overflow-hidden border-gray-100 shadow-sm">
-            {/* Toolbar */}
+            {}
             <div className="p-4 border-b bg-gray-50/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
                <div className="relative w-full md:w-80">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -284,7 +284,7 @@ export default function PrescriptionsPage() {
                </div>
             </div>
 
-            {/* List Content */}
+            {}
             <CardContent className="p-0">
               {isLoading ? (
                  <div className="p-6 space-y-4">
@@ -374,7 +374,7 @@ export default function PrescriptionsPage() {
               )}
             </CardContent>
 
-            {/* Pagination Footer */}
+            {}
             {filteredPrescriptions.length > 0 && (
               <div className="border-t border-gray-100 bg-gray-50/50">
                 <PremiumPagination

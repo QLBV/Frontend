@@ -3,27 +3,27 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "../../components/ui/card"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+} from "../../components/ui/select"
+import { Textarea } from "../../components/ui/textarea"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import { MedicineService, MedicineUnit, type UpdateMedicineData, type Medicine } from "@/services/medicine.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { MedicineService, MedicineUnit, type UpdateMedicineData, type Medicine } from "../../features/inventory/services/medicine.service"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
@@ -154,7 +154,7 @@ export default function EditMedicinePage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Chỉnh sửa thuốc</h1>
@@ -166,7 +166,7 @@ export default function EditMedicinePage() {
           </Button>
         </div>
 
-        {/* Form */}
+        {}
         <form onSubmit={handleSubmit(onSubmit)}>
           <Card>
             <CardHeader>
@@ -176,7 +176,7 @@ export default function EditMedicinePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Name */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="name">
                   Tên thuốc <span className="text-red-500">*</span>
@@ -192,7 +192,7 @@ export default function EditMedicinePage() {
                 )}
               </div>
 
-              {/* Group */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="group">
                   Nhóm thuốc <span className="text-red-500">*</span>
@@ -208,7 +208,7 @@ export default function EditMedicinePage() {
                 )}
               </div>
 
-              {/* Unit */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="unit">
                   Đơn vị <span className="text-red-500">*</span>
@@ -234,7 +234,7 @@ export default function EditMedicinePage() {
                 )}
               </div>
 
-              {/* Prices Row */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="importPrice">
@@ -275,7 +275,7 @@ export default function EditMedicinePage() {
                 </div>
               </div>
 
-              {/* Min Stock Level and Expiry Date Row */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="minStockLevel">
@@ -312,7 +312,7 @@ export default function EditMedicinePage() {
                 </div>
               </div>
 
-              {/* Quantity */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="quantity">
                   Số lượng <span className="text-red-500">*</span>
@@ -331,7 +331,7 @@ export default function EditMedicinePage() {
                 )}
               </div>
 
-              {/* Active Ingredient */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="activeIngredient">Hoạt chất</Label>
                 <Input
@@ -341,7 +341,7 @@ export default function EditMedicinePage() {
                 />
               </div>
 
-              {/* Manufacturer */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="manufacturer">Nhà sản xuất</Label>
                 <Input
@@ -351,7 +351,7 @@ export default function EditMedicinePage() {
                 />
               </div>
 
-              {/* Description */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="description">Mô tả</Label>
                 <Textarea
@@ -362,7 +362,7 @@ export default function EditMedicinePage() {
                 />
               </div>
 
-              {/* Submit Button */}
+              {}
               <div className="flex justify-end gap-4 pt-4">
                 <Button
                   type="button"

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import AdminSidebar from '@/components/sidebar/admin';
+import AdminSidebar from '../../components/layout/sidebar/admin';
 import { 
   ArrowLeft,
   Calendar,
@@ -13,16 +13,16 @@ import {
   Clock,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Badge } from "../../components/ui/badge";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
-// Define interfaces based on backend API
+
 interface Doctor {
   id: number
   doctorCode: string
@@ -56,20 +56,20 @@ export default function DoctorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // API states
+  
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Edit states
+  
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [editingContact, setEditingContact] = useState(false);
   
-  // Avatar states
+  
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Form states
+  
   const [personalForm, setPersonalForm] = useState({
     position: "",
     degree: "",
@@ -81,14 +81,14 @@ export default function DoctorDetail() {
     fullName: ""
   });
 
-  // Tab state
+  
   const [activeTab, setActiveTab] = useState<"overview" | "schedule">("overview")
   
-  // Shifts state
+  
   const [shifts, setShifts] = useState<any[]>([])
   const [isLoadingShifts, setIsLoadingShifts] = useState(false)
 
-  // Add error boundary
+  
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       console.error('JavaScript Error:', event.error);
@@ -99,7 +99,7 @@ export default function DoctorDetail() {
     return () => window.removeEventListener('error', handleError);
   }, []);
 
-  // Fetch doctor data from API
+  
   const fetchDoctor = async () => {
     if (!id) {
       setError('ID bác sĩ không hợp lệ');
@@ -118,13 +118,13 @@ export default function DoctorDetail() {
       if (response.data.success && response.data.data) {
         const doctorData = response.data.data;
         
-        // Validate required data
+        
         if (!doctorData.user || !doctorData.specialty) {
           throw new Error('Dữ liệu bác sĩ không đầy đủ');
         }
         
         setDoctor(doctorData);
-        // Initialize form data
+        
         setPersonalForm({
           position: doctorData.position || "",
           degree: doctorData.degree || "",
@@ -147,7 +147,7 @@ export default function DoctorDetail() {
     }
   };
 
-  // Update doctor data
+  
   const updateDoctor = async (updateData: Partial<Doctor>) => {
     if (!id || !doctor) {
       console.error('Missing id or doctor data');
@@ -160,7 +160,7 @@ export default function DoctorDetail() {
       console.log('Update response:', response.data);
 
       if (response.data.success) {
-        // Don't set doctor state here, let the parent function handle it
+        
         toast.success('Cập nhật thông tin thành công');
         return true;
       } else {
@@ -178,13 +178,13 @@ export default function DoctorDetail() {
     fetchDoctor();
   }, [id]);
 
-  // Fetch doctor shifts
+  
   const fetchDoctorShifts = async () => {
     if (!id) return
     
     try {
       setIsLoadingShifts(true)
-      // Try the most likely endpoint first
+      
       const endpoint = `/doctors/${id}/shifts`
       
       try {
@@ -197,13 +197,13 @@ export default function DoctorDetail() {
           return
         }
       } catch (err: any) {
-        // If 429 error, show user-friendly message
+        
         if (err.response?.status === 429) {
           toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
           setShifts([])
           return
         }
-        // Try alternative endpoint only if first one fails with 404
+        
         if (err.response?.status === 404) {
           try {
             const altResponse = await api.get(`/doctor-shifts/doctor/${id}`)
@@ -222,7 +222,7 @@ export default function DoctorDetail() {
         }
       }
       
-      // If no data found, set empty array
+      
       setShifts([])
     } catch (error: any) {
       console.error('Error fetching shifts:', error)
@@ -235,10 +235,10 @@ export default function DoctorDetail() {
     }
   }
 
-  // Fetch shifts when schedule tab is active (with debouncing)
+  
   useEffect(() => {
     if (activeTab === "schedule" && id) {
-      // Add a small delay to prevent rapid tab switching from causing too many requests
+      
       const timer = setTimeout(() => {
         fetchDoctorShifts()
       }, 300)
@@ -247,7 +247,7 @@ export default function DoctorDetail() {
     }
   }, [activeTab, id])
   
-  // Handlers
+  
   const handlePersonalEdit = () => {
     setEditingPersonal(true);
     if (doctor) {
@@ -275,7 +275,7 @@ export default function DoctorDetail() {
       
       if (success) {
         setEditingPersonal(false);
-        // Refresh doctor data to get latest info
+        
         await fetchDoctor();
       }
     } catch (error) {
@@ -299,7 +299,7 @@ export default function DoctorDetail() {
     }
   };
 
-  // Contact handlers (Note: User info update would need separate API)
+  
   const handleContactEdit = () => {
     try {
       setEditingContact(true);
@@ -316,8 +316,8 @@ export default function DoctorDetail() {
 
   const handleContactSave = () => {
     try {
-      // Note: Updating user info would require a separate API endpoint
-      // For now, just close the edit mode
+      
+      
       toast.info('Cập nhật thông tin liên hệ cần API riêng cho User');
       setEditingContact(false);
     } catch (error) {
@@ -339,7 +339,7 @@ export default function DoctorDetail() {
     }
   };
 
-  // Avatar handlers
+  
   const handleAvatarUpload = () => {
     fileInputRef.current?.click();
   };
@@ -347,26 +347,26 @@ export default function DoctorDetail() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Kiểm tra file type
+      
       if (!file.type.startsWith('image/')) {
         toast.error('Vui lòng chọn file hình ảnh');
         return;
       }
       
-      // Kiểm tra file size (max 10MB)
+      
       if (file.size > 10 * 1024 * 1024) {
         toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 10MB');
         return;
       }
 
-      // Tạo preview URL
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         setAvatarUrl(e.target?.result as string);
       };
       reader.readAsDataURL(file);
       
-      // Note: Avatar upload would need separate API endpoint for file upload
+      
       toast.info('Tính năng upload avatar sẽ được thêm sau');
     }
   };
@@ -409,7 +409,7 @@ export default function DoctorDetail() {
     }
   };
 
-  // Loading state
+  
   if (loading) {
     return (
       <AdminSidebar>
@@ -423,7 +423,7 @@ export default function DoctorDetail() {
     );
   }
 
-  // Error state
+  
   if (error) {
     return (
       <AdminSidebar>
@@ -452,7 +452,7 @@ export default function DoctorDetail() {
   }
 
   
-  // Nếu không tìm thấy doctor
+  
   if (!doctor) {
     return (
       <AdminSidebar>
@@ -471,7 +471,7 @@ export default function DoctorDetail() {
   return (
     <AdminSidebar>
       <div className="p-8">
-        {/* Back Button */}
+        {}
         <div className="mb-6">
           <Link 
             to="/admin/doctors" 
@@ -482,17 +482,17 @@ export default function DoctorDetail() {
           </Link>
         </div>
 
-        {/* Wrap content in try-catch equivalent */}
+        {}
         {(() => {
           try {
             return (
               <>
-                {/* Doctor Profile Header */}
+                {}
                 <Card className="border-0 shadow-lg mb-8">
                   <CardContent className="p-8">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-6">
-                        {/* Avatar */}
+                        {}
                         <div className="relative">
                           {avatarUrl || (doctor?.user?.avatar) ? (
                             <img 
@@ -506,17 +506,16 @@ export default function DoctorDetail() {
                             </div>
                           )}
                           
-                          {/* Hidden file input */}
+                          {}
                           <input
                             ref={fileInputRef}
                             type="file"
                             accept="image/*"
-                            onChange={handleFileChange}
                             className="hidden"
+                            onChange={handleFileChange}
                           />
                         </div>
 
-                        {/* Doctor Info */}
                         <div>
                           <div className="flex items-center gap-3 mb-2">
                             <h1 className="text-3xl font-bold text-gray-900">
@@ -535,7 +534,7 @@ export default function DoctorDetail() {
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
+                      {}
                       <div className="flex items-center gap-3">
                         <Button 
                           className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -567,7 +566,7 @@ export default function DoctorDetail() {
           }
         })()}
 
-        {/* Tabs */}
+        {}
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8">
@@ -595,14 +594,14 @@ export default function DoctorDetail() {
           </div>
         </div>
 
-        {/* Content based on active tab */}
+        {}
         {activeTab === "overview" ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Left Column */}
+          {}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Personal Information */}
+            {}
             <Card className="border-0 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
@@ -703,7 +702,7 @@ export default function DoctorDetail() {
               </CardContent>
             </Card>
 
-            {/* Contact Details */}
+            {}
             <Card className="border-0 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
@@ -825,11 +824,11 @@ export default function DoctorDetail() {
             </Card>
           </div>
 
-          {/* Right Column */}
+          {}
           <div className="space-y-8">
             
 
-            {/* Duty Schedule */}
+            {}
             <Card className="border-0 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-gray-900 flex items-center gap-2">
@@ -875,7 +874,7 @@ export default function DoctorDetail() {
           </div>
         </div>
         ) : (
-          /* Schedule Tab Content */
+          
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="text-xl text-gray-900 flex items-center gap-2">

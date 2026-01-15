@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
-import { getMyAppointments, cancelAppointment as cancelAppointmentService, type Appointment } from "@/services/appointment.service"
+import { getMyAppointments, cancelAppointment as cancelAppointmentService, type Appointment } from "../features/appointment/services/appointment.service"
 import { toast } from "sonner"
-import type { IAppointment } from "@/types/appointment"
+import type { IAppointment } from "../types/appointment"
 
 interface AppointmentStats {
   total: number
@@ -28,9 +28,9 @@ export function usePatientAppointments() {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Convert Appointment to IAppointment format
+  
   const convertToIAppointment = (apt: Appointment): IAppointment => {
-    // Map raw status to display-friendly status
+    
     const statusMap: Record<string, { label: IAppointment["status"]; raw: string }> = {
       WAITING: { label: "Pending", raw: "WAITING" },
       CHECKED_IN: { label: "Checked-in", raw: "CHECKED_IN" },
@@ -58,7 +58,7 @@ export function usePatientAppointments() {
         code: (apt.patientName && apt.patient?.fullName && apt.patientName.toLowerCase().trim() !== apt.patient.fullName.toLowerCase().trim()) 
               ? "" 
               : (apt.patient?.patientCode || "N/A"),
-        // Map extended fields safely
+        
         gender: (apt.patientGender === 'MALE' || (!apt.patientGender && (apt.patient as any)?.gender === 'MALE')) ? 'Nam' 
               : (apt.patientGender === 'FEMALE' || (!apt.patientGender && (apt.patient as any)?.gender === 'FEMALE')) ? 'Nữ' 
               : 'Khác',
@@ -84,7 +84,7 @@ export function usePatientAppointments() {
     }
   }
 
-  // Fetch appointments
+  
   const fetchAppointments = async () => {
     try {
       setIsLoading(true)
@@ -110,15 +110,15 @@ export function usePatientAppointments() {
         }
       })
 
-      // Sort upcoming by date ascending
+      
       upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       
-      // Sort past by date descending
+      
       past.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
       setAppointments({ upcoming, past })
 
-      // Calculate stats
+      
       const cancelled = data.filter(apt => apt.status === "CANCELLED" || apt.status === "NO_SHOW").length
       const completed = data.filter(apt => apt.status === "COMPLETED").length
       setStats({
@@ -135,25 +135,25 @@ export function usePatientAppointments() {
     }
   }
 
-  // View appointment details
+  
   const viewDetails = (apt: IAppointment) => {
     setSelectedAppointment(apt)
     setIsDetailOpen(true)
   }
 
-  // Cancel appointment
+  
   const cancelAppointment = async (appointmentId: string, reason: string) => {
     try {
       await cancelAppointmentService(Number(appointmentId))
       toast.success("Đã hủy lịch hẹn thành công")
-      await fetchAppointments() // Refresh list
+      await fetchAppointments() 
     } catch (error: any) {
       console.error("Error cancelling appointment:", error)
       toast.error(error.response?.data?.message || "Không thể hủy lịch hẹn")
     }
   }
 
-  // Fetch on mount
+  
   useEffect(() => {
     fetchAppointments()
   }, [])

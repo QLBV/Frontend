@@ -8,16 +8,16 @@ import {
   Save,
   Loader2,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
+import { Textarea } from "../../components/ui/textarea"
+import { Switch } from "../../components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import api from "@/lib/api"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import api from "../../lib/api"
 
 interface SystemSettings {
   clinicName: string
@@ -39,7 +39,7 @@ interface SystemSettings {
     allowOnlineBooking: boolean
     allowOfflineBooking: boolean
     maxAppointmentsPerDay: number
-    appointmentDuration: number // minutes
+    appointmentDuration: number 
     currency: string
     timezone: string
   }
@@ -93,7 +93,7 @@ export default function SystemSettingsPage() {
   const fetchSettings = async () => {
     try {
       setIsLoading(true)
-      // Try to fetch from API, fallback to defaults if not available
+      
       try {
         const response = await api.get("/system/settings")
         if (response.data.success && response.data.data) {
@@ -103,7 +103,7 @@ export default function SystemSettingsPage() {
         if (error.response?.status !== 404) {
           console.warn("Failed to fetch system settings, using defaults")
         }
-        // Use defaults
+        
       }
     } catch (error: any) {
       if (error.response?.status === 429) {
@@ -117,7 +117,7 @@ export default function SystemSettingsPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      // Try to save to API
+      
       try {
         const response = await api.put("/system/settings", settings)
         if (response.data.success) {
@@ -127,7 +127,7 @@ export default function SystemSettingsPage() {
         }
       } catch (error: any) {
         if (error.response?.status === 404) {
-          // API endpoint doesn't exist yet, just show success message
+          
           toast.success("Cài đặt đã được lưu (API endpoint chưa được implement)")
         } else {
           throw error
@@ -220,7 +220,7 @@ export default function SystemSettingsPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Clinic Information Tab */}
+          {}
           <TabsContent value="clinic">
             <Card className="border-0 shadow-lg">
               <CardHeader>
@@ -287,7 +287,7 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Business Hours Tab */}
+          {}
           <TabsContent value="hours">
             <Card className="border-0 shadow-lg">
               <CardHeader>
@@ -357,7 +357,7 @@ export default function SystemSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* System Settings Tab */}
+          {}
           <TabsContent value="system">
             <Card className="border-0 shadow-lg">
               <CardHeader>
@@ -499,7 +499,7 @@ export default function SystemSettingsPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Sticky Save Button at Bottom */}
+        {}
         <div className="sticky bottom-0 left-0 right-0 mt-6 md:mt-8 p-4 md:p-6 bg-white border-t border-slate-200 rounded-t-2xl shadow-lg z-10">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
             <Button 

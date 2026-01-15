@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import AdminSidebar from "@/components/sidebar/admin";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import AdminSidebar from "../../components/layout/sidebar/admin";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "../../components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { 
   BarChart, 
   Bar, 
@@ -45,11 +45,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import api from "@/lib/api";
+import api from "../../lib/api";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-// --- Interfaces ---
+
 interface Medicine {
   id: number;
   name: string;
@@ -94,7 +94,7 @@ interface MedicineAlertsResponse {
 
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6'];
 
-// Custom tooltip component for better UX
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -119,14 +119,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function MedicineReportPage() {
   const [activeTab, setActiveTab] = useState("top-medicines");
   
-  // States for Top Medicines
+  
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<string>("");
   const [limit, setLimit] = useState<string>("10");
   const [loadingTop, setLoadingTop] = useState(false);
   const [topMedicinesData, setTopMedicinesData] = useState<TopMedicinesResponse | null>(null);
   
-  // States for Medicine Alerts
+  
   const [daysUntilExpiry, setDaysUntilExpiry] = useState<string>("30");
   const [minStock, setMinStock] = useState<string>("10");
   const [loadingAlerts, setLoadingAlerts] = useState(false);
@@ -143,7 +143,7 @@ export default function MedicineReportPage() {
     { value: "11", label: "Tháng 11" }, { value: "12", label: "Tháng 12" },
   ];
 
-  // Fetch top medicines
+  
   const fetchTopMedicines = useCallback(async () => {
     try {
       setLoadingTop(true);
@@ -166,7 +166,7 @@ export default function MedicineReportPage() {
     }
   }, [year, month, limit]);
 
-  // Fetch medicine alerts
+  
   const fetchMedicineAlerts = useCallback(async () => {
     try {
       setLoadingAlerts(true);
@@ -268,7 +268,7 @@ export default function MedicineReportPage() {
     }
   };
 
-  // Create pie chart data for alerts summary
+  
   const alertsPieData = medicineAlertsData ? [
     { name: 'Sắp hết', value: medicineAlertsData.summary?.totalLowStock ?? 0, fill: '#ef4444' },
     { name: 'Sắp hết hạn', value: medicineAlertsData.summary?.totalExpiring ?? 0, fill: '#f59e0b' },
@@ -279,14 +279,14 @@ export default function MedicineReportPage() {
                       (medicineAlertsData?.summary?.totalExpiring ?? 0) + 
                       (medicineAlertsData?.summary?.totalExpired ?? 0);
 
-  // Calculate total revenue from top medicines
+  
   const totalRevenue = topMedicinesData?.topMedicines?.reduce((sum, item) => sum + item.estimatedRevenue, 0) || 0;
   const totalQuantity = topMedicinesData?.topMedicines?.reduce((sum, item) => sum + item.totalQuantity, 0) || 0;
 
   return (
     <AdminSidebar>
       <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
-        {/* Advanced Background Blobs */}
+        {}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-200/30 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[10%] right-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -296,9 +296,9 @@ export default function MedicineReportPage() {
         <div className="relative p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-8">
             
-            {/* Premium Compact Header */}
+            {}
             <div className="relative overflow-hidden rounded-[32px] bg-white/40 backdrop-blur-3xl p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
-              {/* Animated Background Gradients */}
+              {}
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-emerald-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
                 <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-teal-400/5 rounded-full blur-[50px] -translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '3s' }} />
@@ -332,7 +332,7 @@ export default function MedicineReportPage() {
                   </div>
                 </div>
 
-                {/* Quick Stats in Header */}
+                {}
                 <div className="flex flex-wrap gap-3">
                   <div className="bg-white/60 backdrop-blur-xl rounded-[20px] px-5 py-2.5 border border-white/60 shadow-sm group/stat hover:bg-emerald-50/50 transition-all duration-500">
                     <p className="text-emerald-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 leading-none">
@@ -355,7 +355,7 @@ export default function MedicineReportPage() {
               </div>
             </div>
 
-            {/* Premium Control Bar */}
+            {}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="bg-white/60 backdrop-blur-xl p-2 rounded-[28px] border border-white/60 shadow-xl shadow-slate-200/40 w-fit">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-fit">
@@ -397,7 +397,7 @@ export default function MedicineReportPage() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8 space-y-8">
               <TabsContent value="top-medicines" className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {/* Filters Section Redesign */}
+                {}
                 <div className="bg-white/60 backdrop-blur-xl p-3 rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-3 px-4 h-12 bg-white rounded-2xl border border-slate-100 shadow-sm min-w-[140px]">
@@ -470,7 +470,7 @@ export default function MedicineReportPage() {
                   </div>
                 ) : topMedicinesData && topMedicinesData.topMedicines.length > 0 ? (
                   <div className="space-y-6">
-                    {/* Ultra-Premium Stat Cards */}
+                    {}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-1">
                       {[
                         { 
@@ -522,9 +522,9 @@ export default function MedicineReportPage() {
                       ))}
                     </div>
 
-                    {/* Charts Grid */}
+                    {}
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                      {/* Bar Chart Container */}
+                      {}
                       <Card className="lg:col-span-3 border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80 transition-all hover:shadow-emerald-100/50">
                         <CardHeader className="p-10 border-b border-slate-50">
                           <div className="space-y-2">
@@ -571,7 +571,7 @@ export default function MedicineReportPage() {
                         </CardContent>
                       </Card>
 
-                      {/* Ranking Detailed Card */}
+                      {}
                       <Card className="lg:col-span-2 border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/60">
                         <CardHeader className="p-10 border-b border-slate-50">
                           <div className="flex items-center gap-4">
@@ -611,7 +611,7 @@ export default function MedicineReportPage() {
                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-60">{item.prescriptionCount} lượt kê</p>
                                 </div>
                                 
-                                {/* Background Decorative Badge */}
+                                {}
                                 <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                               </div>
                             ))}
@@ -636,9 +636,9 @@ export default function MedicineReportPage() {
                 )}
               </TabsContent>
 
-              {/* Alerts Tab */}
+              {}
               <TabsContent value="alerts" className="space-y-6 animate-in fade-in-50 duration-500">
-                {/* Filters Card */}
+                {}
                 <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
@@ -708,7 +708,7 @@ export default function MedicineReportPage() {
                   </div>
                 ) : medicineAlertsData ? (
                   <div className="space-y-6">
-                    {/* Ultra-Premium Alert Summary Cards */}
+                    {}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-1">
                       {[
                         { 
@@ -771,9 +771,9 @@ export default function MedicineReportPage() {
                       ))}
                     </div>
 
-                    {/* Charts and Lists */}
+                    {}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Pie Chart */}
+                      {}
                       {alertsPieData.length > 0 && (
                         <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white rounded-3xl overflow-hidden">
                           <CardHeader className="pb-0 pt-6 px-6">
@@ -809,7 +809,7 @@ export default function MedicineReportPage() {
                         </Card>
                       )}
 
-                      {/* Alerts List */}
+                      {}
                       <Card className={`border-0 shadow-xl shadow-slate-200/40 bg-white rounded-3xl overflow-hidden ${alertsPieData.length > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
                         <CardHeader className="pb-2 pt-6 px-6">
                           <CardTitle className="text-xl font-black text-slate-800">Danh sách cảnh báo</CardTitle>
@@ -817,7 +817,7 @@ export default function MedicineReportPage() {
                         </CardHeader>
                         <CardContent className="p-4 pt-2">
                           <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                            {/* Low Stock */}
+                            {}
                             {medicineAlertsData.lowStockMedicines?.map((medicine) => (
                               <Link
                                 key={`low-${medicine.id}`}
@@ -836,7 +836,7 @@ export default function MedicineReportPage() {
                               </Link>
                             ))}
 
-                            {/* Expiring */}
+                            {}
                             {medicineAlertsData.expiringMedicines?.map((medicine) => (
                               <Link
                                 key={`exp-${medicine.id}`}
@@ -858,7 +858,7 @@ export default function MedicineReportPage() {
                               </Link>
                             ))}
 
-                            {/* Expired */}
+                            {}
                             {medicineAlertsData.expiredMedicines?.map((medicine) => (
                               <Link
                                 key={`expired-${medicine.id}`}
@@ -879,14 +879,14 @@ export default function MedicineReportPage() {
                               </Link>
                             ))}
 
-                            {/* Empty state */}
+                            {}
                             {totalAlerts === 0 && (
                               <div className="text-center py-12">
                                 <div className="bg-emerald-100 p-4 rounded-full inline-block mb-4">
                                   <Package className="h-8 w-8 text-emerald-600" />
                                 </div>
                                 <p className="font-bold text-slate-700">Không có cảnh báo!</p>
-                                <p className="text-sm text-slate-400 mt-1">Tất cả thuốc đều trong tình trạng tốt 🎉</p>
+                                <p className="text-sm text-slate-400 mt-1">Tất cả thuốc đều trong tình trạng tốt </p>
                               </div>
                             )}
                           </div>
@@ -914,7 +914,7 @@ export default function MedicineReportPage() {
         </div>
       </div>
 
-      {/* Custom Scrollbar Styles */}
+      {}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;

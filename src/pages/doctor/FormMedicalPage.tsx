@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { ReferralModal } from "@/components/modal/ReferralModal"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ReferralModal } from "../../components/modal/ReferralModal"
+import DoctorSidebar from "../../components/layout/sidebar/doctor"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
+import { Badge } from "../../components/ui/badge"
+import { ScrollArea } from "../../components/ui/scroll-area"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   ArrowLeft,
   User,
@@ -36,10 +36,10 @@ import {
   Ruler,
   ArrowRightLeft
 } from "lucide-react"
-import api from "@/lib/api"
+import api from "../../lib/api"
 import { toast } from "sonner"
 
-// Interfaces
+
 interface PatientData {
   id: number
   fullName: string
@@ -60,7 +60,7 @@ interface VitalSign {
   unit: string
 }
 
-// Initial vital signs data
+
 const initialVitalSigns: VitalSign[] = [
   { key: "bloodPressure", label: "Huyết áp", value: "120/80", unit: "mmHg" },
   { key: "heartRate", label: "Nhịp tim", value: "72", unit: "bpm" },
@@ -74,25 +74,25 @@ const initialVitalSigns: VitalSign[] = [
 export default function FormMedical() {
   const { id } = useParams()
   const navigate = useNavigate()
-  // Data states
+  
   const [patientData, setPatientData] = useState<PatientData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  // Form states
+  
   const [observations, setObservations] = useState("")
   const [diagnosis, setDiagnosis] = useState("")
   const [privateRemarks, setPrivateRemarks] = useState("")
   
-  // Vital signs states
+  
   const [vitalSigns, setVitalSigns] = useState<VitalSign[]>(initialVitalSigns)
   
-  // Modal states
+  
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [showReferralModal, setShowReferralModal] = useState(false)
 
-  // Fetch patient data
+  
   useEffect(() => {
     const fetchPatientData = async () => {
       if (!id) return
@@ -101,8 +101,8 @@ export default function FormMedical() {
         setLoading(true)
         const recordId = parseInt(id)
         
-        // First, try to fetch as visit (if patient was checked in)
-        // Try visit by id only if id is not a pure appointment id
+        
+        
         try {
           const visitResponse = await api.get(`/visits/${recordId}`)
           if (visitResponse.data.success && visitResponse.data.data) {
@@ -124,7 +124,7 @@ export default function FormMedical() {
               symptomImages: appointment.symptomImages
             })
             
-            // Populate existing visit data
+            
             if (visit.diagnosis) setDiagnosis(visit.diagnosis)
             
             if (visit.vitalSigns) {
@@ -135,7 +135,7 @@ export default function FormMedical() {
             }
 
             if (visit.note) {
-               // Try to parse structured sections
+               
                const obsMatch = visit.note.match(/CLINICAL OBSERVATIONS:\s*([\s\S]*?)(?=VITAL SIGNS:|ADDITIONAL NOTES:|$)/i);
                if (obsMatch && obsMatch[1].trim()) setObservations(obsMatch[1].trim());
 
@@ -147,10 +147,10 @@ export default function FormMedical() {
             return
           }
         } catch (visitErr: any) {
-          // suppress noisy log for 404
+          
         }
         
-        // If visit not found, fetch appointment by id directly
+        
         const response = await api.get(`/appointments/${recordId}`)
         const appointment = response.data.data || response.data
 
@@ -174,7 +174,7 @@ export default function FormMedical() {
               symptomImages: appointment.symptomImages
             })
 
-            // Populate from visit if available via appointment
+            
             if (visit) {
               if (visit.diagnosis) setDiagnosis(visit.diagnosis)
               if (visit.vitalSigns) {
@@ -197,7 +197,7 @@ export default function FormMedical() {
           }
         }
         
-        // Neither visit nor appointment found
+        
         toast.error('Không tìm thấy lịch hẹn hoặc thông tin khám bệnh')
         setPatientData(null)
         setError('Không tìm thấy lịch hẹn hoặc thông tin khám bệnh')
@@ -230,7 +230,7 @@ export default function FormMedical() {
   const handleSaveExamination = async () => {
     if (!patientData) return
     
-    // Basic validation
+    
     if (!diagnosis || diagnosis.trim() === '') {
       toast.error('Vui lòng nhập chẩn đoán')
       setError('Vui lòng nhập chẩn đoán')
@@ -241,7 +241,7 @@ export default function FormMedical() {
       setSaving(true)
       setError(null)
       
-      // Construct structured vital signs
+      
       const vitalsObj: any = {}
       vitalSigns.forEach(vs => {
         if (vs.value) {
@@ -253,7 +253,7 @@ export default function FormMedical() {
         }
       })
 
-      // Prepare data according to backend API structure
+      
       const visitData = {
         diagnosis: diagnosis.trim(),
         vitalSigns: vitalsObj,
@@ -273,18 +273,18 @@ Examination completed on: ${new Date().toLocaleString()}
       
       console.log('Saving visit data:', visitData)
 
-      // Check if we have visitId
+      
       let visitId = patientData.visitId
 
-      // If no visitId but have appointmentId, try to check-in first
+      
       if (!visitId && patientData.appointmentId) {
         try {
-          const { checkInAppointment } = await import("@/services/visit.service")
+          const { checkInAppointment } = await import("@/features/appointment/services/visit.service")
           const visit = await checkInAppointment(patientData.appointmentId)
           visitId = visit.id
           console.log('Visit created successfully:', visitId)
         } catch (checkInError: any) {
-          // If check-in fails, show error
+          
           const errorMessage = checkInError.response?.data?.message || 'Không thể tạo visit'
           console.error('Check-in error:', errorMessage)
           toast.error(errorMessage)
@@ -299,14 +299,14 @@ Examination completed on: ${new Date().toLocaleString()}
         return
       }
 
-      // Try to complete the visit using the visits API
+      
       try {
         const response = await api.put(`/visits/${visitId}/complete`, visitData)
 
         if (response.data.success) {
           console.log('Visit completed successfully:', response.data)
           toast.success('Lưu khám thành công, chuyển sang kê đơn')
-          // Chuyển thẳng sang trang kê đơn cho bệnh nhân/appointment này
+          
           navigate(`/doctor/patients/${id}/prescription`)
           return
         }
@@ -368,7 +368,7 @@ Examination completed on: ${new Date().toLocaleString()}
     <DoctorSidebar>
       <div className="min-h-screen bg-slate-50/50 p-4 lg:p-8 space-y-8">
         
-        {/* Navigation & Actions */}
+        {}
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -407,12 +407,12 @@ Examination completed on: ${new Date().toLocaleString()}
             onOpenChange={setShowReferralModal}
             visitId={patientData.visitId || 0}
             onSuccess={() => {
-               // Optional: Disable button or show badge
+               
             }}
           />
         )}
 
-        {/* History Modal */}
+        {}
         <Dialog open={showHistoryModal} onOpenChange={setShowHistoryModal}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
@@ -426,7 +426,7 @@ Examination completed on: ${new Date().toLocaleString()}
             </DialogHeader>
             <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-4">
-                {/* Mock History Data - Replace with API call if available */}
+                {}
                 {[1, 2, 3].map((_, i) => (
                   <div key={i} className="flex gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
                     <div className="flex flex-col items-center justify-center w-16 h-16 bg-white rounded-lg border border-slate-200 shadow-sm text-center">
@@ -453,7 +453,7 @@ Examination completed on: ${new Date().toLocaleString()}
           </DialogContent>
         </Dialog>
 
-        {/* Patient Header */}
+        {}
         <div className="relative overflow-hidden rounded-3xl bg-white shadow-lg shadow-indigo-100/50 border border-slate-100 p-6 lg:p-8 group transition-all hover:shadow-xl hover:shadow-indigo-200/50">
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 rounded-full blur-3xl opacity-60 -mr-20 -mt-20 pointer-events-none"></div>
           
@@ -509,7 +509,7 @@ Examination completed on: ${new Date().toLocaleString()}
           </div>
         </div>
 
-        {/* Vital Signs Grid */}
+        {}
         <div>
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-indigo-600" />
@@ -559,10 +559,10 @@ Examination completed on: ${new Date().toLocaleString()}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Main Clinical Form */}
+          {}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Symptoms */}
+            {}
             <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white overflow-hidden rounded-2xl">
                <div className="h-1 w-full bg-gradient-to-r from-indigo-500 to-blue-500"></div>
                <CardHeader className="pb-2">
@@ -589,16 +589,16 @@ Examination completed on: ${new Date().toLocaleString()}
                       </Label>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                          {patientData.symptomImages.map((img, idx) => {
-                           // Helper to resolve image URL
+                           
                            const getImageUrl = (path: string) => {
-                             if (!path) return "/placeholder-image.jpg"; // Fallback
+                             if (!path) return "/placeholder-image.jpg"; 
                              if (path.startsWith("http")) return path;
                              
-                             // Get base URL (remove /api from VITE_API_URL if present)
+                             
                              const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
                              const baseUrl = apiUrl.replace(/\/api\/?$/, "");
                              
-                             // Ensure path handles both / and \
+                             
                              let normalizedPath = path.replace(/\\/g, "/");
                              if (!normalizedPath.startsWith("/")) {
                                normalizedPath = `/${normalizedPath}`;
@@ -645,7 +645,7 @@ Examination completed on: ${new Date().toLocaleString()}
                </CardContent>
             </Card>
 
-            {/* Diagnosis & Treatment */}
+            {}
             <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white overflow-hidden rounded-2xl">
                <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500"></div>
                <CardHeader className="pb-2">
@@ -684,7 +684,7 @@ Examination completed on: ${new Date().toLocaleString()}
 
           </div>
 
-          {/* Right Column - Actions */}
+          {}
           <div className="space-y-6 sticky top-6 h-fit">
              <Card className="border-0 shadow-lg shadow-indigo-100 bg-gradient-to-br from-indigo-600 to-violet-700 text-white overflow-hidden rounded-2xl">
                 <CardContent className="p-6 space-y-6">
@@ -723,7 +723,7 @@ Examination completed on: ${new Date().toLocaleString()}
                 </CardContent>
              </Card>
 
-             {/* Quick History or Info */}
+             {}
              <Card className="border-0 shadow-md bg-white rounded-2xl p-6 opacity-70 hover:opacity-100 transition-opacity">
                 <h4 className="font-bold text-slate-700 mb-3">Lưu ý nhanh</h4>
                 <ul className="space-y-2 text-sm text-slate-600">

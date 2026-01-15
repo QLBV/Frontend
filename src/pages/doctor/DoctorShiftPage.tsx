@@ -1,17 +1,17 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import DoctorSidebar from '@/components/sidebar/doctor'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import DoctorSidebar from '../../components/layout/sidebar/doctor'
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog"
+import { Textarea } from "../../components/ui/textarea"
+import { Label } from "../../components/ui/label"
 import { toast } from "sonner"
-import api from "@/lib/api"
-import { useAuth } from "@/auth/authContext"
+import api from "../../lib/api"
+import { useAuth } from "../../features/auth/context/authContext"
 import { useNavigate } from "react-router-dom"
 import { 
   Calendar, 
@@ -24,9 +24,9 @@ import {
   Search,
   RefreshCw
 } from "lucide-react"
-import { ShiftService, type Shift as ShiftTemplate } from "@/services/shift.service"
+import { ShiftService, type Shift as ShiftTemplate } from "../../features/shift/services/shift.service"
 
-// Doctor Shift interface
+
 interface DoctorShift {
   id: number
   doctorId: number
@@ -41,7 +41,7 @@ interface DoctorShift {
   }
 }
 
-// Appointment interface
+
 interface Appointment {
   id: number
   date: string
@@ -65,7 +65,7 @@ interface Appointment {
   patientGender?: string
 }
 
-// Personal schedule interface
+
 interface PersonalSchedule {
   id: string
   date: string
@@ -94,7 +94,7 @@ export default function DoctorShiftPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   
-  // Filtered schedule
+  
   const filteredPersonalSchedule = useMemo(() => {
     if (!searchQuery.trim()) return personalSchedule
     const query = searchQuery.toLowerCase()
@@ -105,7 +105,7 @@ export default function DoctorShiftPage() {
     )
   }, [personalSchedule, searchQuery])
   
-  // Cancel shift modal states
+  
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [selectedShiftToCancel, setSelectedShiftToCancel] = useState<PersonalSchedule | null>(null)
@@ -113,7 +113,7 @@ export default function DoctorShiftPage() {
   const [previewData, setPreviewData] = useState<any>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
 
-  // Get week dates (Monday to Sunday)
+  
   const getWeekDates = () => {
     const start = new Date(currentWeek)
     const day = start.getDay()
@@ -129,12 +129,12 @@ export default function DoctorShiftPage() {
     return dates
   }
 
-  // Fetch doctor's shifts and appointments
+  
   const fetchDoctorData = async () => {
     try {
       setLoading(true)
       
-      // Get current doctor's ID from auth context
+      
       if (!user?.doctorId) {
         toast.error("Không tìm thấy thông tin bác sĩ. Vui lòng đăng nhập lại.")
         navigate("/login")
@@ -143,17 +143,17 @@ export default function DoctorShiftPage() {
       
       const currentDoctorId = user.doctorId
       
-      // Fetch doctor shifts
+      
       let fetchedShifts: DoctorShift[] = []
       try {
         const shiftsResponse = await api.get(`/doctors/${currentDoctorId}/shifts`)
-        console.log("🔍 Doctor Shifts Response:", shiftsResponse.data)
+        console.log(" Doctor Shifts Response:", shiftsResponse.data)
         if (shiftsResponse.data.success) {
           fetchedShifts = shiftsResponse.data.data || []
-          console.log("🔍 Doctor Shifts Data:", fetchedShifts)
+          console.log(" Doctor Shifts Data:", fetchedShifts)
           setDoctorShifts(fetchedShifts)
         } else {
-          console.warn("⚠️ Doctor shifts response not successful:", shiftsResponse.data)
+          console.warn("️ Doctor shifts response not successful:", shiftsResponse.data)
           setDoctorShifts([])
         }
       } catch (err: any) {
@@ -167,14 +167,14 @@ export default function DoctorShiftPage() {
         toast.error(err.response?.data?.message || 'Không thể tải danh sách ca trực')
       }
 
-      // Fetch doctor appointments
+      
       let fetchedAppointments: Appointment[] = []
       try {
         const appointmentsResponse = await api.get(`/appointments?doctorId=${currentDoctorId}`)
-        console.log("🔍 Doctor Appointments Response:", appointmentsResponse.data)
+        console.log(" Doctor Appointments Response:", appointmentsResponse.data)
         if (appointmentsResponse.data.success) {
           fetchedAppointments = appointmentsResponse.data.data || []
-          console.log("🔍 Doctor Appointments Data:", fetchedAppointments)
+          console.log(" Doctor Appointments Data:", fetchedAppointments)
           setAppointments(fetchedAppointments)
         } else {
           setAppointments([])
@@ -190,17 +190,17 @@ export default function DoctorShiftPage() {
         toast.error(err.response?.data?.message || 'Không thể tải danh sách lịch hẹn')
       }
 
-      // Fetch shift templates
+      
       try {
         const templates = await ShiftService.getShifts()
-        // Sort by start time
+        
         templates.sort((a, b) => a.startTime.localeCompare(b.startTime))
         setShifts(templates)
       } catch (err) {
         console.error('Failed to fetch shift templates:', err)
       }
 
-      // Create combined personal schedule with fetched data
+      
       createPersonalSchedule(fetchedShifts, fetchedAppointments)
       
     } catch (err: any) {
@@ -214,23 +214,23 @@ export default function DoctorShiftPage() {
     }
   }
 
-  // Create personal schedule from shifts and appointments
+  
   const createPersonalSchedule = (shifts: DoctorShift[] = doctorShifts, apts: Appointment[] = appointments) => {
     const schedule: PersonalSchedule[] = []
 
-    console.log("🔍 Creating schedule from:", {
+    console.log(" Creating schedule from:", {
       doctorShifts: shifts.length,
       appointments: apts.length,
     })
 
-    // Add shifts to schedule
+    
     shifts.forEach(shift => {
       if (!shift.shift) {
-        console.warn("⚠️ Shift missing shift data:", shift)
+        console.warn("️ Shift missing shift data:", shift)
         return
       }
       
-      // Ensure workDate is in YYYY-MM-DD format
+      
       const workDate = shift.workDate ? shift.workDate.split('T')[0] : shift.workDate
       
       schedule.push({
@@ -245,7 +245,7 @@ export default function DoctorShiftPage() {
         shiftId: shift.shift.id
       })
       
-      console.log(`🔍 Added shift to schedule:`, {
+      console.log(` Added shift to schedule:`, {
         id: shift.id,
         date: workDate,
         time: `${shift.shift.startTime} - ${shift.shift.endTime}`,
@@ -253,9 +253,9 @@ export default function DoctorShiftPage() {
       })
     })
     
-    console.log("🔍 Schedule after adding shifts:", schedule.length)
+    console.log(" Schedule after adding shifts:", schedule.length)
 
-    // Add appointments to schedule
+    
     apts.forEach(apt => {
       const appointmentDate = apt.date ? apt.date.split('T')[0] : ""
       const appointmentTime = apt.shift?.startTime || apt.appointmentTime || ""
@@ -274,7 +274,7 @@ export default function DoctorShiftPage() {
       })
     })
 
-    console.log("🔍 Final schedule:", schedule.length, schedule)
+    console.log(" Final schedule:", schedule.length, schedule)
     setPersonalSchedule(schedule)
   }
 
@@ -285,15 +285,15 @@ export default function DoctorShiftPage() {
     }
   }, [currentWeek, user, authLoading])
 
-  // Debug: Log personalSchedule when it changes
+  
   useEffect(() => {
-    console.log("🔍 personalSchedule updated:", personalSchedule.length, personalSchedule)
+    console.log(" personalSchedule updated:", personalSchedule.length, personalSchedule)
   }, [personalSchedule])
 
-  // Get schedule for selected date
+  
   const getScheduleForDate = (date: string) => {
     const filtered = filteredPersonalSchedule.filter(item => {
-      // Normalize dates for comparison (handle both YYYY-MM-DD formats)
+      
       const itemDate = item.date ? item.date.split('T')[0] : ''
       const targetDate = date ? date.split('T')[0] : ''
       return itemDate === targetDate
@@ -301,22 +301,22 @@ export default function DoctorShiftPage() {
     return filtered
   }
 
-  // Get schedule for shift template
+  
   const getScheduleForShift = (date: string, shiftTemplate: ShiftTemplate) => {
     const scheduleForDay = getScheduleForDate(date)
     
     return scheduleForDay.filter(item => {
-      // If it's a shift, match by ID
+      
       if (item.type === 'shift' && item.shiftId) {
         return item.shiftId === shiftTemplate.id
       }
       
-      // If no shiftId or it's an appointment, check time overlap
-      // Parse shift template times
+      
+      
       const shiftStart = parseInt(shiftTemplate.startTime.split(':')[0])
       const shiftEnd = parseInt(shiftTemplate.endTime.split(':')[0])
 
-      // Parse item time
+      
       let itemStart = 0
       let itemEnd = 0
       
@@ -329,8 +329,8 @@ export default function DoctorShiftPage() {
         itemEnd = itemStart + 1
       }
 
-      // Check overlap
-      // Overlap if (StartA < EndB) and (EndA > StartB)
+      
+      
       return (itemStart < shiftEnd) && (itemEnd > shiftStart)
     })
   }
@@ -360,7 +360,7 @@ export default function DoctorShiftPage() {
     setSelectedDate(new Date().toISOString().split('T')[0])
   }
 
-  // Handle cancel shift
+  
   const handleCancelShift = async (shift: PersonalSchedule) => {
     if (shift.type !== 'shift') {
       toast.error('Chỉ có thể hủy ca trực')
@@ -370,11 +370,11 @@ export default function DoctorShiftPage() {
     setSelectedShiftToCancel(shift)
     setShowCancelModal(true)
     
-    // Load preview data
+    
     await loadPreviewData(shift)
   }
 
-  // Load preview data for cancellation
+  
   const loadPreviewData = async (shift: PersonalSchedule) => {
     setPreviewLoading(true)
     try {
@@ -393,7 +393,7 @@ export default function DoctorShiftPage() {
     }
   }
 
-  // Submit cancel shift
+  
   const submitCancelShift = async () => {
     if (!selectedShiftToCancel || !cancelReason.trim()) {
       toast.error('Vui lòng nhập lý do hủy ca')
@@ -402,10 +402,10 @@ export default function DoctorShiftPage() {
 
     setCancelLoading(true)
     try {
-      // Extract shift ID from the shift ID (format: "shift-{id}")
+      
       const shiftId = selectedShiftToCancel.id.replace('shift-', '')
       
-      // Call API to cancel shift using reschedule system
+      
       const response = await api.post(`/doctor-shifts/${shiftId}/cancel-and-reschedule`, {
         cancelReason: cancelReason.trim()
       })
@@ -413,7 +413,7 @@ export default function DoctorShiftPage() {
       if (response.data.success) {
         toast.success('Yêu cầu hủy ca trực đã được gửi và xử lý thành công')
         
-        // Show detailed result if available
+        
         if (response.data.data) {
           const { totalAppointments, rescheduledCount, failedCount } = response.data.data
           if (totalAppointments > 0) {
@@ -421,7 +421,7 @@ export default function DoctorShiftPage() {
           }
         }
         
-        // Update local state
+        
         setPersonalSchedule(prev => 
           prev.map(item => 
             item.id === selectedShiftToCancel.id 
@@ -430,12 +430,12 @@ export default function DoctorShiftPage() {
           )
         )
         
-        // Close modal and reset
+        
         setShowCancelModal(false)
         setCancelReason("")
         setSelectedShiftToCancel(null)
         
-        // Refresh data
+        
         fetchDoctorData()
       } else {
         toast.error(response.data.message || 'Không thể hủy ca trực')
@@ -448,7 +448,7 @@ export default function DoctorShiftPage() {
     }
   }
 
-  // Close cancel modal
+  
   const closeCancelModal = () => {
     setShowCancelModal(false)
     setCancelReason("")
@@ -473,7 +473,7 @@ export default function DoctorShiftPage() {
   return (
     <DoctorSidebar>
       <div className="space-y-6">
-        {/* Page Header */}
+        {}
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
             <Stethoscope className="w-8 h-8 text-blue-600" />
@@ -483,10 +483,10 @@ export default function DoctorShiftPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Schedule Area */}
+          {}
           <div className="lg:col-span-3">
-            {/* Week Navigation */}
-            {/* Week Navigation & Search */}
+            {}
+            {}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
@@ -522,9 +522,9 @@ export default function DoctorShiftPage() {
               </div>
             </div>
 
-            {/* Week View */}
+            {}
             <Card>
-              {/* Week Header */}
+              {}
               <div className="grid grid-cols-8 border-b bg-white">
                 <div className="p-4 border-r text-xs text-gray-500 uppercase">
                   Time
@@ -559,15 +559,15 @@ export default function DoctorShiftPage() {
                 })}
               </div>
 
-              {/* Time Slots */}
+              {}
               <CardContent className="p-0">
                 {shifts.map((shift, shiftIndex) => (
                   <div key={shift.id} className="grid grid-cols-8 border-b min-h-[160px]">
                     <div className="p-4 bg-gray-50 border-r text-center">
                       <div className="text-xl mb-1">
-                        {shift.name.toLowerCase().includes('sáng') ? '🌅' : 
-                         shift.name.toLowerCase().includes('chiều') ? '☀️' : 
-                         shift.name.toLowerCase().includes('tối') ? '🌙' : '⏰'}
+                        {shift.name.toLowerCase().includes('sáng') ? '' : 
+                         shift.name.toLowerCase().includes('chiều') ? '️' : 
+                         shift.name.toLowerCase().includes('tối') ? '' : '⏰'}
                       </div>
                       <div className="font-medium">{shift.name}</div>
                       <div className="text-xs text-gray-500">
@@ -615,9 +615,9 @@ export default function DoctorShiftPage() {
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {}
           <div className="space-y-6">
-            {/* Today's Summary */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -647,7 +647,7 @@ export default function DoctorShiftPage() {
               </CardContent>
             </Card>
 
-            {/* Next Schedule */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Lịch trình tiếp theo</CardTitle>
@@ -680,7 +680,7 @@ export default function DoctorShiftPage() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Thống kê tuần</CardTitle>
@@ -710,7 +710,7 @@ export default function DoctorShiftPage() {
         </div>
       </div>
 
-      {/* Cancel Shift Modal - DISABLED: Only admin can cancel shifts */}
+      {}
       <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -735,7 +735,7 @@ export default function DoctorShiftPage() {
               </div>
             )}
 
-            {/* Preview Information */}
+            {}
             {previewLoading && (
               <div className="p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2">
@@ -748,19 +748,19 @@ export default function DoctorShiftPage() {
             {previewData && !previewLoading && (
               <div className={`p-3 rounded-lg ${previewData.warning ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}`}>
                 <div className="text-sm font-medium mb-2">
-                  📋 Thông tin tác động:
+                   Thông tin tác động:
                 </div>
                 <div className="space-y-1 text-sm">
                   <div>• Số lịch hẹn bị ảnh hưởng: <span className="font-medium">{previewData.affectedAppointments}</span></div>
                   {previewData.hasReplacementDoctor ? (
-                    <div className="text-green-700">• ✅ Có bác sĩ thay thế (ID: {previewData.replacementDoctorId})</div>
+                    <div className="text-green-700">•  Có bác sĩ thay thế (ID: {previewData.replacementDoctorId})</div>
                   ) : (
-                    <div className="text-yellow-700">• ⚠️ Không có bác sĩ thay thế cùng chuyên khoa</div>
+                    <div className="text-yellow-700">• ️ Không có bác sĩ thay thế cùng chuyên khoa</div>
                   )}
                   {previewData.canAutoReschedule ? (
-                    <div className="text-green-700">• ✅ Có thể tự động chuyển lịch hẹn</div>
+                    <div className="text-green-700">•  Có thể tự động chuyển lịch hẹn</div>
                   ) : (
-                    <div className="text-yellow-700">• ⚠️ Không thể tự động chuyển lịch hẹn</div>
+                    <div className="text-yellow-700">• ️ Không thể tự động chuyển lịch hẹn</div>
                   )}
                 </div>
                 {previewData.warning && (

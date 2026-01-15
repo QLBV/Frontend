@@ -4,7 +4,7 @@ import { getMyAppointments, cancelAppointment as cancelAppointmentAPI, type Appo
 import { toast } from "sonner";
 
 export function usePatientAppointments() {
-  // --- STATE MANAGEMENT ---
+  
   const [appointments, setAppointments] = useState<{ upcoming: IAppointment[]; past: IAppointment[] }>({
     upcoming: [],
     past: []
@@ -13,22 +13,22 @@ export function usePatientAppointments() {
   const [selectedAppointment, setSelectedAppointment] = useState<IAppointment | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // --- FETCH APPOINTMENTS FROM API ---
+  
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        // #region agent log
+        
         fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:19',message:'Fetching appointments from API',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
+        
 
         setIsLoading(true);
         const data = await getMyAppointments();
 
-        // #region agent log
+        
         fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:26',message:'Appointments fetched',data:{count:data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
+        
 
-        // Convert API format to IAppointment format
+        
         const now = new Date();
         const upcoming: IAppointment[] = [];
         const past: IAppointment[] = [];
@@ -64,9 +64,9 @@ export function usePatientAppointments() {
 
         setAppointments({ upcoming, past });
       } catch (error: any) {
-        // #region agent log
+        
         fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:60',message:'Error fetching appointments',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
+        
 
         console.error("Error fetching appointments:", error);
         toast.error(error.response?.data?.message || "Không thể tải danh sách lịch hẹn");
@@ -78,7 +78,7 @@ export function usePatientAppointments() {
     fetchAppointments();
   }, []);
 
-  // --- STATISTICS ---
+  
   const stats = useMemo(() => {
     const all = [...appointments.upcoming, ...appointments.past];
     return {
@@ -89,20 +89,20 @@ export function usePatientAppointments() {
     };
   }, [appointments]);
 
-  // --- ACTIONS ---
+  
   const cancelAppointment = async (id: string, reason: string) => {
     try {
-      // #region agent log
+      
       fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:78',message:'Cancelling appointment',data:{appointmentId:id,reason},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
+      
 
       await cancelAppointmentAPI(Number(id));
 
-      // #region agent log
+      
       fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:83',message:'Appointment cancelled successfully',data:{appointmentId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
+      
 
-      // Update local state optimistically
+      
       setAppointments((prev) => {
         const aptToCancel = prev.upcoming.find((a) => a.id === id);
         if (!aptToCancel) return prev;
@@ -121,9 +121,9 @@ export function usePatientAppointments() {
 
       toast.success("Hủy lịch hẹn thành công!");
     } catch (error: any) {
-      // #region agent log
+      
       fetch('http://127.0.0.1:7242/ingest/5d460a2c-0770-476c-bcfe-75b1728b43da',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'usePatientAppointments.ts:104',message:'Error cancelling appointment',data:{error:error.message,appointmentId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
+      
 
       console.error("Error cancelling appointment:", error);
       toast.error(error.response?.data?.message || "Không thể hủy lịch hẹn");

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
-import { useAuth } from "@/auth/authContext"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { useAuth } from "../features/auth/context/authContext"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Button } from "../components/ui/button"
+import { Label } from "../components/ui/label"
+import { Switch } from "../components/ui/switch"
 import { toast } from "sonner"
-import { UserService, type NotificationSettings } from "@/services/user.service"
+import { UserService, type NotificationSettings } from "../features/auth/services/user.service"
 import { Loader2, Bell, Mail, MessageSquare, Calendar, Pill, Receipt } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
@@ -15,11 +15,12 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<NotificationSettings>({
-    emailNotifications: true,
-    smsNotifications: false,
+    emailEnabled: true,
+    smsEnabled: false,
+    pushEnabled: true,
+    inAppEnabled: true,
     appointmentReminders: true,
-    prescriptionReady: true,
-    invoicePaid: true,
+    prescriptionReminders: true,
   })
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function SettingsPage() {
       if (error.response?.status === 429) {
         toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
       } else {
-        // Silent fail - use defaults
+        
         console.warn("Failed to fetch notification settings, using defaults")
       }
     } finally {
@@ -88,7 +89,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* General Notifications */}
+          {}
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Thông báo chung</h3>
             
@@ -106,9 +107,9 @@ export default function SettingsPage() {
               </div>
               <Switch
                 id="emailNotifications"
-                checked={settings.emailNotifications}
+                checked={settings.emailEnabled}
                 onCheckedChange={(checked) =>
-                  setSettings({ ...settings, emailNotifications: checked })
+                  setSettings({ ...settings, emailEnabled: checked })
                 }
               />
             </div>
@@ -127,15 +128,15 @@ export default function SettingsPage() {
               </div>
               <Switch
                 id="smsNotifications"
-                checked={settings.smsNotifications}
+                checked={settings.smsEnabled}
                 onCheckedChange={(checked) =>
-                  setSettings({ ...settings, smsNotifications: checked })
+                  setSettings({ ...settings, smsEnabled: checked })
                 }
               />
             </div>
           </div>
 
-          {/* Specific Notifications */}
+          {}
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Thông báo cụ thể</h3>
             
@@ -174,13 +175,14 @@ export default function SettingsPage() {
               </div>
               <Switch
                 id="prescriptionReady"
-                checked={settings.prescriptionReady}
+                checked={settings.prescriptionReminders}
                 onCheckedChange={(checked) =>
-                  setSettings({ ...settings, prescriptionReady: checked })
+                  setSettings({ ...settings, prescriptionReminders: checked })
                 }
               />
             </div>
 
+            {/* Invoice Paid Notification - Currently not supported
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-center gap-3">
                 <Receipt className="h-5 w-5 text-gray-400" />
@@ -195,12 +197,10 @@ export default function SettingsPage() {
               </div>
               <Switch
                 id="invoicePaid"
-                checked={settings.invoicePaid}
-                onCheckedChange={(checked) =>
-                  setSettings({ ...settings, invoicePaid: checked })
-                }
+                disabled
               />
             </div>
+            */}
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin';
+import AdminSidebar from '../../components/layout/sidebar/admin';
 import { 
   Search,
   Trash2,
@@ -17,10 +17,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Input } from "../../components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +28,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "../../components/ui/dialog";
 import { toast } from "sonner";
-import { getPatients, updatePatient, type Patient } from "@/services/patient.service";
+import { getPatients, updatePatient, type Patient } from "../../features/patient/services/patient.service";
 
 export default function PatientListPage() {
   const navigate = useNavigate()
@@ -40,12 +40,12 @@ export default function PatientListPage() {
   const [loading, setLoading] = useState(true)
   const [totalPages, setTotalPages] = useState(1)
   
-  // Status toggle dialog states
+  
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [patientToToggle, setPatientToToggle] = useState<Patient | null>(null)
   const [isTogglingStatus, setIsTogglingStatus] = useState(false)
   
-  // Delete dialog states
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -73,7 +73,7 @@ export default function PatientListPage() {
     fetchPatients()
   }, [currentPage])
 
-  // Debounce search
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       if (currentPage === 1) {
@@ -144,7 +144,7 @@ export default function PatientListPage() {
     if (!patientToDelete) return
     try {
       setIsDeleting(true)
-      // For now, we'll just deactivate instead of deleting
+      
       await updatePatient(patientToDelete.id, { isActive: false });
       toast.success("Đã xóa bệnh nhân thành công (vô hiệu hóa)!")
       setDeleteDialogOpen(false)
@@ -184,7 +184,7 @@ export default function PatientListPage() {
   return (
     <AdminSidebar>
       <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
-        {/* Advanced Background Blobs */}
+        {}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/30 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -193,9 +193,9 @@ export default function PatientListPage() {
         <div className="relative p-4 md:p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-8">
             
-            {/* Premium Compact Header */}
+            {}
             <div className="relative overflow-hidden rounded-2xl md:rounded-[32px] bg-white/40 backdrop-blur-3xl p-4 md:p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
-              {/* Animated Background Gradients */}
+              {}
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-emerald-400/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
                 <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-teal-400/5 rounded-full blur-[50px] -translate-x-1/2 translate-y-1/2 animate-pulse" style={{ animationDelay: '3s' }} />
@@ -229,7 +229,7 @@ export default function PatientListPage() {
                   </div>
                 </div>
 
-                {/* Quick Stats & Actions */}
+                {}
                 <div className="flex flex-wrap items-center gap-2 md:gap-3">
                   <div className="bg-white/60 backdrop-blur-xl rounded-[20px] px-5 py-2.5 border border-white/60 shadow-sm group/stat hover:bg-emerald-50/50 transition-all duration-500">
                     <p className="text-emerald-500 text-[9px] font-black uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 leading-none">
@@ -250,10 +250,10 @@ export default function PatientListPage() {
               </div>
             </div>
 
-            {/* Premium Filter Bar */}
+            {}
             <div className="bg-white/60 backdrop-blur-xl p-2 md:p-3 rounded-2xl md:rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
               <div className="flex flex-wrap items-center gap-3">
-                {/* Search */}
+                {}
                 <div className="relative flex-1 min-w-full md:min-w-[300px]">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-slate-400" />
@@ -268,14 +268,14 @@ export default function PatientListPage() {
               </div>
             </div>
 
-            {/* Results Count */}
+            {}
             <div className="mb-4">
               <span className="text-sm text-slate-500 font-medium whitespace-nowrap">
                 Hiển thị <span className="text-slate-900 font-bold">{patients.length}</span> bệnh nhân
               </span>
             </div>
 
-            {/* Compact Patient Table */}
+            {}
             <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-2xl md:rounded-[40px] overflow-hidden border border-white/80">
               <CardContent className="p-0">
                 <div className="overflow-x-auto -mx-px">
@@ -391,7 +391,7 @@ export default function PatientListPage() {
               </CardContent>
             </Card>
 
-        {/* Pagination */}
+        {}
         {patients.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between mt-6 md:mt-8 bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm gap-3">
             <div className="flex items-center gap-2">
@@ -412,7 +412,7 @@ export default function PatientListPage() {
               </Button>
               
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                // Show first, last, current, and pages around current
+                
                 if (
                   page === 1 || 
                   page === totalPages || 
@@ -435,7 +435,7 @@ export default function PatientListPage() {
                   );
                 }
                 
-                // Show ellipses
+                
                 if (
                   (page === 2 && currentPage > 3) || 
                   (page === totalPages - 1 && currentPage < totalPages - 2)
@@ -459,7 +459,7 @@ export default function PatientListPage() {
           </div>
         )}
 
-        {/* Status Toggle Confirmation Dialog */}
+        {}
         <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -512,7 +512,7 @@ export default function PatientListPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
+        {}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

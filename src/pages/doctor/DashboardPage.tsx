@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { CalendarIcon, Users, Clock, Eye, Loader2, Stethoscope } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "@/components/ui/calendar"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import UpcomingAppointmentsWidget from "@/components/UpcomingAppointmentsWidget"
-import api from "@/lib/api"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Calendar } from "../../components/ui/calendar"
+import DoctorSidebar from "../../components/layout/sidebar/doctor"
+import UpcomingAppointmentsWidget from "../../features/appointment/components/UpcomingAppointmentsWidget"
+import api from "../../lib/api"
 import { toast } from "sonner"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../../features/auth/context/authContext"
 
-// --- Interfaces ---
+
 interface Appointment {
   id: string | number
   visitId?: string | number
@@ -48,14 +48,14 @@ export default function DoctorDashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      // Get local YYYY-MM-DD from selected date
+      
       const targetDate = date || new Date()
       const offset = targetDate.getTimezoneOffset()
       const localDate = new Date(targetDate.getTime() - (offset * 60 * 1000))
       const dateString = localDate.toISOString().split('T')[0]
       const today = dateString
       
-      // Fetch both appointments and visits for target date
+      
       const [appointmentsRes, visitsRes] = await Promise.all([
         api.get(`/appointments?date=${dateString}`),
         api.get(`/visits?startDate=${dateString}&endDate=${dateString}`)
@@ -65,13 +65,13 @@ export default function DoctorDashboardPage() {
         const appointments = appointmentsRes.data.data || []
         const visits = visitsRes.data.data || []
         
-        // Debug: Log visits data
-        console.log("🔍 Doctor Dashboard - Visits:", visits.length, visits)
-        console.log("🔍 Doctor Dashboard - Appointments:", appointments.length, appointments)
         
-        // Combine appointments and visits
-        // Visits are for patients who have checked in (status EXAMINING)
-        // Appointments are for patients who haven't checked in yet (status WAITING, CHECKED_IN)
+        console.log(" Doctor Dashboard - Visits:", visits.length, visits)
+        console.log(" Doctor Dashboard - Appointments:", appointments.length, appointments)
+        
+        
+        
+        
         const allPatients = [
           ...visits.map((visit: any) => {
             const visitDate = visit.checkInTime
@@ -88,7 +88,7 @@ export default function DoctorDashboardPage() {
               },
               shift: visit.appointment?.shift || { startTime: 'N/A', endTime: 'N/A' },
               date: visitDate,
-              status: visit.status, // Keep original visit status (EXAMINING, EXAMINED, COMPLETED)
+              status: visit.status, 
               isVisit: true,
             }
           }),
@@ -105,7 +105,7 @@ export default function DoctorDashboardPage() {
             }))
         ]
         
-        console.log("🔍 Doctor Dashboard - All Patients:", allPatients.length, allPatients)
+        console.log(" Doctor Dashboard - All Patients:", allPatients.length, allPatients)
         
         const todayAppointmentsCount = allPatients.length
         const todayPatientsCount = new Set(allPatients.map((p: any) => p.patientId)).size
@@ -118,14 +118,14 @@ export default function DoctorDashboardPage() {
           stats: {
             todayAppointments: todayAppointmentsCount,
             todayPatients: todayPatientsCount,
-            patientChange: 0, // Calculate from previous day if needed
+            patientChange: 0, 
             completedVisits,
             pendingAppointments,
           },
-          appointments: allPatients.slice(0, 10), // Show first 10
+          appointments: allPatients.slice(0, 10), 
         })
       } else {
-        // Fallback to empty data
+        
         setDashboardData({
           stats: {
             todayAppointments: 0,
@@ -144,11 +144,11 @@ export default function DoctorDashboardPage() {
         response: err.response?.data,
         status: err.response?.status,
       })
-      // Show error toast for debugging
+      
       if (import.meta.env.DEV) {
         toast.error(`Error: ${err.response?.data?.message || err.message}`)
       }
-      // Fallback to empty data
+      
       setDashboardData({
         stats: {
           todayAppointments: 0,
@@ -192,7 +192,7 @@ export default function DoctorDashboardPage() {
   }
 
   const formatTime = (timeString: string) => {
-    // Format "HH:mm:ss" to "HH:mm"
+    
     return timeString.substring(0, 5)
   }
 
@@ -224,7 +224,7 @@ export default function DoctorDashboardPage() {
       <div className="min-h-screen bg-slate-50/50">
         <div className="p-4 lg:p-10 max-w-[1600px] mx-auto space-y-12">
           
-          {/* Header Section */}
+          {}
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-indigo-100/50">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/20 hidden md:block">
@@ -250,10 +250,10 @@ export default function DoctorDashboardPage() {
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-            {/* --- Left Column: Stats & List --- */}
+            {}
             <div className="xl:col-span-2 space-y-8">
 
-              {/* --- Stats Cards Section --- */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-xl overflow-hidden relative group hover:shadow-md transition-all duration-300">
                   <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-indigo-600"></div>
@@ -295,12 +295,12 @@ export default function DoctorDashboardPage() {
                 </Card>
               </div>
 
-              {/* --- Upcoming Appointments Widget --- */}
+              {}
               <div className="rounded-2xl border border-indigo-100/50 overflow-hidden shadow-sm bg-white/60 backdrop-blur-sm">
                  <UpcomingAppointmentsWidget limit={5} />
               </div>
 
-              {/* --- Appointments List Section --- */}
+              {}
               <Card className="border-0 shadow-sm overflow-hidden bg-white">
                 <CardHeader className="bg-white border-b border-slate-100 px-6 py-5">
                    <div className="flex items-center justify-between">
@@ -406,7 +406,7 @@ export default function DoctorDashboardPage() {
               </Card>
             </div>
 
-            {/* --- Right Column: Calendar & Quick Info --- */}
+            {}
             <div className="space-y-6">
               <Card className="border-0 shadow-sm bg-white overflow-hidden">
                 <CardHeader className="bg-white border-b border-slate-100 pb-4">
@@ -437,7 +437,7 @@ export default function DoctorDashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Tips / Info Card */}
+              {}
               <div className="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-500/30">
                 <h3 className="font-bold text-lg mb-2">Lời nhắc hôm nay</h3>
                 <p className="text-indigo-100 text-sm leading-relaxed mb-4">

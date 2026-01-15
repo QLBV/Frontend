@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import ReceptionistSidebar from '@/components/sidebar/recep'
+import ReceptionistSidebar from '../../components/layout/sidebar/recep'
 import { 
   Search, 
   UserPlus, 
@@ -16,12 +16,12 @@ import {
   UserCheck,
   Fingerprint
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { PremiumPagination } from "@/components/ui/premium-pagination"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
+import { Button } from "../../components/ui/button"
+import { PremiumPagination } from "../../components/ui/premium-pagination"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
+import { Label } from "../../components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -29,18 +29,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { getPatients, type Patient } from "@/services/patient.service"
-import { SearchService } from "@/services/search.service"
+import { getPatients, type Patient } from "../../features/patient/services/patient.service"
+
 
 export default function RecepPatients() {
   const [patients, setPatients] = useState<Patient[]>([])
@@ -55,7 +55,7 @@ export default function RecepPatients() {
     totalPages: 0,
   })
 
-  // Advanced search dialog
+  
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false)
   const [advancedFilters, setAdvancedFilters] = useState({
     keyword: "",
@@ -68,7 +68,7 @@ export default function RecepPatients() {
     createdTo: "",
   })
 
-  // Stats
+  
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -120,15 +120,22 @@ export default function RecepPatients() {
       if (advancedFilters.keyword) filters.keyword = advancedFilters.keyword
       if (advancedFilters.profileKeyword) filters.profileKeyword = advancedFilters.profileKeyword
       if (advancedFilters.gender) filters.gender = advancedFilters.gender
-      if (advancedFilters.isActive !== undefined) filters.isActive = advancedFilters.isActive
+      
+      // If undefined, meaningful "All" for advanced search
+      if (advancedFilters.isActive !== undefined) {
+        filters.isActive = advancedFilters.isActive
+      } else {
+        filters.isActive = 'all'
+      }
+
       if (advancedFilters.dateOfBirthFrom) filters.dateOfBirthFrom = advancedFilters.dateOfBirthFrom
       if (advancedFilters.dateOfBirthTo) filters.dateOfBirthTo = advancedFilters.dateOfBirthTo
 
-      const response = await SearchService.searchPatients(filters)
-      setPatients(response.data || [])
+      const response = await getPatients(filters)
+      setPatients(response.patients || [])
       setPagination(response.pagination || pagination)
       setIsAdvancedSearchOpen(false)
-      toast.success(`Tìm thấy ${response.data?.length || 0} bệnh nhân`)
+      toast.success(`Tìm thấy ${response.patients?.length || 0} bệnh nhân`)
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tìm kiếm bệnh nhân")
     } finally {
@@ -143,14 +150,15 @@ export default function RecepPatients() {
     }
     try {
       setIsSearching(true)
-      const response = await SearchService.searchPatients({
+      const response = await getPatients({
         keyword: searchQuery,
         page: 1,
         limit: pagination.limit,
+        isActive: 'all'
       })
-      setPatients(response.data || [])
+      setPatients(response.patients || [])
       setPagination(response.pagination || pagination)
-      toast.success(`Tìm thấy ${response.data?.length || 0} bệnh nhân`)
+      toast.success(`Tìm thấy ${response.patients?.length || 0} bệnh nhân`)
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tìm kiếm bệnh nhân")
     } finally {
@@ -187,7 +195,7 @@ export default function RecepPatients() {
       <div className="min-h-screen bg-slate-50/50 pb-12">
         <div className="container mx-auto px-6 py-8 max-w-[1600px]">
           
-          {/* Header Section */}
+          {}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -207,7 +215,7 @@ export default function RecepPatients() {
             </Button>
           </div>
 
-          {/* Stats Overview */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
              <Card className="border-0 shadow-sm bg-white rounded-2xl ring-1 ring-slate-200 group overflow-hidden">
                 <CardContent className="p-6 flex items-center gap-5">
@@ -244,7 +252,7 @@ export default function RecepPatients() {
              </Card>
           </div>
 
-          {/* Unified Search Bar */}
+          {}
           <Card className="border-0 shadow-sm bg-white rounded-2xl ring-1 ring-slate-200 mb-8 overflow-hidden">
             <CardContent className="p-4">
               <div className="flex flex-col lg:flex-row gap-4">
@@ -296,7 +304,7 @@ export default function RecepPatients() {
             </CardContent>
           </Card>
 
-          {/* Patients Listing */}
+          {}
           <Card className="border-0 shadow-sm bg-white rounded-3xl ring-1 ring-slate-200 overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-slate-50/50 to-white px-8 py-6 border-b border-slate-100 flex flex-row items-center justify-between">
               <div>
@@ -403,7 +411,7 @@ export default function RecepPatients() {
                  </div>
                )}
 
-               {/* Pagination Premium Section */}
+               {}
                {pagination.totalPages > 1 && (
                  <div className="px-8 pb-8">
                    <PremiumPagination
@@ -419,7 +427,7 @@ export default function RecepPatients() {
           </Card>
         </div>
 
-        {/* Advanced Search Modal */}
+        {}
         <Dialog open={isAdvancedSearchOpen} onOpenChange={setIsAdvancedSearchOpen}>
           <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
             <div className="bg-indigo-600 px-8 py-6 text-white text-center sm:text-left">

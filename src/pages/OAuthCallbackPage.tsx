@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
-import { setAccessToken, setRefreshToken } from "@/lib/axiosAuth"
+import { useAuth } from "../features/auth/context/authContext"
+import { setAccessToken, setRefreshToken } from "../lib/axiosAuth"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import api from "@/lib/api"
+import api from "../lib/api"
 
 export default function OAuthCallbackPage() {
   const [searchParams] = useSearchParams()
@@ -17,13 +17,13 @@ export default function OAuthCallbackPage() {
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      // Prevent re-processing if already processed or if user is already logged in
+      
       if (hasProcessed || user) {
         return
       }
 
       try {
-        // Check if we have token in URL params (from backend redirect)
+        
         const token = searchParams.get("token")
         const refreshToken = searchParams.get("refreshToken")
         const error = searchParams.get("error")
@@ -35,53 +35,53 @@ export default function OAuthCallbackPage() {
         }
 
         if (token) {
-          // Mark as processed to prevent re-processing
+          
           setHasProcessed(true)
 
-          // Use loginWithToken to properly set user in context
-          // Pass refreshToken if available
+          
+          
           await loginWithToken(token, refreshToken || undefined)
 
-          // Clear token from URL to prevent re-processing
+          
           window.history.replaceState({}, '', window.location.pathname)
 
           toast.success("Đăng nhập với Google thành công")
           
-          // Wait a bit for user state to update, then navigate based on role
+          
           setTimeout(() => {
-            // Get user role from token to navigate to correct dashboard
+            
             try {
               const tokenPayload = JSON.parse(atob(token.split('.')[1]))
               const roleId = tokenPayload.roleId
               
-              // Navigate to appropriate dashboard based on role
-              // roleId: 1=Admin, 2=Doctor, 3=Patient, 4=Receptionist
+              
+              
               if (roleId === 1) {
-                // Admin
+                
                 navigate("/admin/dashboard", { replace: true })
               } else if (roleId === 4) {
-                // Doctor - roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+                
                 navigate("/doctor/dashboard", { replace: true })
               } else if (roleId === 3) {
-                // Patient
+                
                 navigate("/patient/dashboard", { replace: true })
               } else if (roleId === 2) {
-                // Receptionist
+                
                 navigate("/receptionist/dashboard", { replace: true })
               } else {
-                // Default fallback
+                
                 navigate("/", { replace: true })
               }
             } catch (error) {
-              // If can't parse token, just navigate to home
+              
               console.error("Error parsing token:", error)
               navigate("/", { replace: true })
             }
-          }, 100) // Small delay to ensure state is updated
+          }, 100) 
           return
         }
 
-        // No token in URL - error
+        
         toast.error("Không nhận được token từ Google")
         navigate("/login")
       } catch (error: any) {

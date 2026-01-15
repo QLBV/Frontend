@@ -2,34 +2,34 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../../features/auth/context/authContext"
 import { ArrowLeft, Download, User, FileText, Activity, Check, Loader2, Edit, DollarSign } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import { toast } from "sonner"
-import { InvoiceService, type Invoice, PaymentStatus, PaymentMethod } from "@/services/invoice.service"
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import PatientSidebar from "@/components/sidebar/patient"
+import { InvoiceService, type Invoice, PaymentStatus, PaymentMethod } from "../../features/finance/services/invoice.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import DoctorSidebar from "../../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import PatientSidebar from "../../components/layout/sidebar/patient"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "../../components/ui/dialog"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { formatVND } from "@/utils/currency"
+} from "../../components/ui/select"
+import { Textarea } from "../../components/ui/textarea"
+import { formatVND } from "../../utils/currency"
 
 export default function InvoiceDetailPage() {
   const { id } = useParams()
@@ -43,11 +43,11 @@ export default function InvoiceDetailPage() {
   const [isLoadingPayment, setIsLoadingPayment] = useState(false)
   const [isLoadingUpdate, setIsLoadingUpdate] = useState(false)
 
-  // Edit form state
+  
   const [editDiscount, setEditDiscount] = useState("")
   const [editNote, setEditNote] = useState("")
 
-  // Payment form state
+  
   const [paymentAmount, setPaymentAmount] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH)
   const [paymentReference, setPaymentReference] = useState("")
@@ -177,7 +177,7 @@ export default function InvoiceDetailPage() {
     )
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    
     if (role === "admin" || role === "1") {
       return <AdminSidebar>{loadingContent}</AdminSidebar>
     } else if (role === "doctor" || role === "4") {
@@ -203,7 +203,7 @@ export default function InvoiceDetailPage() {
     )
     if (!user) return null
     const role = String(user.roleId || user.role || "").toLowerCase()
-    // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+    
     if (role === "admin" || role === "1") {
       return <AdminSidebar>{errorContent}</AdminSidebar>
     } else if (role === "doctor" || role === "4") {
@@ -222,8 +222,8 @@ export default function InvoiceDetailPage() {
 
   const role = String(user.roleId || user.role || "").toLowerCase()
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
-  const canEdit = user?.roleId === 1 || user?.roleId === 2 // Admin or Receptionist
+  
+  const canEdit = user?.roleId === 1 || user?.roleId === 2 
   const remainingAmount = invoice.totalAmount - invoice.paidAmount
   const medicineItems = invoice.items?.filter(item => item.itemType === "MEDICINE") || []
   const examinationItems = invoice.items?.filter(item => item.itemType === "EXAMINATION") || []
@@ -231,7 +231,7 @@ export default function InvoiceDetailPage() {
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
       <div className="space-y-6">
-        {/* Back Button */}
+        {}
         <div>
           <Button 
             variant="ghost" 
@@ -243,7 +243,7 @@ export default function InvoiceDetailPage() {
           </Button>
         </div>
 
-        {/* Invoice Header Card */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5 mb-8 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
             <div className="flex items-start justify-between">
@@ -304,7 +304,7 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
 
-          {/* Quick Info */}
+          {}
           <div className="grid grid-cols-4 divide-x bg-white">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-2">
@@ -371,9 +371,9 @@ export default function InvoiceDetailPage() {
           </div>
         </Card>
 
-        {/* Details Cards */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Patient Information */}
+          {}
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
               <CardTitle className="flex items-center gap-2">
@@ -399,7 +399,7 @@ export default function InvoiceDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Doctor Information */}
+          {}
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
               <CardTitle className="flex items-center gap-2">
@@ -426,7 +426,7 @@ export default function InvoiceDetailPage() {
           </Card>
         </div>
 
-        {/* Payment Details Card */}
+        {}
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
             <CardTitle className="flex items-center gap-2">
@@ -436,7 +436,7 @@ export default function InvoiceDetailPage() {
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-3">
-                {/* Examination Fee */}
+                {}
                 {examinationItems.length > 0 && (
                   <div className="flex justify-between py-2">
                     <span className="text-slate-600">Phí khám bệnh</span>
@@ -446,7 +446,7 @@ export default function InvoiceDetailPage() {
                   </div>
                 )}
 
-                {/* Medicine Items */}
+                {}
                 {medicineItems.length > 0 && (
                   <div className="border rounded-lg p-4 space-y-2">
                     <div className="font-medium text-slate-900 mb-3">Danh sách thuốc:</div>
@@ -474,7 +474,7 @@ export default function InvoiceDetailPage() {
                   </div>
                 )}
 
-                {/* Discount */}
+                {}
                 {invoice.discount > 0 && (
                   <div className="flex justify-between py-2 text-red-600">
                     <span>Giảm giá</span>
@@ -482,7 +482,7 @@ export default function InvoiceDetailPage() {
                   </div>
                 )}
 
-                {/* Payment Summary */}
+                {}
                 {invoice.paymentStatus !== PaymentStatus.UNPAID && (
                   <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                     <div className="flex justify-between">
@@ -520,7 +520,7 @@ export default function InvoiceDetailPage() {
                 </div>
               )}
 
-              {/* Actions */}
+              {}
               {canEdit && invoice.paymentStatus !== PaymentStatus.PAID && (
                 <div className="pt-4 border-t">
                   <Button
@@ -536,7 +536,7 @@ export default function InvoiceDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Payment History Card */}
+        {}
         {invoice.payments && invoice.payments.length > 0 && (
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-cyan-50/50 border-b">
@@ -568,7 +568,7 @@ export default function InvoiceDetailPage() {
           </Card>
         )}
 
-        {/* Note Card */}
+        {}
         {invoice.note && (
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-orange-50/50 border-b">
@@ -583,10 +583,10 @@ export default function InvoiceDetailPage() {
           </Card>
         )}
 
-        {/* Edit Dialog - Premium Design */}
+        {}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
-            {/* Premium Gradient Header */}
+            {}
             <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-6 text-white">
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
@@ -605,9 +605,9 @@ export default function InvoiceDetailPage() {
               </div>
             </div>
 
-            {/* Form Content */}
+            {}
             <div className="p-6 space-y-5 bg-gradient-to-b from-slate-50/50 to-white">
-              {/* Discount Field */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="discount" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-emerald-500" />
@@ -628,7 +628,7 @@ export default function InvoiceDetailPage() {
                 <p className="text-xs text-slate-500 pl-1">Nhập số tiền giảm giá áp dụng cho hóa đơn</p>
               </div>
 
-              {/* Note Field */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="note" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <FileText className="h-4 w-4 text-amber-500" />
@@ -645,7 +645,7 @@ export default function InvoiceDetailPage() {
               </div>
             </div>
 
-            {/* Footer */}
+            {}
             <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
               <Button 
                 variant="ghost" 
@@ -675,10 +675,10 @@ export default function InvoiceDetailPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Payment Dialog - Premium Design */}
+        {}
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
           <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl">
-            {/* Premium Gradient Header */}
+            {}
             <div className="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-6 text-white">
               <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
@@ -701,9 +701,9 @@ export default function InvoiceDetailPage() {
               </div>
             </div>
 
-            {/* Form Content */}
+            {}
             <div className="p-6 space-y-5 bg-gradient-to-b from-slate-50/50 to-white">
-              {/* Amount Field */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="paymentAmount" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-emerald-500" />
@@ -723,7 +723,7 @@ export default function InvoiceDetailPage() {
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">VND</span>
                 </div>
-                {/* Quick amount buttons */}
+                {}
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"
@@ -742,7 +742,7 @@ export default function InvoiceDetailPage() {
                 </div>
               </div>
 
-              {/* Payment Method Field */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="paymentMethod" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Activity className="h-4 w-4 text-blue-500" />
@@ -781,7 +781,7 @@ export default function InvoiceDetailPage() {
                 </Select>
               </div>
 
-              {/* Reference Field */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="paymentReference" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <FileText className="h-4 w-4 text-violet-500" />
@@ -796,7 +796,7 @@ export default function InvoiceDetailPage() {
                 />
               </div>
 
-              {/* Note Field */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="paymentNote" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <FileText className="h-4 w-4 text-amber-500" />
@@ -813,7 +813,7 @@ export default function InvoiceDetailPage() {
               </div>
             </div>
 
-            {/* Footer */}
+            {}
             <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
               <Button 
                 variant="ghost" 
@@ -846,7 +846,7 @@ export default function InvoiceDetailPage() {
       </div>
     )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
   if (role === "admin" || role === "1") {
     return <AdminSidebar>{content}</AdminSidebar>
   } else if (role === "doctor" || role === "4") {

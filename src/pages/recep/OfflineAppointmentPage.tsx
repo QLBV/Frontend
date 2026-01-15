@@ -1,28 +1,28 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import ReceptionistSidebar from "../../components/layout/sidebar/recep"
+import { Button } from "../../components/ui/button"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "../../components/ui/card"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
+} from "../../components/ui/select"
+import { Calendar } from "../../components/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "../../components/ui/popover"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "../../components/ui/alert-dialog"
 import { 
   ArrowLeft, 
   CalendarIcon, 
@@ -46,15 +46,15 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 import {
   createOfflineAppointment,
   type CreateAppointmentData,
-} from "@/services/appointment.service"
-import { createPatient } from "@/services/patient.service"
-import { SpecialtyService, type Specialty } from "@/services/specialty.service"
-import { ShiftService, type DoctorWithShifts } from "@/services/shift.service"
-import { Input } from "@/components/ui/input"
+} from "../../features/appointment/services/appointment.service"
+import { createPatient } from "../../features/patient/services/patient.service"
+import { SpecialtyService, type Specialty } from "../../features/appointment/services/specialty.service"
+import { ShiftService, type DoctorWithShifts } from "../../features/shift/services/shift.service"
+import { Input } from "../../components/ui/input"
 
 export default function OfflineAppointmentPage() {
   const navigate = useNavigate()
@@ -64,14 +64,14 @@ export default function OfflineAppointmentPage() {
 
   const [patientId, setPatientId] = useState<number | null>(null)
   
-  // New State Logic
+  
   const [selectedSpecialty, setSelectedSpecialty] = useState<number | null>(null)
   const [doctorId, setDoctorId] = useState<number | null>(null)
   const [shiftId, setShiftId] = useState<number | null>(null)
   const [date, setDate] = useState<Date>()
   const [symptomInitial, setSymptomInitial] = useState("")
 
-  // Data States
+  
   const [specialties, setSpecialties] = useState<Specialty[]>([])
   const [doctorsWithShifts, setDoctorsWithShifts] = useState<DoctorWithShifts[]>([])
   const [selectedDoctorShifts, setSelectedDoctorShifts] = useState<any[]>([])
@@ -79,11 +79,11 @@ export default function OfflineAppointmentPage() {
   const [isLoadingSpecialties, setIsLoadingSpecialties] = useState(false)
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(false)
 
-  // Error Dialog State
+  
   const [showErrorDialog, setShowErrorDialog] = useState(false)
   const [errorDialogContent, setErrorDialogContent] = useState({ title: "", message: "" })
 
-  // Patient Form
+  
   const [patientForm, setPatientForm] = useState({
     fullName: "",
     gender: "MALE" as "MALE" | "FEMALE" | "OTHER",
@@ -93,7 +93,7 @@ export default function OfflineAppointmentPage() {
     address: ""
   })
 
-  // 1. Fetch specialties on mount
+  
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
@@ -109,7 +109,7 @@ export default function OfflineAppointmentPage() {
     fetchSpecialties()
   }, [])
 
-  // 2. Fetch doctors when Date & Specialty change
+  
   useEffect(() => {
     const fetchDoctorsByDate = async () => {
       if (!date || !selectedSpecialty) {
@@ -125,11 +125,11 @@ export default function OfflineAppointmentPage() {
           selectedSpecialty
         )
 
-        // Filter out doctors who have NO available shifts (all full)
+        
         const availableDoctors = data.filter(d => d.shifts.some(s => !s.isFull));
         setDoctorsWithShifts(availableDoctors)
 
-        // Reset selections if current selection is invalid
+        
         setDoctorId(null)
         setShiftId(null)
         setSelectedDoctorShifts([])
@@ -145,7 +145,7 @@ export default function OfflineAppointmentPage() {
     fetchDoctorsByDate()
   }, [date, selectedSpecialty])
 
-  // Handle Doctor Selection
+  
   const handleDoctorClick = (id: number) => {
     if (doctorId === id) {
       setDoctorId(null)
@@ -169,7 +169,7 @@ export default function OfflineAppointmentPage() {
       return
     }
     
-    // Validate Patient Info
+    
     if (!patientForm.fullName || !patientForm.dateOfBirth || !patientForm.phone) {
         toast.error("Vui lòng nhập họ tên, ngày sinh và số điện thoại bệnh nhân")
         return
@@ -177,7 +177,7 @@ export default function OfflineAppointmentPage() {
 
     setIsSubmitting(true)
     try {
-      // 1. Create Patient
+      
       const profiles: any[] = []
       if (patientForm.phone) profiles.push({ type: "phone", value: patientForm.phone })
       if (patientForm.email) profiles.push({ type: "email", value: patientForm.email })
@@ -187,7 +187,7 @@ export default function OfflineAppointmentPage() {
         fullName: patientForm.fullName,
         gender: patientForm.gender,
         dateOfBirth: patientForm.dateOfBirth,
-        cccd: "", // CCCD optional now
+        cccd: "", 
         profiles
       })
 
@@ -195,7 +195,7 @@ export default function OfflineAppointmentPage() {
           throw new Error("Không thể tạo hồ sơ bệnh nhân")
       }
 
-      // 2. Create Appointment
+      
       const appointmentData: CreateAppointmentData & { patientId: number } = {
         patientId: newPatient.id,
         doctorId,
@@ -205,13 +205,13 @@ export default function OfflineAppointmentPage() {
       }
       const result = await createOfflineAppointment(appointmentData)
       setCreatedAppointment(result)
-      setPatientId(newPatient.id) // For success screen
+      setPatientId(newPatient.id) 
       setIsSuccess(true)
       toast.success("Đặt lịch hẹn và tạo hồ sơ thành công!")
       
     } catch (error: any) {
-      // Aggressively dismiss toasts to ensure Dialog is the only feedback
-      // We do this multiple times to catch any race conditions from global interceptors
+      
+      
       toast.dismiss()
       setTimeout(() => toast.dismiss(), 0)
       setTimeout(() => toast.dismiss(), 100)
@@ -221,49 +221,49 @@ export default function OfflineAppointmentPage() {
       let title = "Đặt lịch thất bại"
       let message = "Đã có lỗi xảy ra trong quá trình đặt lịch. Vui lòng thử lại."
 
-      // Normalize error code for easier matching
+      
       const normalizedError = String(errorCode)
 
       switch (true) {
         case normalizedError.includes("PATIENT_ALREADY_HAS_OVERLAPPING_APPOINTMENT"):
         case normalizedError.includes("Bệnh nhân này đã có lịch hẹn trùng"):
-            title = "⚠️ Trùng lịch khám"
+            title = "️ Trùng lịch khám"
             message = "Bệnh nhân này đã có lịch hẹn trùng hoặc quá sát với khung giờ của ca khám này. Vui lòng chọn ca khác."
             break;
 
         case normalizedError.includes("SHIFT_FULL"):
         case normalizedError.includes("Ca khám đã đủ lượt"):
-            title = "⛔ Ca khám đã đầy"
+            title = " Ca khám đã đầy"
             message = "Ca khám này đã đạt giới hạn tối đa số lượng bệnh nhân. Vui lòng chuyển sang ca khác."
             break;
 
         case normalizedError.includes("DAY_FULL"):
         case normalizedError.includes("Bác sĩ đã đủ 40 lịch"):
-            title = "⛔ Bác sĩ đã kín lịch"
+            title = " Bác sĩ đã kín lịch"
             message = "Bác sĩ đã nhận đủ số lượng bệnh nhân tối đa trong ngày. Vui lòng chọn ngày làm việc khác."
             break;
 
         case normalizedError.includes("DOCTOR_NOT_ON_DUTY"):
         case normalizedError.includes("Bác sĩ không trực"):
-            title = "📅 Bác sĩ không trực"
+            title = " Bác sĩ không trực"
             message = "Bác sĩ không có lịch trực vào thời gian này (hoặc đã bị thay đổi). Vui lòng tải lại trang."
             break;
 
         case normalizedError.includes("CANNOT_BOOK_PAST_DATE"):
         case normalizedError.includes("Không thể đặt lịch cho ngày trong quá khứ"):
-            title = "❌ Ngày không hợp lệ"
+            title = " Ngày không hợp lệ"
             message = "Không thể đặt lịch cho ngày trong quá khứ."
             break;
 
         case normalizedError.includes("DOCTOR_NOT_AVAILABLE"):
         case normalizedError.includes("Bác sĩ hiện không tiếp nhận bệnh nhân"):
-            title = "⛔ Bác sĩ ngừng nhận bệnh"
+            title = " Bác sĩ ngừng nhận bệnh"
             message = "Bác sĩ này hiện không tiếp nhận bệnh nhân mới. Vui lòng chọn bác sĩ khác."
             break;
 
         case normalizedError.includes("PATIENT_BLOCKED_DUE_TO_NO_SHOWS"):
         case normalizedError.includes("Tài khoản bị tạm khóa"):
-            title = "🔒 Bệnh nhân bị khóa"
+            title = " Bệnh nhân bị khóa"
             message = "Bệnh nhân này đã bị khóa do vắng mặt nhiều lần. Vui lòng liên hệ quản trị viên."
             break;
 
@@ -278,15 +278,15 @@ export default function OfflineAppointmentPage() {
     }
   }
 
-  // Ensure no toasts appear while Error Dialog is shown
+  
   useEffect(() => {
     if (showErrorDialog) {
-      // Dismiss immediately
+      
       toast.dismiss()
-      // Continuous dismissal loop to catch any toasts that appear slightly later due to race conditions or animations
+      
       const timer = setInterval(() => {
         toast.dismiss()
-      }, 50) // Check every 50ms
+      }, 50) 
       
       return () => clearInterval(timer)
     }
@@ -411,7 +411,7 @@ export default function OfflineAppointmentPage() {
             <CardContent className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* 1. Patient Info */}
+                {}
                 <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <User className="w-5 h-5 text-indigo-600" />
@@ -480,12 +480,12 @@ export default function OfflineAppointmentPage() {
                     </div>
                 </div>
 
-                {/* 2. Medical Info - New Layout */}
+                {}
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Specialty & Date Selection */}
+                        {}
                         <div className="space-y-6">
-                            {/* Specialty */}
+                            {}
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chuyên khoa *</Label>
                                 <Select 
@@ -511,7 +511,7 @@ export default function OfflineAppointmentPage() {
                                 </Select>
                             </div>
 
-                            {/* Date */}
+                            {}
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày khám *</Label>
                                 <div className="relative">
@@ -536,7 +536,7 @@ export default function OfflineAppointmentPage() {
                             </div>
                         </div>
 
-                        {/* Shift Selection - Only show when Doctor is selected */}
+                        {}
                         <div className="space-y-1.5">
                             <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ca khám *</Label>
                              <div className="min-h-[100px] bg-slate-50/50 rounded-xl border border-slate-100 p-3">
@@ -550,7 +550,7 @@ export default function OfflineAppointmentPage() {
                                         {selectedDoctorShifts.map(({ shift, isFull, currentBookings, maxSlots }) => (
                                             <div
                                                 key={shift.id}
-                                                // Disable click if full
+                                                
                                                 onClick={() => !isFull && setShiftId(shift.id)}
                                                 className={cn(
                                                     "flex flex-col items-center justify-center p-2 rounded-lg border transition-all text-center relative overflow-hidden",
@@ -565,7 +565,7 @@ export default function OfflineAppointmentPage() {
                                                 <span className="text-sm">{shift.name}</span>
                                                 <span className="text-[10px] opacity-80">{shift.startTime.slice(0,5)} - {shift.endTime.slice(0,5)}</span>
                                                 
-                                                {/* Show slot count or FULL badge */}
+                                                {}
                                                 <div className="mt-1 text-[9px] font-bold">
                                                     {isFull ? (
                                                         <span className="text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">ĐÃ ĐẦY</span>
@@ -583,7 +583,7 @@ export default function OfflineAppointmentPage() {
                         </div>
                     </div>
 
-                    {/* Doctor Selection */}
+                    {}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
                              <UserCheck className="w-5 h-5 text-indigo-600" />
@@ -638,7 +638,7 @@ export default function OfflineAppointmentPage() {
                     </div>
                 </div>
 
-                {/* Symptoms */}
+                {}
                 <div className="space-y-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
                     <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-5 h-5 text-indigo-600" />

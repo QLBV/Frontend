@@ -3,16 +3,16 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import AdminSidebar from '../../components/layout/sidebar/admin'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Loader2, User, Phone, Mail, Award, MapPin, Briefcase, Calendar, ArrowLeft, Stethoscope } from "lucide-react"
 import { toast } from "sonner"
-import api from "@/lib/api"
+import api from "../../lib/api"
 
 interface DoctorFormData {
   fullName: string
@@ -41,7 +41,7 @@ export default function DoctorAddPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [specialties, setSpecialties] = useState<Specialty[]>([
-    // Fallback data nếu API không hoạt động
+    
     { id: 1, name: "Nội khoa", description: "Chuyên khoa nội tổng quát" },
     { id: 2, name: "Ngoại khoa", description: "Chuyên khoa ngoại tổng quát" },
     { id: 3, name: "Sản phụ khoa", description: "Chuyên khoa sản phụ" },
@@ -49,7 +49,7 @@ export default function DoctorAddPage() {
     { id: 5, name: "Tim mạch", description: "Chuyên khoa tim mạch" },
     { id: 6, name: "Da liễu", description: "Chuyên khoa da liễu" }
   ])
-  const [loadingSpecialties, setLoadingSpecialties] = useState(false) // Changed to false since we have fallback data
+  const [loadingSpecialties, setLoadingSpecialties] = useState(false) 
 
   const [formData, setFormData] = useState<DoctorFormData>({
     fullName: "",
@@ -61,7 +61,7 @@ export default function DoctorAddPage() {
     description: "",
   })
 
-  // Fetch specialties from API
+  
   const fetchSpecialties = async () => {
     try {
       setLoadingSpecialties(true)
@@ -71,10 +71,10 @@ export default function DoctorAddPage() {
       if (response.data.success && response.data.data.length > 0) {
         setSpecialties(response.data.data)
       }
-      // If API fails, keep fallback data
+      
     } catch (err: any) {
       console.log('Using fallback specialties data:', err.message)
-      // Keep fallback data, don't show error to user
+      
     } finally {
       setLoadingSpecialties(false)
     }
@@ -106,7 +106,7 @@ export default function DoctorAddPage() {
     setError("")
     setLoading(true)
 
-    // Validation
+    
     if (!formData.fullName.trim()) {
       setError("Vui lòng nhập họ và tên")
       setLoading(false)
@@ -156,19 +156,19 @@ export default function DoctorAddPage() {
     }
 
     try {
-      // Step 1: Create User first (assuming we need to create user with doctor role)
+      
       const userResponse = await api.post('/auth/register', {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
-        roleId: 4 // Doctor role ID
+        roleId: 4 
       })
 
       if (!userResponse.data.success) {
         throw new Error(userResponse.data.message || 'Không thể tạo tài khoản người dùng')
       }
 
-      // Fix: Get userId from correct response structure
+      
       const userId = userResponse.data.user?.id
 
       console.log('User creation response:', {
@@ -182,7 +182,7 @@ export default function DoctorAddPage() {
         throw new Error(`Không thể lấy ID người dùng. Response: ${JSON.stringify(userResponse.data)}`)
       }
 
-      // Step 2: Create Doctor profile
+      
       const doctorResponse = await api.post('/doctors', {
         userId: userId,
         specialtyId: parseInt(formData.specialtyId),
@@ -210,7 +210,7 @@ export default function DoctorAddPage() {
         errorMessage = err.message
       }
       
-      // Handle specific error messages
+      
       if (errorMessage.includes('EMAIL_ALREADY_EXISTS')) {
         errorMessage = 'Email này đã được sử dụng. Vui lòng chọn email khác.'
       } else if (errorMessage.includes('EMAIL_AND_PASSWORD_REQUIRED')) {
@@ -228,7 +228,7 @@ export default function DoctorAddPage() {
     <AdminSidebar>
       <div className="p-8">
         <div className="max-w-2xl mx-auto">
-          {/* Back Button and Header */}
+          {}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4 -ml-30">
               <Button
@@ -253,14 +253,14 @@ export default function DoctorAddPage() {
 
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Alert */}
+              {}
               {error && (
                 <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
                   {error}
                 </div>
               )}
 
-              {/* Họ và Tên */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
@@ -277,7 +277,7 @@ export default function DoctorAddPage() {
                 />
               </div>
 
-              {/* Email và Mật khẩu */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
@@ -313,7 +313,7 @@ export default function DoctorAddPage() {
                 </div>
               </div>
 
-              {/* Chuyên khoa */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="specialtyId" className="flex items-center gap-2">
                   <Stethoscope className="w-4 h-4" />
@@ -333,7 +333,7 @@ export default function DoctorAddPage() {
                 </Select>
               </div>
 
-              {/* Vị trí và Bằng cấp */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="position" className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export default function DoctorAddPage() {
                 </div>
               </div>
 
-              {/* Mô tả */}
+              {}
               <div className="space-y-2">
                 <Label htmlFor="description" className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
@@ -384,7 +384,7 @@ export default function DoctorAddPage() {
                 />
               </div>
 
-              {/* Buttons */}
+              {}
               <div className="flex gap-4 pt-4">
                 <Button
                   type="submit"

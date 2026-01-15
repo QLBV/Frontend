@@ -13,24 +13,24 @@ import {
   ShieldCheck,
   RefreshCw
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+} from "../../components/ui/select"
+import { Badge } from "../../components/ui/badge"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import { 
   ScheduleGenerationService, 
   type GenerationPreview, 
   type GenerationResult 
-} from "@/services/scheduleGeneration.service"
+} from "../../features/shift/services/scheduleGeneration.service"
 
 export default function ScheduleGenerationPage() {
   const [activeTab, setActiveTab] = useState<"next" | "manual">("next")
@@ -38,7 +38,7 @@ export default function ScheduleGenerationPage() {
   const [previewData, setPreviewData] = useState<GenerationPreview | null>(null)
   const [lastResult, setLastResult] = useState<GenerationResult | null>(null)
   
-  // Manual generation state
+  
   const currentDate = new Date()
   const [manualYear, setManualYear] = useState<string>(currentDate.getFullYear().toString())
   const [manualMonth, setManualMonth] = useState<string>((currentDate.getMonth() + 1).toString())
@@ -67,7 +67,7 @@ export default function ScheduleGenerationPage() {
       const result = await ScheduleGenerationService.generateNextMonth()
       setLastResult(result)
       toast.success(result.message || "Tạo lịch thành công!")
-      setPreviewData(null) // Clear preview after success
+      setPreviewData(null) 
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tạo lịch")
     } finally {
@@ -94,7 +94,7 @@ export default function ScheduleGenerationPage() {
       )
       setLastResult(result)
       toast.success(result.message || "Tạo lịch thành công!")
-      // Switch to result view view
+      
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tạo lịch")
     } finally {
@@ -102,7 +102,7 @@ export default function ScheduleGenerationPage() {
     }
   }
 
-  // Generate list of years (current - 1 to current + 2)
+  
   const years = Array.from({ length: 4 }, (_, i) => currentDate.getFullYear() - 1 + i)
   
   return (
@@ -110,7 +110,7 @@ export default function ScheduleGenerationPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
         <div className="p-8 max-w-[1200px] mx-auto space-y-8">
           
-          {/* Header */}
+          {}
           <div className="flex items-center gap-4">
             <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg shadow-blue-200">
               <CalendarDays className="w-8 h-8 text-white" />
@@ -126,10 +126,10 @@ export default function ScheduleGenerationPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Action Area */}
+            {}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Tabs / Selection */}
+              {}
               <div className="flex p-1 bg-slate-100 rounded-xl w-fit">
                 <button
                   onClick={() => setActiveTab("next")}
@@ -153,7 +153,7 @@ export default function ScheduleGenerationPage() {
                 </button>
               </div>
 
-              {/* Next Month Tab */}
+              {}
               {activeTab === "next" && (
                 <Card className="border-0 shadow-xl shadow-slate-200/50 overflow-hidden relative">
                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
@@ -255,7 +255,7 @@ export default function ScheduleGenerationPage() {
                 </Card>
               )}
 
-              {/* Manual Month Tab */}
+              {}
               {activeTab === "manual" && (
                 <Card className="border-0 shadow-xl shadow-slate-200/50">
                   <CardHeader>
@@ -319,7 +319,7 @@ export default function ScheduleGenerationPage() {
                 </Card>
               )}
 
-              {/* Result Success Alert */}
+              {}
               {lastResult && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
                    <Alert className="bg-emerald-50 border-emerald-200 py-6">
@@ -348,7 +348,7 @@ export default function ScheduleGenerationPage() {
 
             </div>
 
-            {/* Sidebar / Info */}
+            {}
             <div className="space-y-6">
               <Card className="border-0 shadow-lg bg-indigo-900 text-white overflow-hidden relative">
                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full opacity-20 blur-3xl" />

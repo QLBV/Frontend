@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { DollarSign, Users, TrendingUp, Calendar, Loader2, BarChart3, PieChart, Download } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Badge } from "../../components/ui/badge"
 import { toast } from "sonner"
-import { PayrollService, type Payroll } from "@/services/payroll.service"
-import AdminSidebar from "@/components/sidebar/admin"
+import { PayrollService, type Payroll } from "../../features/finance/services/payroll.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import { format } from "date-fns"
 
 export interface PayrollStatistics {
@@ -51,7 +51,7 @@ export default function PayrollStatisticsPage() {
     }
   }
 
-  // Calculate totals
+  
   const totalPayrolls = statistics.reduce((sum, stat) => sum + stat.count, 0)
   const totalGross = statistics.reduce((sum, stat) => sum + (parseFloat(stat.totalGross?.toString() || "0")), 0)
   const totalNet = statistics.reduce((sum, stat) => sum + (parseFloat(stat.totalNet?.toString() || "0")), 0)
@@ -84,7 +84,7 @@ export default function PayrollStatisticsPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Thống kê lương</h1>
@@ -98,7 +98,7 @@ export default function PayrollStatisticsPage() {
           </Button>
         </div>
 
-        {/* Filters */}
+        {}
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <CardTitle>Bộ lọc</CardTitle>
@@ -149,7 +149,7 @@ export default function PayrollStatisticsPage() {
           </CardContent>
         </Card>
 
-        {/* Summary Cards */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -196,7 +196,7 @@ export default function PayrollStatisticsPage() {
           </Card>
         </div>
 
-        {/* Statistics by Status */}
+        {}
         <Card className="border-0 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
             <CardTitle className="text-2xl flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function PayrollStatisticsPage() {
                         </td>
                       </tr>
                     ))}
-                    {/* Total Row */}
+                    {}
                     <tr className="border-t-2 border-slate-300 bg-slate-100 font-bold">
                       <td className="py-4 px-6">Tổng cộng</td>
                       <td className="py-4 px-6">{totalPayrolls}</td>
@@ -276,10 +276,10 @@ export default function PayrollStatisticsPage() {
           </CardContent>
         </Card>
 
-        {/* Visual Charts */}
+        {}
         {statistics.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Status Distribution Chart */}
+            {}
             <Card className="border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -310,7 +310,7 @@ export default function PayrollStatisticsPage() {
               </CardContent>
             </Card>
 
-            {/* Revenue Distribution Chart */}
+            {}
             <Card className="border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

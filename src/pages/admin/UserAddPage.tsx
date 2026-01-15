@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin'
+import AdminSidebar from '../../components/layout/sidebar/admin'
 import { 
   ArrowLeft,
   Save,
@@ -12,26 +12,26 @@ import {
   Phone,
   Shield
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { toast } from "sonner"
-import { UserService, type CreateUserData } from "@/services/user.service"
+import { UserService, type CreateUserData } from "../../features/auth/services/user.service"
 
 export default function UserAddPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [isSaving, setIsSaving] = useState(false)
   
-  // Get role from query param
+  
   const queryParams = new URLSearchParams(location.search)
   const initialRole = queryParams.get('role') as any || "patient"
 
@@ -43,7 +43,7 @@ export default function UserAddPage() {
     role: initialRole,
   })
 
-  // Update role if query param changes
+  
   useEffect(() => {
     const role = queryParams.get('role') as any
     if (role && ['admin', 'doctor', 'receptionist', 'patient'].includes(role)) {
@@ -54,7 +54,7 @@ export default function UserAddPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Basic validation
+    
     if (!formData.fullName || !formData.email || !formData.password) {
       toast.error("Vui lòng điền đầy đủ các thông tin bắt buộc")
       return
@@ -84,7 +84,7 @@ export default function UserAddPage() {
   return (
     <AdminSidebar>
       <div className="p-8">
-        {/* Header */}
+        {}
         <div className="mb-6">
           <Button
             variant="ghost"

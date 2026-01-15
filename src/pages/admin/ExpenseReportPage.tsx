@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import AdminSidebar from "@/components/sidebar/admin";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import AdminSidebar from "../../components/layout/sidebar/admin";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from "../../components/ui/select";
+import { Badge } from "../../components/ui/badge";
 import { 
   AreaChart, 
   Area, 
@@ -36,9 +36,9 @@ import {
   Users
 } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
-// --- Interfaces ---
+
 interface ExpenseSummary {
   totalExpense: number;
   medicineExpense: number;
@@ -89,7 +89,7 @@ export default function ExpenseReport() {
     { value: "12", label: "Tháng 12" },
   ];
 
-  // Fetch expense report
+  
   const fetchExpenseReport = async () => {
     try {
       setLoading(true);
@@ -114,22 +114,22 @@ export default function ExpenseReport() {
     }
   };
 
-  // Load report on mount
+  
   useEffect(() => {
     fetchExpenseReport();
   }, []);
 
-  // Format currency
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
       minimumFractionDigits: 0,
     }).format(value) + " VND";
   };
 
-  // Format chart data
+  
   const chartData = reportData?.expenseTrends || [];
 
-  // Calculate statistics
+  
   const summaryData = reportData?.summary || {
     totalExpense: 0,
     medicineExpense: 0,
@@ -138,14 +138,14 @@ export default function ExpenseReport() {
     salaryPercentage: 0,
   };
 
-  // Salary mapping for table
+  
   const salaryTableData = (reportData?.salaryByRole || []).map((item: any) => ({
     name: item.role,
     salary: item.totalSalary || 0,
     count: item.count || 0,
   }));
 
-  // Expense breakdown for pie chart
+  
   const expenseBreakdown = [
     { name: "Thuốc", value: summaryData.medicineExpense },
     { name: "Lương", value: summaryData.salaryExpense },
@@ -212,7 +212,7 @@ export default function ExpenseReport() {
     <AdminSidebar>
       <div className="container mx-auto px-6 py-10 bg-gradient-to-br from-slate-50 via-red-50/20 to-slate-50 min-h-screen">
         <div className="max-w-[1600px] mx-auto space-y-10">
-          {/* Header Section */}
+          {}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -253,7 +253,7 @@ export default function ExpenseReport() {
             </div>
           </div>
 
-          {/* Filter Card */}
+          {}
           <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white/80 backdrop-blur-md rounded-[32px] overflow-hidden">
             <CardHeader className="pb-4 pt-7 px-8 border-b border-slate-50">
               <div className="flex items-center gap-3">
@@ -320,7 +320,7 @@ export default function ExpenseReport() {
             </CardContent>
           </Card>
 
-          {/* Summary Cards Grid */}
+          {}
           {reportData && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {[
@@ -391,10 +391,10 @@ export default function ExpenseReport() {
             </div>
           )}
 
-          {/* Charts Row */}
+          {}
           {reportData && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Line Chart (Medicine Expense) */}
+              {}
               {!month && (
                 <Card className="lg:col-span-2 border-0 shadow-xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden">
                   <CardHeader className="pb-0 pt-10 px-10 flex flex-row items-center justify-between">
@@ -475,7 +475,7 @@ export default function ExpenseReport() {
                 </Card>
               )}
 
-              {/* Expense Proportion (Pie Chart) */}
+              {}
               <Card className="lg:col-span-1 border-0 shadow-xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden">
                 <CardHeader className="pb-0 pt-10 px-10">
                   <div className="bg-indigo-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-indigo-100">
@@ -548,7 +548,7 @@ export default function ExpenseReport() {
             </div>
           )}
 
-          {/* Detailed Statistics Grid (Replacing the Bar Chart section) */}
+          {}
           {reportData && (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden p-8 flex items-center gap-6 group hover:shadow-2xl transition-all duration-500">
@@ -589,7 +589,7 @@ export default function ExpenseReport() {
              </div>
           )}
 
-          {/* Detailed Salary Table */}
+          {}
           {reportData && (
              <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white rounded-[32px] overflow-hidden">
                 <CardHeader className="p-8 border-b border-slate-50">
@@ -641,7 +641,7 @@ export default function ExpenseReport() {
              </Card>
           )}
 
-          {/* Empty/Loading State */}
+          {}
           {!loading && !reportData && (
             <Card className="border-0 shadow-lg bg-white rounded-[32px] p-20 text-center">
               <div className="max-w-md mx-auto space-y-6">

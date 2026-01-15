@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import DoctorSidebar from "@/components/sidebar/doctor";
+import DoctorSidebar from "../../components/layout/sidebar/doctor";
 import {
   Search,
   Calendar,
@@ -11,23 +11,23 @@ import {
   Bell,
   Stethoscope,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
 import { Link } from "react-router-dom";
-import api from "@/lib/api";
-import { useAuth } from "@/auth/authContext";
-import { cn } from "@/lib/utils";
+import api from "../../lib/api";
+import { useAuth } from "../../features/auth/context/authContext";
+import { cn } from "../../lib/utils";
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationPrevious,
   PaginationNext,
-} from "@/components/ui/pagination";
+} from "../../components/ui/pagination";
 
-// --- Interfaces & Data ---
+
 interface MedicalAppointment {
   id: number;
   visitId?: number;
@@ -43,12 +43,12 @@ interface MedicalAppointment {
   isVisit?: boolean;
   isReferral?: boolean;
   referralInfo?: any;
-  // Custom patient details (for booking for relatives)
+  
   patientName?: string;
   patientPhone?: string;
   patientDob?: string;
   patientGender?: "MALE" | "FEMALE";
-  // Support both lowercase (standard) and uppercase (legacy/backend) aliases
+  
   patient?: {
     id: number;
     fullName?: string;
@@ -84,7 +84,7 @@ export default function MedicalList() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  // filterStatus uses union type including REFERRAL
+  
   const [filterStatus, setFilterStatus] = useState<
     "all" | "WAITING" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "REFERRAL"
   >("all");
@@ -92,18 +92,18 @@ export default function MedicalList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toLocaleDateString("en-CA") // YYYY-MM-DD in local time
+    new Date().toLocaleDateString("en-CA") 
   );
   const [showAllDates, setShowAllDates] = useState(false);
   
-  // Pagination State
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Check if user is doctor or receptionist
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
+  
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to load
+    if (authLoading) return; 
 
     if (!user) {
       setError("Please login to access this page.");
@@ -111,7 +111,7 @@ export default function MedicalList() {
       return;
     }
 
-    // Allow ADMIN (1), RECEPTIONIST (2), and DOCTOR (4)
+    
     if (user.roleId !== 1 && user.roleId !== 2 && user.roleId !== 4) {
       setError(
         "Access denied. This page is only for doctors, receptionists, and admins."
@@ -120,13 +120,13 @@ export default function MedicalList() {
       return;
     }
   }, [user, authLoading]);
-  // Fetch appointments from API
+  
   const fetchAppointments = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       setError(null);
 
-      // Get current doctor's ID from auth context
+      
       if (!user?.doctorId) {
         if (!silent) setError("Không tìm thấy thông tin bác sĩ. Vui lòng đăng nhập lại.");
         if (!silent) setLoading(false);
@@ -137,7 +137,7 @@ export default function MedicalList() {
       const dateToFetch = showAllDates ? undefined : selectedDate;
       const today = new Date().toLocaleDateString("en-CA");
 
-      // Fetch appointments, visits AND referrals
+      
       let appointmentsRes, visitsRes;
 
       const appointmentsQuery = showAllDates
@@ -150,20 +150,20 @@ export default function MedicalList() {
       
       const referralsQuery = `/visits/referrals/pending`;
 
-      // Parallel fetch
+      
       const [apptResult, visitResult, refResult] = await Promise.allSettled([
         api.get(appointmentsQuery),
         api.get(visitsQuery),
         api.get(referralsQuery)
       ]);
 
-      // Process Appointments
+      
       appointmentsRes = apptResult.status === 'fulfilled' ? apptResult.value : { data: { success: false, data: [] } };
       
-      // Process Visits
+      
       visitsRes = visitResult.status === 'fulfilled' ? visitResult.value : { data: { success: false, data: [] } };
 
-      // Process Referrals
+      
       let referralsData: any[] = [];
       if (refResult.status === 'fulfilled' && refResult.value.data.success) {
         referralsData = refResult.value.data.data || [];
@@ -173,7 +173,7 @@ export default function MedicalList() {
         const appointmentsData = appointmentsRes.data.success ? appointmentsRes.data.data || [] : [];
         const visitsData = visitsRes.data.success ? visitsRes.data.data || [] : [];
         
-        // Convert visits to appointment format
+        
         const visitAppointments = visitsData.map((visit: any) => {
           const appointment = visit.appointment || {};
           const patient = visit.patient || {};
@@ -216,19 +216,19 @@ export default function MedicalList() {
           };
         });
 
-        // Convert Referrals to appointment format
+        
         const referralAppointments = referralsData.map((ref: any) => {
-           // ref structure: { ...referralFields, visit: { patientName, visitCode, ... } }
-           // We need to shape this like MedicalAppointment
+           
+           
            return {
-             id: ref.visit.id, // Use visit ID as key
+             id: ref.visit.id, 
              visitId: ref.visit.id,
              patientId: ref.visit.patientId,
-             doctorId: currentDoctorId, // Me
+             doctorId: currentDoctorId, 
              shiftId: 0,
              date: ref.createdAt.split('T')[0],
              slotNumber: 0,
-             status: "REFERRAL", // Custom status for UI
+             status: "REFERRAL", 
              bookingType: "REFERRAL",
              bookedBy: "DOCTOR",
              symptomInitial: ref.reason,
@@ -243,7 +243,7 @@ export default function MedicalList() {
            };
         });
 
-        // Filter out appointments that already have visits
+        
         const appointmentIdsWithVisits = new Set(
           visitsData.map((v: any) => v.appointmentId).filter(Boolean)
         );
@@ -251,7 +251,7 @@ export default function MedicalList() {
           .filter((apt: any) => !appointmentIdsWithVisits.has(apt.id))
           .map((apt: any) => ({ ...apt, isVisit: false }));
 
-        // Combine all: Referrals first?
+        
         const allAppointments = [...referralAppointments, ...visitAppointments, ...uniqueAppointments];
 
         console.log(
@@ -259,15 +259,15 @@ export default function MedicalList() {
           allAppointments.length
         );
         
-        // Use combined data
+        
         setAppointments(allAppointments);
 
-        // Show info if no data
+        
         if (allAppointments.length === 0) {
           setError(null);
         }
       } else {
-        // API returned success: false
+        
         setAppointments([]);
         setError(appointmentsRes.data.message || "Failed to load appointments");
       }
@@ -284,16 +284,16 @@ export default function MedicalList() {
     }
   };
 
-  // Fetch on mount and when user changes, and setup auto-refresh
+  
   useEffect(() => {
     if (authLoading || !user) return;
 
-    // Allow ADMIN (1), RECEPTIONIST (2), and DOCTOR (4)
+    
     if (user.roleId !== 1 && user.roleId !== 2 && user.roleId !== 4) return;
 
     fetchAppointments();
 
-    // Auto-refresh every 30 seconds
+    
     const intervalId = setInterval(() => {
         fetchAppointments(true);
     }, 30000);
@@ -302,8 +302,8 @@ export default function MedicalList() {
   }, [user?.id, user?.doctorId, authLoading, selectedDate, showAllDates]);
 
   const filteredAppointments = appointments.filter((appointment) => {
-    // Get patient name from nested user object
-    // Get patient name from nested user object or custom booking details
+    
+    
     const patientName =
       appointment.patientName ||
       appointment.patient?.user?.fullName ||
@@ -323,28 +323,28 @@ export default function MedicalList() {
 
     return matchesSearch && matchesStatus;
   }).sort((a, b) => {
-    // Sort by Slot Number (Ascending) - Primary
+    
     if (a.slotNumber && b.slotNumber) {
       if (a.slotNumber !== b.slotNumber) {
         return a.slotNumber - b.slotNumber;
       }
     }
-    // If one has slot number and other doesn't (0), prioritize the one with slot number
+    
     if (a.slotNumber && !b.slotNumber) return -1;
     if (!a.slotNumber && b.slotNumber) return 1;
 
-    // Secondary Sort: By ID (or Date)
+    
     return a.id - b.id;
   });
 
-  // Calculate pagination
+  
   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
   const paginatedAppointments = filteredAppointments.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Reset page when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterStatus, selectedDate, showAllDates]);
@@ -399,15 +399,15 @@ export default function MedicalList() {
   };
 
   const calculateAge = (dateOfBirth: string) => {
-    // ...
+    
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
-    // basic age calc
+    
     return today.getFullYear() - birthDate.getFullYear();
   };
 
   const handleCallPatient = (appointment: MedicalAppointment) => {
-    // If Referral, go to Consultation Page
+    
     if (appointment.isReferral && appointment.visitId) {
        navigate(`/doctor/consultation/${appointment.visitId}`);
        return;
@@ -470,7 +470,7 @@ export default function MedicalList() {
   return (
     <DoctorSidebar>
       <div className="space-y-6">
-        {/* Page Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -516,7 +516,7 @@ export default function MedicalList() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-0 shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -586,7 +586,7 @@ export default function MedicalList() {
             </CardContent>
           </Card>
         </div>
-        {/* Search and Filter Section */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
@@ -667,7 +667,7 @@ export default function MedicalList() {
           </CardContent>
         </Card>
 
-        {/* Appointments Table */}
+        {}
         <Card className="border-0 shadow-xl shadow-slate-900/5 overflow-hidden bg-white">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
             <div className="flex items-center justify-between">
@@ -743,7 +743,7 @@ export default function MedicalList() {
                               const patient =
                                 appointment.patient || appointment.Patient;
 
-                              // Prioritize custom patient details from booking (for relatives)
+                              
                               const patientName =
                                 appointment.patientName ||
                                 appointment.patient?.user?.fullName ||
@@ -848,7 +848,7 @@ export default function MedicalList() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-2">
-                            {/* Show "Kiểm tra" button for REFERRAL status */}
+                            {}
                             {appointment.status === "REFERRAL" && appointment.visitId && (
                               <Button
                                 size="sm"
@@ -859,7 +859,7 @@ export default function MedicalList() {
                                 Kiểm tra
                               </Button>
                             )}
-                            {/* Show "Chi tiết" for completed or cancelled appointments */}
+                            {}
                             {(appointment.status === "COMPLETED" ||
                               appointment.status === "CANCELLED") && (
                               <Button
@@ -880,7 +880,7 @@ export default function MedicalList() {
                                 </Link>
                               </Button>
                             )}
-                            {/* Show "Khám bệnh" for WAITING, CHECKED_IN, or IN_PROGRESS */}
+                            {}
                             {(appointment.status === "WAITING" ||
                               appointment.status === "CHECKED_IN" ||
                               appointment.status === "IN_PROGRESS") && (
@@ -910,7 +910,7 @@ export default function MedicalList() {
               </table>
             </div>
 
-            {/* Premium Pagination Controls */}
+            {}
              {filteredAppointments.length > 0 && (
                <div className="px-6 py-4 border-t bg-white flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">

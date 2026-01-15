@@ -1,25 +1,25 @@
 import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import DoctorSidebar from '@/components/sidebar/doctor'
-import api from "@/lib/api"
+import DoctorSidebar from '../../components/layout/sidebar/doctor'
+import api from "../../lib/api"
 import { toast } from "sonner"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "../../components/ui/pagination"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "../../components/ui/alert-dialog"
 import { 
   Plus,
   Search,
@@ -51,9 +51,9 @@ import {
   UserCheck,
   Lock
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 
-// Interfaces
+
 interface Medicine {
   medicineId: number
   name: string
@@ -108,17 +108,17 @@ export default function PrescriptionManagementPage() {
   const [deleting, setDeleting] = useState<number | null>(null)
   const [lockConfirmationId, setLockConfirmationId] = useState<number | null>(null)
   
-  // Filter states
+  
   const [statusFilter, setStatusFilter] = useState<string>("ALL")
   const [patientIdFilter, setPatientIdFilter] = useState<string>("")
   const [dateFilter, setDateFilter] = useState<string>("")
   
-  // Pagination states
+  
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
 
-  // Stats
+  
   const [stats, setStats] = useState({
     total: 0,
     draft: 0,
@@ -135,7 +135,7 @@ export default function PrescriptionManagementPage() {
       setError(null)
       
       const params: any = {
-        limit: 1000 // Construct client-side pagination by fetching all/many
+        limit: 1000 
       }
       
       if (statusFilter && statusFilter !== "ALL") {
@@ -182,8 +182,8 @@ export default function PrescriptionManagementPage() {
         setPrescriptions(transformed)
         setPrescriptions(transformed)
 
-        // Generate simple stats from current view for demo/UI purposes
-        // Ideally these come from a dedicated stats endpoint
+        
+        
         const allList = response.data.data || []
         setStats({
           total: response.data.pagination?.total || allList.length,
@@ -202,7 +202,7 @@ export default function PrescriptionManagementPage() {
     }
   }, [statusFilter, patientIdFilter, dateFilter])
 
-  // Fetch prescriptions when filters or pagination change
+  
   useEffect(() => {
     fetchPrescriptions()
   }, [fetchPrescriptions])
@@ -264,7 +264,7 @@ export default function PrescriptionManagementPage() {
     }
   }
 
-  // Search filtered results
+  
   const filteredPrescriptions = prescriptions.filter(p => 
     searchTerm === "" || 
     p.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -272,14 +272,14 @@ export default function PrescriptionManagementPage() {
     p.id.toString().includes(searchTerm)
   )
 
-  // Calculate pagination
+  
   const totalPages = Math.ceil(filteredPrescriptions.length / itemsPerPage)
   const paginatedPrescriptions = filteredPrescriptions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
   
-  // Reset page when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, patientIdFilter, dateFilter]);
@@ -316,7 +316,7 @@ export default function PrescriptionManagementPage() {
     <DoctorSidebar>
       <div className="max-w-[1600px] mx-auto space-y-6 pb-10">
         
-        {/* Simplified Modern Header */}
+        {}
         <div className="bg-white rounded-[1.5rem] p-8 shadow-sm border border-slate-200/60 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 rounded-full -mr-32 -mt-32 blur-3xl" />
           
@@ -343,7 +343,7 @@ export default function PrescriptionManagementPage() {
           </div>
         </div>
 
-        {/* Streamlined Stats Row - Clickable */}
+        {}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
            {[
              { label: "Tổng số đơn", val: stats.total, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", filter: "ALL", border: "hover:border-blue-300" },
@@ -373,7 +373,7 @@ export default function PrescriptionManagementPage() {
            ))}
         </div>
 
-        {/* Search & Filter Bar - More Compact */}
+        {}
         <div className="bg-white rounded-[1.25rem] p-4 shadow-sm border border-slate-200/60 flex flex-col lg:flex-row items-center gap-4">
           <div className="relative flex-1 w-full lg:w-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -422,7 +422,7 @@ export default function PrescriptionManagementPage() {
           </div>
         </div>
 
-        {/* Content Area - Clean Modern Table */}
+        {}
         {loading ? (
           <div className="h-64 flex flex-col items-center justify-center gap-3">
              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -564,7 +564,7 @@ export default function PrescriptionManagementPage() {
               </table>
             </div>
             
-             {/* Pagination Inside Card */}
+             {}
                <div className="px-6 py-4 border-t bg-white flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                      Hiển thị <span className="text-slate-900">{paginatedPrescriptions.length}</span> trên <span className="text-slate-900">{filteredPrescriptions.length}</span> hóa đơn
@@ -595,11 +595,11 @@ export default function PrescriptionManagementPage() {
         )}
 
 
-        {/* Simplified Details Modal */}
+        {}
         {showDetails && selectedPrescription && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
             <Card className="w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border-0 shadow-2xl bg-white">
-              {/* Simple Header */}
+              {}
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -629,7 +629,7 @@ export default function PrescriptionManagementPage() {
               </div>
 
               <CardContent className="p-6 overflow-y-auto flex-1 space-y-6">
-                {/* Patient & Visit Info */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-50 rounded-xl">
                     <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
@@ -662,7 +662,7 @@ export default function PrescriptionManagementPage() {
                   </div>
                 </div>
 
-                {/* Medicines List */}
+                {}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-slate-700">
@@ -685,7 +685,7 @@ export default function PrescriptionManagementPage() {
                           </div>
                         </div>
 
-                        {/* Dosage Grid - Simple */}
+                        {}
                         <div className="grid grid-cols-4 gap-2">
                           {[
                             { label: "Sáng", val: medicine.dosageMorning, bg: "bg-amber-50", text: "text-amber-700" },
@@ -702,7 +702,7 @@ export default function PrescriptionManagementPage() {
 
                         {medicine.instruction && (
                           <p className="mt-3 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
-                            📝 {medicine.instruction}
+                             {medicine.instruction}
                           </p>
                         )}
                       </div>
@@ -710,7 +710,7 @@ export default function PrescriptionManagementPage() {
                   </div>
                 </div>
 
-                {/* Doctor Info */}
+                {}
                 <div className="pt-4 border-t border-slate-100">
                   <div className="text-right">
                     <p className="text-xs text-slate-500 mb-1">Bác sĩ kê đơn</p>
@@ -724,7 +724,7 @@ export default function PrescriptionManagementPage() {
                 </div>
               </CardContent>
 
-              {/* Footer Actions */}
+              {}
               <div className="px-6 py-4 bg-slate-50 border-t flex gap-3 shrink-0">
                 <Button
                   onClick={() => downloadPDF(selectedPrescription.id)}

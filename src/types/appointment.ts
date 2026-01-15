@@ -38,7 +38,7 @@ export interface IAppointment {
   diagnosis?: string;
   prescription?: string;
   nextSteps?: string;
-  // Custom patient details (for booking for relatives)
+  
   patientName?: string;
   patientPhone?: string;
   patientDob?: string;

@@ -11,7 +11,7 @@ export interface UserProfile {
   avatar?: string | null;
   patientId?: number | null;
   doctorId?: number | null;
-  // Patient-specific
+  
   patient?: {
     id: number;
     patientCode: string;
@@ -27,7 +27,7 @@ export interface UserProfile {
       ward?: string;
     }>;
   };
-  // Doctor-specific (using Employee data)
+  
   doctor?: {
     id: number;
     doctorCode?: string;
@@ -35,7 +35,7 @@ export interface UserProfile {
     specialtyId: number;
     yearsOfExperience: number;
     bio?: string;
-    // New employee fields
+    
     description?: string;
     position?: string;
     degree?: string;
@@ -62,14 +62,14 @@ export interface UpdateProfileData {
   dateOfBirth?: string;
   cccd?: string;
   address?: string;
-  // Patient-specific 
+  
   profiles?: Array<{
     type: string;
     value: string;
     city?: string;
     ward?: string;
   }>;
-  // Doctor/Employee specific
+  
   bio?: string;
   yearsOfExperience?: number;
   position?: string;

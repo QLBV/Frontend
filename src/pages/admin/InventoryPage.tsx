@@ -19,20 +19,20 @@ import {
   ChevronRight,
   Filter,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../../components/ui/select"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import { MedicineService, type Medicine, MedicineStatus, MedicineUnit } from "@/services/medicine.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { MedicineService, type Medicine, MedicineStatus, MedicineUnit } from "../../features/inventory/services/medicine.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import {
@@ -42,7 +42,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 
 const getUnitLabel = (unit: MedicineUnit): string => {
   const unitMap: Record<MedicineUnit, string> = {
@@ -209,7 +209,7 @@ export default function InventoryPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Data is now handled server-side through fetchMedicines
+  
   const displayMedicines = medicines
 
   const handleAutoMarkExpired = async () => {
@@ -237,7 +237,7 @@ export default function InventoryPage() {
       <div className="relative p-6 lg:p-8">
         <div className="max-w-[1700px] mx-auto space-y-6">
           
-          {/* Simplified Header Section */}
+          {}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
@@ -285,7 +285,7 @@ export default function InventoryPage() {
             </div>
           </div>
 
-        {/* Simplified Stats Grid */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           <Card className="border border-slate-100 bg-white shadow-sm rounded-xl hover:border-blue-200 transition-colors">
             <CardContent className="p-5 flex items-center gap-4">
@@ -348,7 +348,7 @@ export default function InventoryPage() {
           </Card>
         </div>
 
-        {/* Low Stock & Expiring Alerts */}
+        {}
         {(lowStockCount > 0 || expiringCount > 0) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {lowStockCount > 0 && (
@@ -438,10 +438,10 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* Compact Filter Bar */}
+        {}
         <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
           <div className="flex flex-col xl:flex-row gap-3">
-            {/* Search input with focus effects */}
+            {}
             <div className="relative flex-grow group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -454,7 +454,7 @@ export default function InventoryPage() {
               />
             </div>
 
-            {/* Filters grid */}
+            {}
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
                 <div className="px-3 flex items-center gap-2 border-r border-slate-200 mr-1">
@@ -615,7 +615,7 @@ export default function InventoryPage() {
               </div>
             )}
 
-            {/* Pagination Component */}
+            {}
             {displayMedicines.length > 0 && (
               <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
                 <div className="flex items-center gap-2">
@@ -681,7 +681,7 @@ export default function InventoryPage() {
           </CardContent>
         </Card>
 
-        {/* Auto-Mark Expired Dialog */}
+        {}
         <Dialog open={isAutoMarkDialogOpen} onOpenChange={setIsAutoMarkDialogOpen}>
           <DialogContent>
             <DialogHeader>

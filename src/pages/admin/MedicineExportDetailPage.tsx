@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import AdminSidebar from "@/components/sidebar/admin"
+import AdminSidebar from "../../components/layout/sidebar/admin"
 import { ArrowLeft, Calendar, User, Package, FileText, Printer, FileSpreadsheet, ExternalLink } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { MedicineService, type MedicineExport } from "@/services/medicine.service"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { MedicineService, type MedicineExport } from "../../features/inventory/services/medicine.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { toast } from "sonner"
@@ -59,7 +59,7 @@ export default function MedicineExportDetailPage() {
   return (
     <AdminSidebar>
       <div className="p-8 max-w-5xl mx-auto">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
              <Button variant="ghost" size="icon" onClick={() => navigate("/admin/medicines/exports")}>
@@ -84,7 +84,7 @@ export default function MedicineExportDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main Content */}
+          {}
           <div className="md:col-span-2 space-y-6">
             <Card>
               <CardHeader>
@@ -154,7 +154,7 @@ export default function MedicineExportDetailPage() {
             </Card>
           </div>
 
-          {/* Sidebar Info */}
+          {}
           <div className="space-y-6">
              <Card>
                 <CardHeader>
@@ -185,7 +185,7 @@ export default function MedicineExportDetailPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-gray-600 italic">
-                        {/* Mock note field since it's not in the type explicitly but good for UI */}
+                        {}
                         Phiếu xuất được tạo tự động từ hệ thống kê đơn.
                     </p>
                 </CardContent>

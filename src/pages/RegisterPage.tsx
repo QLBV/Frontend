@@ -1,6 +1,6 @@
 "use client"
 
-import Register from "@/components/form/Register"
+import Register from "../features/auth/components/RegisterForm"
 
 export default function RegisterPage() {
   return(

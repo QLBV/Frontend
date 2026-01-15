@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin';
+import AdminSidebar from '../../components/layout/sidebar/admin';
 import { 
   Search,
   ChevronDown,
@@ -9,10 +9,10 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Input } from "../../components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -20,11 +20,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "../../components/ui/dialog";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
-// --- 1. Define Data & Interfaces ---
+
 interface Doctor {
   id: number
   doctorCode: string
@@ -66,7 +66,7 @@ export default function DoctorList() {
   const itemsPerPage = 10
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Fetch doctors from API
+  
   const fetchDoctors = async () => {
     try {
       setLoading(true)
@@ -182,7 +182,7 @@ export default function DoctorList() {
       return 0
     })
 
-  // Pagination logic
+  
   const totalPages = Math.ceil(sortedAndFilteredDoctors.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
@@ -204,7 +204,7 @@ export default function DoctorList() {
     }
   }
 
-  // Reset to page 1 when search changes
+  
   useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery])
@@ -243,7 +243,7 @@ export default function DoctorList() {
         toast.success("Xóa bác sĩ thành công!")
         setDeleteDialogOpen(false)
         setDoctorToDelete(null)
-        // Refresh doctors list with delay to avoid rate limiting
+        
         setTimeout(async () => {
           await fetchDoctors()
         }, 500)
@@ -298,11 +298,11 @@ export default function DoctorList() {
   return (
     <AdminSidebar>
       <div className="p-8">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Doctor Records</h1>
           
-          {/* Search Bar */}
+          {}
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
@@ -313,10 +313,10 @@ export default function DoctorList() {
             />
           </div>
 
-          {/* Filters and Add Doctor Button */}
+          {}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              {/* Sort By */}
+              {}
               <div className="flex items-center gap-2 relative" ref={dropdownRef}>
                 <span className="text-sm text-gray-600">Sắp xếp theo:</span>
                 <Button 
@@ -351,7 +351,7 @@ export default function DoctorList() {
               </div>
             </div>
 
-            {/* Add Doctor Button */}
+            {}
             <Button 
             onClick={() => navigate("/admin/doctors/add")}
             className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6">
@@ -360,14 +360,14 @@ export default function DoctorList() {
           </div>
         </div>
 
-        {/* Results Count */}
+        {}
         <div className="mb-4">
           <span className="text-sm text-slate-500 font-medium whitespace-nowrap">
             Hiển thị <span className="text-slate-900 font-bold">{currentDoctors.length}</span> trong tổng số <span className="text-slate-900 font-bold">{sortedAndFilteredDoctors.length}</span> bác sĩ
           </span>
         </div>
 
-        {/* Doctor Table */}
+        {}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -447,7 +447,7 @@ export default function DoctorList() {
           </CardContent>
         </Card>
 
-        {/* Pagination */}
+        {}
         {sortedAndFilteredDoctors.length > 0 && (
           <div className="flex items-center justify-between mt-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2">
@@ -468,7 +468,7 @@ export default function DoctorList() {
               </Button>
               
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                // Show first, last, current, and pages around current
+                
                 if (
                   page === 1 || 
                   page === totalPages || 
@@ -491,7 +491,7 @@ export default function DoctorList() {
                   );
                 }
                 
-                // Show ellipses
+                
                 if (
                   (page === 2 && currentPage > 3) || 
                   (page === totalPages - 1 && currentPage < totalPages - 2)
@@ -515,7 +515,7 @@ export default function DoctorList() {
           </div>
         )}
 
-        {/* Delete Confirmation Dialog */}
+        {}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

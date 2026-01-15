@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { BookingForm } from "@/components/BookingForm"
-import { useAuth } from "@/auth/authContext"
+import { BookingForm } from "../../features/appointment/components/BookingForm"
+import { useAuth } from "../../features/auth/context/authContext"
 import { toast } from "sonner"
-import PatientSidebar from "@/components/sidebar/patient"
-import { getPatientById } from "@/services/patient.service"
-import { Skeleton } from "@/components/ui/skeleton"
+import PatientSidebar from "../../components/layout/sidebar/patient"
+import { getPatientById } from "../../features/patient/services/patient.service"
+import { Skeleton } from "../../components/ui/skeleton"
 import { CalendarPlus, Clock, Shield, Sparkles } from "lucide-react"
 
 export default function BookAppointmentPage() {
@@ -15,16 +15,16 @@ export default function BookAppointmentPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is authenticated
+    
     if (isAuthenticated && user) {
-      // If user doesn't have patientId, redirect to setup page
+      
       if (!user.patientId) {
         toast.info("Vui lòng thiết lập hồ sơ bệnh nhân trước khi đặt lịch")
         navigate("/patient/setup")
         return
       }
 
-      // Fetch patient profile for patient code
+      
       const fetchPatientCode = async () => {
         try {
           if (user.patientId) {
@@ -50,16 +50,16 @@ export default function BookAppointmentPage() {
         patientCode={patientCode}
       >
         <div className="space-y-6">
-          {/* Header Skeleton */}
+          {}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-100 to-slate-200 p-8">
             <Skeleton className="h-10 w-80 mb-3" />
             <Skeleton className="h-5 w-64" />
           </div>
           
-          {/* Progress Bar Skeleton */}
+          {}
           <Skeleton className="h-24 w-full rounded-2xl" />
           
-          {/* Cards Skeleton */}
+          {}
           <div className="grid lg:grid-cols-3 gap-6">
             <Skeleton className="h-96 rounded-xl" />
             <Skeleton className="h-96 rounded-xl" />
@@ -76,15 +76,15 @@ export default function BookAppointmentPage() {
       patientCode={patientCode}
     >
       <div className="space-y-8">
-        {/* Premium Header Section */}
+        {}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-cyan-600 p-8 shadow-xl">
-          {/* Background Decorations */}
+          {}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-4 -right-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-0 left-1/4 h-24 w-24 rounded-full bg-cyan-400/20 blur-xl" />
             <div className="absolute top-1/2 right-1/4 h-16 w-16 rounded-full bg-white/5 blur-lg" />
             
-            {/* Decorative pattern */}
+            {}
             <svg className="absolute right-0 top-0 h-full w-1/3 opacity-10" viewBox="0 0 100 100" preserveAspectRatio="none">
               <defs>
                 <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -95,7 +95,7 @@ export default function BookAppointmentPage() {
             </svg>
           </div>
           
-          {/* Content */}
+          {}
           <div className="relative z-10">
             <div className="flex items-start justify-between">
               <div>
@@ -114,13 +114,13 @@ export default function BookAppointmentPage() {
                 </div>
               </div>
               
-              {/* Sparkle decoration */}
+              {}
               <div className="hidden md:flex items-center gap-1">
                 <Sparkles className="h-5 w-5 text-amber-300 animate-pulse" />
               </div>
             </div>
             
-            {/* Quick Info Pills */}
+            {}
             <div className="flex flex-wrap gap-3 mt-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm text-white text-sm">
                 <Clock className="h-4 w-4" />
@@ -134,7 +134,7 @@ export default function BookAppointmentPage() {
           </div>
         </div>
         
-        {/* Booking Form */}
+        {}
         <BookingForm />
       </div>
     </PatientSidebar>

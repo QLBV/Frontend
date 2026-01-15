@@ -22,7 +22,7 @@ export function TimeAgo({ date, className, addSuffix = true }: TimeAgoProps) {
     }
 
     updateTime()
-    const interval = setInterval(updateTime, 60000) // Update every minute
+    const interval = setInterval(updateTime, 60000) 
 
     return () => clearInterval(interval)
   }, [date, addSuffix])

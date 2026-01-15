@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import AdminSidebar from "@/components/sidebar/admin"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { Card, CardContent } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -14,16 +14,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { TablePagination } from "@/components/TablePagination"
-import { cn } from "@/lib/utils"
+} from "../../components/ui/select"
+import { TablePagination } from "../../components/shared/TablePagination"
+import { cn } from "../../lib/utils"
 import {
   Calendar,
   Clock,
@@ -39,25 +39,25 @@ import {
   UserCheck
 } from "lucide-react"
 import { toast } from "sonner"
-import { AttendanceService, type Attendance, AttendanceStatus } from "@/services/attendance.service"
+import { AttendanceService, type Attendance, AttendanceStatus } from "../../features/shift/services/attendance.service"
 import { format } from "date-fns"
 
 export default function AttendanceManagementPage() {
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
-  // Client-side pagination
+  
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Filters
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterUserId, setFilterUserId] = useState<string>("")
   const [filterDateFrom, setFilterDateFrom] = useState<string>("")
   const [filterDateTo, setFilterDateTo] = useState<string>("")
 
-  // Edit dialog
+  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null)
   const [editData, setEditData] = useState({
@@ -69,14 +69,14 @@ export default function AttendanceManagementPage() {
 
   useEffect(() => {
     fetchAttendances()
-  }, [filterStatus, filterUserId, filterDateFrom, filterDateTo]) // Removed pagination.page dependence for client-side
+  }, [filterStatus, filterUserId, filterDateFrom, filterDateTo]) 
 
 
   const fetchAttendances = async () => {
     try {
       setIsLoading(true)
       const params: any = {
-        limit: 1000, // Fetch all/many for client-side pagination
+        limit: 1000, 
       }
 
       if (filterStatus !== "all") {
@@ -94,7 +94,7 @@ export default function AttendanceManagementPage() {
 
       const response = await AttendanceService.getAllAttendance(params)
       setAttendances(response.attendances || [])
-      // No need to set server pagination state
+      
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Không thể tải danh sách chấm công")
       setAttendances([])
@@ -210,14 +210,14 @@ export default function AttendanceManagementPage() {
     return matchesSearch
   })
   
-  // Calculate pagination
+  
   const totalPages = Math.ceil(filteredAttendances.length / itemsPerPage)
   const paginatedAttendances = filteredAttendances.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
 
-  // Reset page when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterStatus, filterUserId, filterDateFrom, filterDateTo]);
@@ -225,7 +225,7 @@ export default function AttendanceManagementPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        {/* Premium Header */}
+        {}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -246,7 +246,7 @@ export default function AttendanceManagementPage() {
           </Button>
         </div>
 
-        {/* Premium Stats Grid - Clickable Filters */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
             { 
@@ -309,7 +309,7 @@ export default function AttendanceManagementPage() {
                   <h3 className="text-2xl font-bold text-slate-900">{stat.value}</h3>
                 </div>
               </CardContent>
-              {/* Decorative gradient overlay on hover */}
+              {}
               <div className={cn(
                 "absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-0 group-hover:opacity-10 transition-opacity blur-2xl", 
                 stat.bg.replace('/50', '') 
@@ -318,8 +318,8 @@ export default function AttendanceManagementPage() {
           ))}
         </div>
 
-        {/* Filters */}
-        {/* Premium Filters Bar */}
+        {}
+        {}
         <div className="bg-white/70 backdrop-blur-xl rounded-[24px] p-2 border border-slate-100 shadow-sm mb-6">
           <div className="flex flex-col xl:flex-row gap-3">
             <div className="relative flex-grow group">
@@ -347,11 +347,11 @@ export default function AttendanceManagementPage() {
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-100 shadow-xl">
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="PRESENT">✅ Có mặt</SelectItem>
-                    <SelectItem value="ABSENT">❌ Vắng mặt</SelectItem>
+                    <SelectItem value="PRESENT"> Có mặt</SelectItem>
+                    <SelectItem value="ABSENT"> Vắng mặt</SelectItem>
                     <SelectItem value="LATE">⏰ Đi muộn</SelectItem>
-                    <SelectItem value="LEAVE">📁 Nghỉ phép</SelectItem>
-                    <SelectItem value="HALF_DAY">🌗 Nửa ngày</SelectItem>
+                    <SelectItem value="LEAVE"> Nghỉ phép</SelectItem>
+                    <SelectItem value="HALF_DAY"> Nửa ngày</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -397,7 +397,7 @@ export default function AttendanceManagementPage() {
           </div>
         </div>
 
-        {/* Premium Attendance Table UI */}
+        {}
         <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white">
           <CardContent className="p-0">
             {isLoading ? (
@@ -512,7 +512,7 @@ export default function AttendanceManagementPage() {
         </Card>
       </div>
 
-      {/* Edit Dialog */}
+      {}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

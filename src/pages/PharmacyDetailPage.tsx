@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { Link, useParams } from "react-router-dom"
-import { useAuth } from "@/auth/authContext"
+import { useAuth } from "../features/auth/context/authContext"
 import { ArrowLeft, Calendar, Package, DollarSign, TrendingUp, Clock, Loader2, Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import ReceptionistSidebar from "@/components/sidebar/recep"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import { MedicineService, type Medicine, type MedicineImport, type MedicineExport, MedicineStatus, MedicineUnit } from "@/services/medicine.service"
+import AdminSidebar from "../components/layout/sidebar/admin"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import { MedicineService, type Medicine, type MedicineImport, type MedicineExport, MedicineStatus, MedicineUnit } from "../features/inventory/services/medicine.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import {
@@ -22,7 +22,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../components/ui/dialog"
 
 const getUnitLabel = (unit: MedicineUnit): string => {
   const unitMap: Record<MedicineUnit, string> = {
@@ -177,7 +177,7 @@ export default function PharmacyDetailPage() {
   return (
     <SidebarComponent userName={user?.fullName || user?.email}>
       <div className="space-y-6">
-        {/* Page Header */}
+        {}
         <div className="flex items-start justify-between">
           <div>
             <Button variant="ghost" className="mb-2 pl-0" onClick={() => window.history.back()}>
@@ -237,9 +237,9 @@ export default function PharmacyDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Details */}
+          {}
           <div className="lg:col-span-2 space-y-6">
-            {/* Basic Info */}
+            {}
             <Card className="border-0 shadow-xl shadow-slate-900/5">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
                 <CardTitle className="text-xl text-slate-900">Thông tin cơ bản</CardTitle>
@@ -280,7 +280,7 @@ export default function PharmacyDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Pricing Info */}
+            {}
             <Card className="border-0 shadow-xl shadow-slate-900/5">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
                 <CardTitle className="text-xl text-slate-900">Thông tin giá</CardTitle>
@@ -316,7 +316,7 @@ export default function PharmacyDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Description */}
+            {}
             {medicine.description && (
               <Card className="border-0 shadow-xl shadow-slate-900/5">
                 <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
@@ -329,7 +329,7 @@ export default function PharmacyDetailPage() {
             )}
           </div>
 
-          {/* Right Column - Import/Export History */}
+          {}
           <div>
             <Card className="border-0 shadow-xl shadow-slate-900/5">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
@@ -346,7 +346,7 @@ export default function PharmacyDetailPage() {
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Imports Tab */}
+                  {}
                   <TabsContent value="imports" className="p-6">
                     {isLoadingHistory ? (
                       <div className="flex items-center justify-center h-32">
@@ -408,7 +408,7 @@ export default function PharmacyDetailPage() {
                     )}
                   </TabsContent>
 
-                  {/* Exports Tab */}
+                  {}
                   <TabsContent value="exports" className="p-6">
                     {isLoadingHistory ? (
                       <div className="flex items-center justify-center h-32">
@@ -455,7 +455,7 @@ export default function PharmacyDetailPage() {
           </div>
         </div>
 
-        {/* Delete Confirmation Dialog */}
+        {}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

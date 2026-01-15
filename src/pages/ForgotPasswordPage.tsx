@@ -2,15 +2,15 @@
 
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
 import { Mail, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { toast } from "sonner"
-import api from "@/lib/api"
+import api from "../lib/api"
 
 const forgotPasswordSchema = yup.object({
   email: yup
@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen w-full lg:grid lg:grid-cols-2 overflow-hidden bg-white">
-        {/* LEFT COLUMN - BRANDING */}
+        {}
         <div className="hidden lg:flex relative flex-col justify-center items-center bg-slate-900 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-indigo-900 opacity-90"></div>
           <div className="absolute inset-0 bg-[url('/healthcare-bg.png')] bg-cover bg-center mix-blend-overlay opacity-20"></div>
@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN - SUCCESS STATE */}
+        {}
         <div className="flex flex-col justify-center items-center p-6 sm:p-12 md:p-20 relative bg-white">
            <Link to="/login" className="absolute top-8 left-8 text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group">
                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Quay lại
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2 overflow-hidden bg-white">
-      {/* LEFT COLUMN - BRANDING */}
+      {}
       <div className="hidden lg:flex relative flex-col justify-center items-center bg-slate-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-indigo-900 opacity-90"></div>
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-20"></div>
@@ -172,7 +172,7 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      {/* RIGHT COLUMN - FORM */}
+      {}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12 md:p-20 relative bg-white">
          <Link to="/login" className="absolute top-8 left-8 text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-2 font-medium group">
              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Đăng nhập

@@ -1,8 +1,8 @@
 "use client"
 
 import React, { useState } from "react"
-import { Button } from "@/components/ui/button"
-import api from "@/lib/api"
+import { Button } from "../../components/ui/button"
+import api from "../../lib/api"
 import { toast } from "sonner"
 
 interface Doctor {
@@ -56,7 +56,7 @@ export default function ScheduleEventModal({
   const [selectedShiftId, setSelectedShiftId] = useState<number>(0)
   const [loading, setLoading] = useState(false)
 
-  // Update selectedShiftId when shifts change
+  
   React.useEffect(() => {
     if (shifts && shifts.length > 0 && selectedShiftId === 0) {
       setSelectedShiftId(shifts[0].id)
@@ -85,14 +85,14 @@ export default function ScheduleEventModal({
       if (response.data.success) {
         toast.success('Đã phân công bác sĩ thành công')
         
-        // Call onSuccess to trigger refetch in parent component
+        
         onSuccess({
           doctorId: doctor.id,
           shiftId: selectedShiftId,
           workDate: selectedDate
         })
         
-        onClose() // Đóng modal
+        onClose() 
       } else {
         throw new Error(response.data.message || 'Phân công thất bại')
       }
@@ -121,13 +121,13 @@ export default function ScheduleEventModal({
   return (
     <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6 w-96 max-w-md mx-4 animate-in fade-in zoom-in duration-200">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-gray-900">Schedule Event</h3>
-          <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0" onClick={onClose} disabled={loading}>✕</Button>
+          <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0" onClick={onClose} disabled={loading}></Button>
         </div>
 
-        {/* Doctor info */}
+        {}
         <div className="mb-6">
           <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
             <div
@@ -153,7 +153,7 @@ export default function ScheduleEventModal({
           </div>
         </div>
 
-        {/* Date */}
+        {}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Select Date</label>
           <input
@@ -166,7 +166,7 @@ export default function ScheduleEventModal({
           />
         </div>
 
-        {/* Event type */}
+        {}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Event Type</label>
           <select 
@@ -176,11 +176,11 @@ export default function ScheduleEventModal({
             disabled={loading}
           >
             <option value="consultation">Ca trực</option>
-            {/* <option value="on-leave">Nghỉ phép</option> */}
+            {}
           </select>
         </div>
 
-        {/* Time slot */}
+        {}
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">Time Slot</label>
           <select 
@@ -197,7 +197,7 @@ export default function ScheduleEventModal({
           </select>
         </div>
 
-        {/* Actions */}
+        {}
         <div className="flex gap-3">
           <Button 
             className="flex-1 bg-blue-600 text-white" 

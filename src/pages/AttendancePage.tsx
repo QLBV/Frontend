@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/auth/authContext"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useAuth } from "../features/auth/context/authContext"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Button } from "../components/ui/button"
+import { Badge } from "../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -12,17 +12,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "../components/ui/dialog"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
+import { Textarea } from "../components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "../components/ui/select"
 import {
   Clock,
   Calendar,
@@ -34,14 +34,14 @@ import {
   CalendarDays,
   UserCheck
 } from "lucide-react"
-import { TablePagination } from "@/components/TablePagination"
+import { TablePagination } from "../components/shared/TablePagination"
 
 import { toast } from "sonner"
-import { AttendanceService, type Attendance, AttendanceStatus } from "@/services/attendance.service"
+import { AttendanceService, type Attendance, AttendanceStatus } from "../features/shift/services/attendance.service"
 import { format } from "date-fns"
-import AdminSidebar from "@/components/sidebar/admin"
-import DoctorSidebar from "@/components/sidebar/doctor"
-import ReceptionistSidebar from "@/components/sidebar/recep"
+import AdminSidebar from "../components/layout/sidebar/admin"
+import DoctorSidebar from "../components/layout/sidebar/doctor"
+import ReceptionistSidebar from "../components/layout/sidebar/recep"
 
 export default function AttendancePage() {
   const { user } = useAuth()
@@ -58,7 +58,7 @@ export default function AttendancePage() {
     type: "",
   })
   
-  // Client-side pagination
+  
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -70,7 +70,7 @@ export default function AttendancePage() {
     try {
       if (!silent) setIsLoading(true)
       
-      // Fetch both today's and history
+      
       const [todayResp, historyResp] = await Promise.all([
         AttendanceService.getMyAttendance({
           startDate: format(new Date(), "yyyy-MM-dd"),
@@ -78,7 +78,7 @@ export default function AttendancePage() {
           limit: 1,
         }),
         AttendanceService.getMyAttendance({
-          limit: 1000, // Fetch all for client-side pagination
+          limit: 1000, 
         })
       ])
 
@@ -102,9 +102,9 @@ export default function AttendancePage() {
     try {
       const response = await AttendanceService.checkIn()
       toast.success("Check-in thành công!")
-      // Update local state immediately to show time
+      
       setTodayAttendance(response.data)
-      // Re-fetch in the background to update history
+      
       await fetchMyAttendance(true)
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Không thể check-in"
@@ -123,9 +123,9 @@ export default function AttendancePage() {
     try {
       const response = await AttendanceService.checkOut()
       toast.success("Check-out thành công!")
-      // Update local state immediately
+      
       setTodayAttendance(response.data)
-      // Re-fetch history in the background
+      
       await fetchMyAttendance(true)
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Không thể check-out"
@@ -190,7 +190,7 @@ export default function AttendancePage() {
   const canCheckIn = !todayAttendance?.checkInTime
   const canCheckOut = todayAttendance?.checkInTime && !todayAttendance?.checkOutTime
 
-  // Calculate pagination
+  
   const totalPages = Math.ceil(myAttendance.length / itemsPerPage)
   const paginatedAttendance = myAttendance.slice(
     (currentPage - 1) * itemsPerPage,
@@ -199,7 +199,7 @@ export default function AttendancePage() {
 
   const content = (
     <div className="container mx-auto px-6 py-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 min-h-full">
-      {/* Header */}
+      {}
       <div className="flex items-center gap-4 mb-8">
         <div className="h-14 w-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 ring-1 ring-white/50">
              <UserCheck className="h-7 w-7 text-white" />
@@ -212,7 +212,7 @@ export default function AttendancePage() {
 
       <div className="space-y-6">
 
-        {/* Today's Attendance Card */}
+        {}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-blue-50/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -328,7 +328,7 @@ export default function AttendancePage() {
           </CardContent>
         </Card>
 
-        {/* Attendance History */}
+        {}
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <CardTitle>Lịch sử chấm công</CardTitle>
@@ -393,7 +393,7 @@ export default function AttendancePage() {
                   </table>
                 </div>
 
-                {/* Pagination Footer */}
+                {}
                 <TablePagination
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -415,7 +415,7 @@ export default function AttendancePage() {
     <>
       {content}
 
-      {/* Leave Request Dialog */}
+      {}
       <Dialog open={isLeaveRequestOpen} onOpenChange={setIsLeaveRequestOpen}>
         <DialogContent>
           <DialogHeader>
@@ -486,7 +486,7 @@ export default function AttendancePage() {
     </>
   )
 
-  // roleId: 1=Admin, 2=Receptionist, 3=Patient, 4=Doctor (theo enum RoleCode)
+  
   if (role === "admin" || role === "1") {
     return <AdminSidebar>{pageContent}</AdminSidebar>
   } else if (role === "doctor" || role === "4") {

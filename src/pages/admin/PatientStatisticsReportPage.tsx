@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import AdminSidebar from "@/components/sidebar/admin";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import AdminSidebar from "../../components/layout/sidebar/admin";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from "../../components/ui/select";
+import { Badge } from "../../components/ui/badge";
 import {
   Users,
   UserPlus,
@@ -29,7 +29,7 @@ import {
   Venus
 } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 import {
   BarChart,
   Bar,
@@ -107,7 +107,7 @@ export default function PatientStatisticsReportPage() {
       const response = await api.get(`/reports/patient-statistics?${params.toString()}`);
       if (response.data.success) {
         const rawData = response.data.data;
-        // Map backend data fields to frontend expected names
+        
         setReportData({
           ...rawData,
           genderRatio: rawData.patientsByGender || [],
@@ -160,7 +160,7 @@ export default function PatientStatisticsReportPage() {
   return (
     <AdminSidebar>
       <div className="min-h-screen bg-[#f8fafc]">
-        {/* Dynamic Background Blobs */}
+        {}
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/10 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-400/10 rounded-full blur-[120px] animate-pulse delay-700" />
@@ -169,9 +169,9 @@ export default function PatientStatisticsReportPage() {
         <div className="relative z-10 p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-8">
             
-            {/* Compact Premium Header Section - Advanced Glassmorphism */}
+            {}
             <div className="relative overflow-hidden rounded-[32px] bg-white/40 backdrop-blur-3xl p-6 lg:p-7 border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] group">
-              {/* Animated Background Blobs */}
+              {}
               <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-gradient-to-br from-indigo-500/10 via-blue-500/10 to-transparent blur-[80px] rounded-full animate-pulse transition-all duration-[6000ms]" />
               <div className="absolute bottom-[-50%] right-[-10%] w-[50%] h-[200%] bg-gradient-to-tl from-violet-500/10 via-purple-500/10 to-transparent blur-[80px] rounded-full animate-pulse transition-all duration-[6000ms] delay-1000" />
               
@@ -208,7 +208,7 @@ export default function PatientStatisticsReportPage() {
                   </div>
                 </div>
 
-                {/* Quick Stats in Header */}
+                {}
                 <div className="flex gap-4">
                   {[
                     { 
@@ -247,11 +247,11 @@ export default function PatientStatisticsReportPage() {
               </div>
             </div>
 
-            {/* Premium Filter Section */}
+            {}
             <div className="flex flex-col xl:flex-row items-center justify-between gap-6">
               <div className="w-full xl:flex-1 bg-white/60 backdrop-blur-xl p-3 rounded-[32px] border border-white/60 shadow-xl shadow-slate-200/40">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {/* Year Select */}
+                  {}
                   <div className="flex-1">
                     <Select value={year} onValueChange={setYear}>
                       <SelectTrigger className="h-14 w-full rounded-2xl bg-white border-0 shadow-sm hover:shadow-md transition-all px-6 group data-[state=open]:ring-2 ring-indigo-500/20 outline-none">
@@ -275,7 +275,7 @@ export default function PatientStatisticsReportPage() {
                     </Select>
                   </div>
 
-                  {/* Month Select */}
+                  {}
                   <div className="flex-1">
                     <Select value={month} onValueChange={setMonth}>
                       <SelectTrigger className="h-14 w-full rounded-2xl bg-white border-0 shadow-sm hover:shadow-md transition-all px-6 group data-[state=open]:ring-2 ring-blue-500/20 outline-none">
@@ -301,7 +301,7 @@ export default function PatientStatisticsReportPage() {
                     </Select>
                   </div>
 
-                  {/* Action Buttons */}
+                  {}
                   <div className="flex gap-2">
                     <Button
                       onClick={() => fetchData()}
@@ -324,7 +324,7 @@ export default function PatientStatisticsReportPage() {
                 </div>
               </div>
 
-              {/* Export Buttons */}
+              {}
               <div className="flex gap-3 h-14">
                 <Button
                   onClick={() => handleExport('pdf')}
@@ -353,7 +353,7 @@ export default function PatientStatisticsReportPage() {
 
             {reportData && (
               <>
-                {/* Premium Stat Cards - Matching Financial & Appointment Style */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   {[
                     { label: "Bệnh nhân mới", value: reportData?.newPatients, icon: UserPlus, color: "blue", shadow: "shadow-blue-500/10", desc: "Đăng ký trong kỳ" },
@@ -387,9 +387,9 @@ export default function PatientStatisticsReportPage() {
                   ))}
                 </div>
 
-                {/* Charts Grid */}
+                {}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Growth Chart */}
+                  {}
                   <Card className="lg:col-span-2 border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80 transition-all hover:shadow-indigo-100/50">
                     <CardHeader className="p-10 border-b border-slate-50">
                       <div className="space-y-2">
@@ -421,7 +421,7 @@ export default function PatientStatisticsReportPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Gender Distribution Chart */}
+                  {}
                   <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/60">
                     <CardHeader className="p-10 border-b border-slate-50">
                       <div className="flex items-center gap-4">
@@ -505,7 +505,7 @@ export default function PatientStatisticsReportPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Age Distribution Chart */}
+                  {}
                   <Card className="lg:col-span-3 border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden border border-white/80 transition-all hover:shadow-amber-100/50">
                     <CardHeader className="p-10 border-b border-slate-50">
                       <div className="space-y-2">

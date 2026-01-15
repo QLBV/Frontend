@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin'
+import AdminSidebar from '../../components/layout/sidebar/admin'
 import { 
   ArrowLeft,
   Edit,
@@ -12,16 +12,16 @@ import {
   XCircle,
   Camera,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 import { toast } from "sonner"
-import { UserService, type User, type UpdateUserData } from "@/services/user.service"
+import { UserService, type User, type UpdateUserData } from "../../features/auth/services/user.service"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-import { TimeAgo } from "@/components/ui/time-ago"
+import { TimeAgo } from "../../components/ui/time-ago"
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -210,7 +210,7 @@ export default function UserDetailPage() {
   return (
     <AdminSidebar>
       <div className="p-8">
-        {/* Header */}
+        {}
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -252,9 +252,9 @@ export default function UserDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info */}
+          {}
           <div className="lg:col-span-2 space-y-6">
-            {/* Basic Information */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Thông tin cơ bản</CardTitle>
@@ -290,70 +290,56 @@ export default function UserDetailPage() {
                       accept="image/*"
                       className="hidden"
                       onChange={handleAvatarUpload}
-                      disabled={isUploadingAvatar}
                     />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{user.fullName}</h2>
+                    <h2 className="text-xl font-bold">{user.fullName}</h2>
                     <p className="text-gray-500">{user.email}</p>
+                    <div className="mt-2 text-sm text-gray-400">
+                      ID: {user.id}
+                    </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="fullName">Họ và tên</Label>
-                    {isEditing ? (
-                      <Input
-                        id="fullName"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 text-gray-900">{user.fullName}</p>
-                    )}
+                    <Input
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      disabled={!isEditing}
+                    />
                   </div>
-
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    {isEditing ? (
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 text-gray-900">{user.email}</p>
-                    )}
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      disabled={!isEditing}
+                    />
                   </div>
-
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="phone">Số điện thoại</Label>
-                    {isEditing ? (
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 text-gray-900">{user.phone || "Chưa cập nhật"}</p>
-                    )}
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      disabled={!isEditing}
+                    />
                   </div>
-
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="role">Vai trò</Label>
-                    <div className="mt-1">
-                      {getRoleBadge(user.role)}
+                    <div className="flex items-center h-10">
+                      {getRoleBadge(user.role || "patient")}
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Status Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Trạng thái</CardTitle>
@@ -387,9 +373,9 @@ export default function UserDetailPage() {
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {}
           <div className="space-y-6">
-            {/* Quick Info */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Thông tin nhanh</CardTitle>
@@ -418,7 +404,7 @@ export default function UserDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Related Links */}
+            {}
             {user.employee && (
               <Card>
                 <CardHeader>

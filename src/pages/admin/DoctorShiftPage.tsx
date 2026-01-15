@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import AdminSidebar from '@/components/sidebar/admin'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import AdminSidebar from '../../components/layout/sidebar/admin'
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog"
+import { Textarea } from "../../components/ui/textarea"
+import { Label } from "../../components/ui/label"
 import { toast } from "sonner"
-import api from "@/lib/api"
+import api from "../../lib/api"
 import { 
   Calendar, 
   Clock, 
@@ -27,9 +27,9 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card"
+} from "../../components/ui/hover-card"
 
-// Doctor Shift interface
+
 interface DoctorShift {
   id: number
   doctorId: number
@@ -57,7 +57,7 @@ interface DoctorShift {
   }
 }
 
-// Preview data interface
+
 interface PreviewData {
   doctorShiftId: number
   affectedAppointments: number
@@ -73,7 +73,7 @@ export default function DoctorShiftPage() {
   const [doctorShifts, setDoctorShifts] = useState<DoctorShift[]>([])
   const [loading, setLoading] = useState(true)
   
-  // Cancel shift modal states
+  
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [selectedShiftToCancel, setSelectedShiftToCancel] = useState<DoctorShift | null>(null)
@@ -81,7 +81,7 @@ export default function DoctorShiftPage() {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
 
-  // Get week dates (Monday to Sunday)
+  
   const getWeekDates = () => {
     const start = new Date(currentWeek)
     const day = start.getDay()
@@ -97,7 +97,7 @@ export default function DoctorShiftPage() {
     return dates
   }
 
-  // Fetch doctor shifts
+  
   const fetchDoctorShifts = async () => {
     try {
       setLoading(true)
@@ -123,21 +123,21 @@ export default function DoctorShiftPage() {
     fetchDoctorShifts()
   }, [currentWeek])
 
-  // Get shifts for selected date
+  
   const getShiftsForDate = (date: string) => {
     return doctorShifts.filter(shift => shift.workDate === date)
   }
 
-  // Handle cancel shift
+  
   const handleCancelShift = async (shift: DoctorShift) => {
     setSelectedShiftToCancel(shift)
     setShowCancelModal(true)
     
-    // Load preview data
+    
     await loadPreviewData(shift)
   }
 
-  // Load preview data for cancellation
+  
   const loadPreviewData = async (shift: DoctorShift) => {
     setPreviewLoading(true)
     try {
@@ -155,7 +155,7 @@ export default function DoctorShiftPage() {
     }
   }
 
-  // Submit cancel shift
+  
   const submitCancelShift = async () => {
     if (!selectedShiftToCancel || !cancelReason.trim()) {
       toast.error('Vui lòng nhập lý do hủy ca')
@@ -171,7 +171,7 @@ export default function DoctorShiftPage() {
       if (response.data.success) {
         toast.success('Ca trực đã được hủy và xử lý thành công')
         
-        // Show detailed result if available
+        
         if (response.data.data) {
           const { totalAppointments, rescheduledCount, failedCount } = response.data.data
           if (totalAppointments > 0) {
@@ -179,13 +179,13 @@ export default function DoctorShiftPage() {
           }
         }
         
-        // Close modal and reset
+        
         setShowCancelModal(false)
         setCancelReason("")
         setSelectedShiftToCancel(null)
         setPreviewData(null)
         
-        // Refresh data
+        
         fetchDoctorShifts()
       } else {
         toast.error(response.data.message || 'Không thể hủy ca trực')
@@ -198,7 +198,7 @@ export default function DoctorShiftPage() {
     }
   }
 
-  // Close cancel modal
+  
   const closeCancelModal = () => {
     setShowCancelModal(false)
     setCancelReason("")
@@ -206,14 +206,14 @@ export default function DoctorShiftPage() {
     setPreviewData(null)
   }
 
-  // Navigate week
+  
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newWeek = new Date(currentWeek)
     newWeek.setDate(newWeek.getDate() + (direction === 'next' ? 7 : -7))
     setCurrentWeek(newWeek)
   }
 
-  // Go to today
+  
   const goToToday = () => {
     setCurrentWeek(new Date())
     setSelectedDate(new Date().toISOString().split('T')[0])
@@ -237,7 +237,7 @@ export default function DoctorShiftPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6">
-        {/* Page Header */}
+        {}
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
             <Stethoscope className="w-8 h-8 text-blue-600" />
@@ -247,9 +247,9 @@ export default function DoctorShiftPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Schedule Area */}
+          {}
           <div className="lg:col-span-3">
-            {/* Week Navigation */}
+            {}
             <div className="flex items-center gap-3 mb-4">
               <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
               <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')}>
@@ -271,9 +271,9 @@ export default function DoctorShiftPage() {
               </div>
             </div>
 
-            {/* Week View */}
+            {}
             <Card className="border-0 shadow-xl shadow-slate-900/5">
-              {/* Week Header */}
+              {}
               <div className="grid grid-cols-8 border-b bg-gradient-to-r from-slate-50 to-blue-50/50">
                 <div className="p-4 border-r text-xs text-slate-500 uppercase font-semibold">
                   Bác sĩ
@@ -308,7 +308,7 @@ export default function DoctorShiftPage() {
                 })}
               </div>
 
-              {/* Shifts Content */}
+              {}
               <CardContent className="p-0">
                 {weekDates.map((date, dayIndex) => {
                   const dateStr = date.toISOString().split('T')[0]
@@ -322,7 +322,7 @@ export default function DoctorShiftPage() {
                         </div>
                       </div>
 
-                      {/* Shifts for each day */}
+                      {}
                       <div className="col-span-7 p-3">
                         {shiftsForDay.length > 0 ? (
                           <div className="space-y-2">
@@ -417,9 +417,9 @@ export default function DoctorShiftPage() {
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {}
           <div className="space-y-6">
-            {/* Today's Summary */}
+            {}
             <Card className="border-0 shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
@@ -458,7 +458,7 @@ export default function DoctorShiftPage() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
+            {}
             <Card className="border-0 shadow-lg shadow-emerald-500/5 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 bg-gradient-to-br from-white to-emerald-50/30">
               <CardHeader>
                 <CardTitle className="text-lg text-slate-900">Thống kê tuần</CardTitle>
@@ -487,7 +487,7 @@ export default function DoctorShiftPage() {
           </div>
         </div>
 
-        {/* Cancel Shift Modal */}
+        {}
         <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
@@ -520,7 +520,7 @@ export default function DoctorShiftPage() {
                 </div>
               )}
 
-              {/* Preview Information */}
+              {}
               {previewLoading && (
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-3">

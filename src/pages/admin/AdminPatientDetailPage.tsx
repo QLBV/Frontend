@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
-import AdminSidebar from '@/components/sidebar/admin';
+import AdminSidebar from '../../components/layout/sidebar/admin';
 import {
   ArrowLeft,
   Phone,
@@ -24,11 +24,11 @@ import {
   Receipt,
   FileText as InvoiceIcon,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import { toast } from "sonner"
 import {
   getPatientById,
@@ -47,8 +47,8 @@ import {
   type Patient,
   type Visit,
   type Prescription,
-} from "@/services/patient.service"
-import { InvoiceService, type Invoice } from "@/services/invoice.service"
+} from "../../features/patient/services/patient.service"
+import { InvoiceService, type Invoice } from "../../features/finance/services/invoice.service"
 
 export default function AdminPatientDetailPage() {
   const { id } = useParams()
@@ -62,11 +62,11 @@ export default function AdminPatientDetailPage() {
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   
-  // Status toggle dialog
+  
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [isTogglingStatus, setIsTogglingStatus] = useState(false)
 
-  // Fetch patient data
+  
   useEffect(() => {
     const fetchPatient = async () => {
       if (!id) return
@@ -75,7 +75,7 @@ export default function AdminPatientDetailPage() {
         const data = await getPatientById(Number(id))
         setPatient(data)
         
-        // Auto-load medical history to get vital signs
+        
         try {
           const result = await getPatientMedicalHistory(Number(id), 1, 5)
           setMedicalHistory(result.data)
@@ -93,7 +93,7 @@ export default function AdminPatientDetailPage() {
     fetchPatient()
   }, [id])
 
-  // Fetch medical history
+  
   const fetchMedicalHistory = async () => {
     if (!id) return
     try {
@@ -109,7 +109,7 @@ export default function AdminPatientDetailPage() {
     }
   }
 
-  // Fetch prescriptions
+  
   const fetchPrescriptions = async () => {
     if (!id) return
     try {
@@ -125,7 +125,7 @@ export default function AdminPatientDetailPage() {
     }
   }
 
-  // Fetch invoices
+  
   const fetchInvoices = async () => {
     if (!id) return
     try {
@@ -143,7 +143,7 @@ export default function AdminPatientDetailPage() {
     }
   }
 
-  // Handle avatar upload
+  
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !id) return
@@ -189,7 +189,7 @@ export default function AdminPatientDetailPage() {
     }
   }
 
-  // Calculate age from date of birth
+  
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date()
     const birthDate = new Date(dateOfBirth)
@@ -201,7 +201,7 @@ export default function AdminPatientDetailPage() {
     return age
   }
 
-  // Get initials for avatar
+  
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -251,7 +251,7 @@ export default function AdminPatientDetailPage() {
   return (
     <AdminSidebar>
       <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
-        {/* Advanced Background Blobs */}
+        {}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/30 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[10%] left-[-5%] w-[35%] h-[35%] bg-teal-200/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
@@ -260,7 +260,7 @@ export default function AdminPatientDetailPage() {
         <div className="relative p-6 lg:p-10">
           <div className="max-w-[1700px] mx-auto space-y-6">
             
-            {/* Back Button */}
+            {}
             <div>
               <Button variant="ghost" className="pl-0 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 transition-colors" asChild>
                 <Link to="/admin/patients">
@@ -270,11 +270,11 @@ export default function AdminPatientDetailPage() {
               </Button>
             </div>
 
-            {/* Premium Patient Header Card */}
+            {}
             <Card className="border-0 shadow-2xl shadow-slate-200/40 bg-white rounded-[40px] overflow-hidden">
-              {/* Header Section - Light Glassmorphic */}
+              {}
               <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-teal-50/50 to-cyan-50/30 border-b-2 border-emerald-100/50">
-                {/* Subtle animated background */}
+                {}
                 <div className="absolute inset-0 opacity-30">
                   <div className="absolute top-[-20%] right-[-10%] w-[300px] h-[300px] bg-emerald-300/20 rounded-full blur-[80px] animate-pulse" />
                   <div className="absolute bottom-[-10%] left-[-10%] w-[250px] h-[250px] bg-teal-300/15 rounded-full blur-[70px] animate-pulse" style={{ animationDelay: '1.5s' }} />
@@ -309,77 +309,51 @@ export default function AdminPatientDetailPage() {
                             accept="image/*"
                             className="hidden"
                             onChange={handleAvatarUpload}
-                            disabled={isUploadingAvatar}
                           />
                         </label>
                       </div>
+                      
                       <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h1 className="text-3xl font-black text-slate-900 tracking-tight">{patient.fullName}</h1>
-                          <Badge 
-                            variant="outline" 
-                            className={patient.isActive 
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold" 
-                              : "bg-red-50 text-red-700 border-red-200 font-bold"
-                            }
-                          >
-                            {patient.isActive ? "Hoạt động" : "Vô hiệu hóa"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-slate-600 text-sm font-medium mb-3">
-                          <div className="flex items-center gap-2">
-                            <IdCard className="h-4 w-4 text-emerald-500" />
-                            <span className="font-mono font-bold">{patient.patientCode}</span>
-                          </div>
-                          <span className="text-slate-300">•</span>
-                          <span>{age} tuổi</span>
-                          <span className="text-slate-300">•</span>
-                          <span>{patient.gender === "MALE" ? "Nam" : patient.gender === "FEMALE" ? "Nữ" : "Khác"}</span>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          {(patient.phone || phoneProfile) && (
-                            <div className="flex items-center gap-2 text-slate-600">
-                              <Phone className="h-4 w-4 text-emerald-500" />
-                              <span className="font-medium">{patient.phone || phoneProfile?.value}</span>
-                            </div>
-                          )}
-                          {(patient.email || emailProfile) && (
-                            <div className="flex items-center gap-2 text-slate-600">
-                              <Mail className="h-4 w-4 text-emerald-500" />
-                              <span className="font-medium">{patient.email || emailProfile?.value}</span>
-                            </div>
-                          )}
+                        <h1 className="text-3xl font-black text-slate-900 group-hover:text-emerald-700 transition-colors">
+                            {patient.fullName}
+                        </h1>
+                        <div className="flex items-center gap-3 text-slate-500 font-bold mt-2 text-sm">
+                            <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-100 flex items-center gap-1.5">
+                                <IdCard className="h-3.5 w-3.5" />
+                                {patient.patientCode}
+                            </span>
+                            <span className="hidden sm:inline text-slate-300">|</span>
+                            <span className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors">
+                                <Phone className="h-3.5 w-3.5" />
+                                {patient.phone}
+                            </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className={patient.isActive 
-                          ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 font-bold" 
-                          : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
-                        }
+
+                    <div>
+                      <Button 
+                        variant={patient.isActive ? "destructive" : "default"}
                         onClick={() => setStatusDialogOpen(true)}
+                        className={patient.isActive ? "bg-white text-red-600 hover:bg-red-50 border-2 border-red-100 shadow-sm" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200"}
                       >
-                        {patient.isActive ? (
-                          <><Ban className="h-4 w-4 mr-2" />Vô hiệu hóa</>
-                        ) : (
-                          <><UserCheck className="h-4 w-4 mr-2" />Kích hoạt</>
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-bold"
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Chỉnh sửa
-                      </Button>
+                       {patient.isActive ? (
+                         <>
+                           <Ban className="h-4 w-4 mr-2" />
+                           Vô hiệu hóa
+                         </>
+                       ) : (
+                         <>
+                           <UserCheck className="h-4 w-4 mr-2" />
+                           Kích hoạt
+                         </>
+                       )}
+                     </Button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Quick Stats - Compact Grid */}
               <div className="grid grid-cols-4 divide-x border-b bg-white/80">
                 <div className="p-5">
                   <div className="flex items-center gap-3">
@@ -432,7 +406,7 @@ export default function AdminPatientDetailPage() {
               </div>
             </Card>
 
-        {/* Tabbed Content */}
+        {}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-white border shadow-sm">
             <TabsTrigger value="overview">Tổng quan</TabsTrigger>
@@ -456,10 +430,10 @@ export default function AdminPatientDetailPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
+          {}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Personal Information */}
+              {}
               <Card className="border-0 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 border-b">
                   <CardTitle className="flex items-center gap-2">
@@ -497,7 +471,7 @@ export default function AdminPatientDetailPage() {
               </Card>
 
 
-              {/* Vital Signs */}
+              {}
               <Card className="border-0 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
                   <CardTitle className="flex items-center gap-2">
@@ -534,7 +508,7 @@ export default function AdminPatientDetailPage() {
               </Card>
             </div>
 
-            {/* Allergies and Chronic Conditions */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="border-0 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-slate-50 to-orange-50/50 border-b">
@@ -582,7 +556,7 @@ export default function AdminPatientDetailPage() {
             </div>
           </TabsContent>
 
-          {/* Medical History Tab */}
+          {}
           <TabsContent value="medical-history">
             <Card className="border-0 shadow-xl">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-purple-50/50 border-b">
@@ -603,7 +577,7 @@ export default function AdminPatientDetailPage() {
                     {medicalHistory.map((visit) => (
                       <div key={visit.id} className="p-6 hover:bg-gradient-to-r hover:from-purple-50/30 hover:to-blue-50/20 transition-all duration-300 group">
                         <div className="flex items-start gap-5">
-                          {/* Icon */}
+                          {}
                           <div className="relative">
                             <div className="absolute inset-0 bg-purple-400/20 rounded-full blur-md group-hover:blur-lg transition-all" />
                             <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
@@ -611,9 +585,9 @@ export default function AdminPatientDetailPage() {
                             </div>
                           </div>
 
-                          {/* Main Content */}
+                          {}
                           <div className="flex-1 space-y-3">
-                            {/* Header: Diagnosis + Date */}
+                            {}
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold text-slate-900 mb-1">
@@ -673,7 +647,7 @@ export default function AdminPatientDetailPage() {
                               </Badge>
                             </div>
 
-                            {/* Symptoms */}
+                            {}
                             {visit.symptoms && (
                               <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-3">
                                 <p className="text-sm text-slate-700">
@@ -683,7 +657,7 @@ export default function AdminPatientDetailPage() {
                               </div>
                             )}
 
-                            {/* Vital Signs */}
+                            {}
                             {visit.vitalSigns && Object.keys(visit.vitalSigns).length > 0 && (
                               <div className="bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border border-emerald-100 rounded-xl p-4">
                                 <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wide mb-3 flex items-center gap-2">
@@ -737,7 +711,7 @@ export default function AdminPatientDetailPage() {
                               </div>
                             )}
 
-                            {/* Note */}
+                            {}
                             {visit.note && (
                               <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
                                 <p className="text-sm text-slate-700">
@@ -747,7 +721,7 @@ export default function AdminPatientDetailPage() {
                               </div>
                             )}
 
-                            {/* Action Button */}
+                            {}
                             <div className="pt-1">
                               <Button 
                                 variant="outline" 
@@ -771,7 +745,7 @@ export default function AdminPatientDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Prescriptions Tab */}
+          {}
           <TabsContent value="prescriptions">
             <Card className="border-0 shadow-xl">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-cyan-50/50 border-b">
@@ -798,7 +772,7 @@ export default function AdminPatientDetailPage() {
                         className="p-6 hover:bg-gradient-to-r hover:from-cyan-50/30 hover:to-blue-50/20 transition-all duration-300 group"
                       >
                         <div className="flex items-start gap-5">
-                          {/* Icon */}
+                          {}
                           <div className="relative">
                             <div className="absolute inset-0 bg-cyan-400/20 rounded-full blur-md group-hover:blur-lg transition-all" />
                             <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
@@ -806,9 +780,9 @@ export default function AdminPatientDetailPage() {
                             </div>
                           </div>
 
-                          {/* Main Content */}
+                          {}
                           <div className="flex-1 space-y-3">
-                            {/* Header: Code + Status */}
+                            {}
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <h3 className="text-lg font-bold text-slate-900 mb-1">
@@ -869,7 +843,7 @@ export default function AdminPatientDetailPage() {
                               </Badge>
                             </div>
 
-                            {/* Medicines Info */}
+                            {}
                             {prescription.medicines && prescription.medicines.length > 0 && (
                               <div className="bg-cyan-50/50 border border-cyan-100 rounded-xl p-3">
                                 <p className="text-sm text-slate-700">
@@ -879,7 +853,7 @@ export default function AdminPatientDetailPage() {
                               </div>
                             )}
 
-                            {/* Note */}
+                            {}
                             {prescription.note && (
                               <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
                                 <p className="text-sm text-slate-700">
@@ -889,7 +863,7 @@ export default function AdminPatientDetailPage() {
                               </div>
                             )}
 
-                            {/* Action Button */}
+                            {}
                             <div className="pt-1">
                               <Button 
                                 variant="outline" 
@@ -913,7 +887,7 @@ export default function AdminPatientDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Invoices Tab */}
+          {}
           <TabsContent value="invoices">
             <Card className="border-0 shadow-xl">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-emerald-50/50 border-b">
@@ -1009,7 +983,7 @@ export default function AdminPatientDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Status Toggle Dialog */}
+        {}
         <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
           <DialogContent>
             <DialogHeader>

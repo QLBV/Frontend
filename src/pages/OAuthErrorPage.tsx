@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { AlertCircle, RefreshCw, Home, LogIn } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert"
 
 export default function OAuthErrorPage() {
   const [searchParams] = useSearchParams()
@@ -14,12 +14,12 @@ export default function OAuthErrorPage() {
   const [errorMessage, setErrorMessage] = useState<string>("")
 
   useEffect(() => {
-    // Get error details from URL params
+    
     const error = searchParams.get("error")
     const errorDescription = searchParams.get("error_description")
     const errorReason = searchParams.get("error_reason")
 
-    // Map common OAuth errors to user-friendly messages
+    
     const errorMessages: Record<string, { title: string; description: string }> = {
       access_denied: {
         title: "Đăng nhập bị từ chối",
@@ -65,7 +65,7 @@ export default function OAuthErrorPage() {
   }, [searchParams])
 
   const handleRetry = () => {
-    // Redirect to OAuth login
+    
     window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/oauth/google`
   }
 

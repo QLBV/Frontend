@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import DoctorSidebar from '@/components/sidebar/doctor'
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import api from "@/lib/api"
+import DoctorSidebar from '../../components/layout/sidebar/doctor'
+import { Card, CardContent } from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Textarea } from "../../components/ui/textarea"
+import api from "../../lib/api"
 import { toast } from "sonner"
-import { PrescriptionService } from '@/services/prescription.service'
-import type { Prescription } from '@/types/prescription.types'
+import { PrescriptionService } from '../../features/appointment/services/prescription.service'
+import type { Prescription } from '../../types/prescription.types'
 import { 
   ArrowLeft, 
   Save,
@@ -27,7 +27,7 @@ import {
   Clock
 } from "lucide-react"
 
-// Interfaces
+
 interface Medicine {
   id: number
   name: string
@@ -60,17 +60,17 @@ export default function EditPrescriptionPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  // State cho danh sách thuốc
+  
   const [medications, setMedications] = useState<Medication[]>([])
   
-  // State cho ghi chú thêm
+  
   const [additionalNotes, setAdditionalNotes] = useState("")
   
-  // State cho tìm kiếm thuốc
+  
   const [searchTerms, setSearchTerms] = useState<{[key: string]: string}>({})
   const [showSuggestions, setShowSuggestions] = useState<{[key: string]: boolean}>({})
 
-  // Fetch prescription and medicines data on mount
+  
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
@@ -82,20 +82,20 @@ export default function EditPrescriptionPage() {
         setLoading(true)
         setError(null)
         
-        // Fetch medicines list
+        
         const medicinesResponse = await api.get('/medicines')
         if (medicinesResponse.data.success) {
           setMedicines(medicinesResponse.data.data)
         }
         
-        // Fetch prescription data
+        
         const prescriptionResponse = await PrescriptionService.getPrescriptionById(parseInt(id))
         
         if (prescriptionResponse.success && prescriptionResponse.data) {
           const transformedPrescription = PrescriptionService.transformPrescriptionData(prescriptionResponse.data)
           setPrescription(transformedPrescription)
           
-          // Load existing medications
+          
           if (transformedPrescription.details && transformedPrescription.details.length > 0) {
             const loadedMedications: Medication[] = transformedPrescription.details.map((detail: any, index: number) => ({
               id: `existing-${detail.id || index}`,
@@ -110,14 +110,14 @@ export default function EditPrescriptionPage() {
               days: detail.days || 1
             }))
             setMedications(loadedMedications)
-            // Initialize search terms
+            
             const searchTermsMap: {[key: string]: string} = {}
             loadedMedications.forEach(med => {
               searchTermsMap[med.id] = med.name
             })
             setSearchTerms(searchTermsMap)
           } else {
-            // If no details, start with empty medication
+            
             setMedications([{
               id: "1",
               medicineId: null,
@@ -132,7 +132,7 @@ export default function EditPrescriptionPage() {
             }])
           }
           
-          // Load notes
+          
           setAdditionalNotes(transformedPrescription.note || "")
           
         } else {
@@ -162,7 +162,7 @@ export default function EditPrescriptionPage() {
     return age
   }
 
-  // Lọc danh sách thuốc theo từ khóa tìm kiếm
+  
   const getFilteredMedicines = (searchTerm: string) => {
     if (!searchTerm || typeof searchTerm !== 'string') return []
     const term = searchTerm.toLowerCase()
@@ -174,7 +174,7 @@ export default function EditPrescriptionPage() {
     }).slice(0, 5)
   }
 
-  // Chọn thuốc từ danh sách gợi ý
+  
   const selectMedicine = (medicationId: string, medicine: Medicine) => {
     updateMedication(medicationId, 'name', medicine.name)
     updateMedication(medicationId, 'medicineId', medicine.id)
@@ -182,7 +182,7 @@ export default function EditPrescriptionPage() {
     setSearchTerms(prev => ({ ...prev, [medicationId]: medicine.name }))
   }
 
-  // Thêm thuốc mới
+  
   const addMedication = () => {
     const newMedication: Medication = {
       id: Date.now().toString(),
@@ -199,7 +199,7 @@ export default function EditPrescriptionPage() {
     setMedications([...medications, newMedication])
   }
 
-  // Xóa thuốc
+  
   const removeMedication = (id: string) => {
     if (medications.length > 1) {
       setMedications(medications.filter(med => med.id !== id))
@@ -211,13 +211,13 @@ export default function EditPrescriptionPage() {
     }
   }
 
-  // Cập nhật thông tin thuốc
+  
   const updateMedication = (id: string, field: keyof Medication, value: string | number | null) => {
     setMedications(medications.map(med => {
       if (med.id === id) {
         const updatedMed = { ...med, [field]: value }
         
-        // Tự động tính tổng số lượng khi thay đổi dosage
+        
         if (field === 'dosageMorning' || field === 'dosageNoon' || field === 'dosageAfternoon' || field === 'dosageEvening') {
           const morning = field === 'dosageMorning' ? (value as number) : med.dosageMorning
           const noon = field === 'dosageNoon' ? (value as number) : med.dosageNoon
@@ -231,13 +231,13 @@ export default function EditPrescriptionPage() {
       return med
     }))
     
-    // Cập nhật search term khi thay đổi tên thuốc
+    
     if (field === 'name') {
       setSearchTerms(prev => ({ ...prev, [id]: value as string }))
     }
   }
 
-  // Xử lý thay đổi input tìm kiếm thuốc
+  
   const handleMedicineSearch = (medicationId: string, value: string) => {
     setSearchTerms(prev => ({ ...prev, [medicationId]: value }))
     setShowSuggestions(prev => ({ ...prev, [medicationId]: value.length > 0 }))
@@ -245,7 +245,7 @@ export default function EditPrescriptionPage() {
     updateMedication(medicationId, 'medicineId', null)
   }
 
-  // Lưu đơn thuốc (update)
+  
   const handleSavePrescription = async () => {
     if (!prescription) return
     
@@ -253,7 +253,7 @@ export default function EditPrescriptionPage() {
       setSaving(true)
       setError(null)
       
-      // Form validation
+      
       const validMedications = medications.filter(med => med.medicineId && med.quantity > 0)
       
       if (validMedications.length === 0) {
@@ -262,7 +262,7 @@ export default function EditPrescriptionPage() {
         return
       }
       
-      // Validate each medicine has at least one dosage > 0
+      
       for (let i = 0; i < validMedications.length; i++) {
         const med = validMedications[i]
         const totalDosage = (med.dosageMorning || 0) + 
@@ -283,7 +283,7 @@ export default function EditPrescriptionPage() {
         }
       }
       
-      // Prepare prescription data for update
+      
       const prescriptionData = {
         medicines: validMedications.map(med => ({
           medicineId: med.medicineId as number,
@@ -299,7 +299,7 @@ export default function EditPrescriptionPage() {
       
       console.log('Updating prescription:', prescriptionData)
       
-      // Update prescription via API
+      
       try {
         const response = await PrescriptionService.updatePrescription(prescription.id, prescriptionData)
         
@@ -372,7 +372,7 @@ export default function EditPrescriptionPage() {
     return null
   }
 
-  // Check if prescription can be edited
+  
   if (prescription.status !== 'DRAFT') {
     return (
       <DoctorSidebar>
@@ -399,9 +399,9 @@ export default function EditPrescriptionPage() {
     <DoctorSidebar>
       <div className="max-w-7xl mx-auto space-y-6 pb-10">
         
-        {/* Premium Header with Glassmorphism */}
+        {}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-6 shadow-xl">
-          {/* Background decorative elements */}
+          {}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
@@ -455,10 +455,10 @@ export default function EditPrescriptionPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Form Area */}
+          {}
           <div className="lg:col-span-3 space-y-6">
             
-            {/* Medications Table - Premium Design */}
+            {}
             <Card className="border-0 shadow-xl rounded-2xl overflow-hidden bg-white">
               <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200/80 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -586,7 +586,7 @@ export default function EditPrescriptionPage() {
                                   if (value >= 0) {
                                     updateMedication(medication.id, field as keyof Medication, value)
                                     
-                                    // Calculate new total quantity
+                                    
                                     const m = { ...medication, [field]: value }
                                     const dailyDosage = (m.dosageMorning || 0) + (m.dosageNoon || 0) + (m.dosageAfternoon || 0) + (m.dosageEvening || 0)
                                     updateMedication(medication.id, 'quantity', dailyDosage * (m.days || 1))
@@ -623,7 +623,7 @@ export default function EditPrescriptionPage() {
               </CardContent>
             </Card>
 
-            {/* Note Area - Premium Design */}
+            {}
             <Card className="border-0 shadow-xl rounded-2xl overflow-hidden bg-white">
               <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200/80 p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-200">
@@ -646,12 +646,12 @@ export default function EditPrescriptionPage() {
             </Card>
           </div>
 
-          {/* Side Info Panel - Premium Design */}
+          {}
           <div className="space-y-6">
-            {/* Patient Identity Card */}
+            {}
             <Card className="border-0 shadow-xl rounded-2xl overflow-hidden">
               <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-5 text-white">
-                {/* Decorative elements */}
+                {}
                 <div className="absolute inset-0 overflow-hidden">
                   <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                   <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
@@ -672,7 +672,7 @@ export default function EditPrescriptionPage() {
               </div>
 
               <CardContent className="p-4 space-y-4">
-                {/* Patient Info Grid */}
+                {}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-2 mb-1">
@@ -690,7 +690,7 @@ export default function EditPrescriptionPage() {
                   </div>
                 </div>
 
-                {/* Diagnosis Section */}
+                {}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-1">
                     <Stethoscope className="w-4 h-4 text-rose-500" />
@@ -703,7 +703,7 @@ export default function EditPrescriptionPage() {
                   </div>
                 </div>
 
-                {/* Vital Signs */}
+                {}
                 {prescription.visit?.vitalSigns && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 px-1">
@@ -737,7 +737,7 @@ export default function EditPrescriptionPage() {
               </CardContent>
             </Card>
 
-            {/* Action Buttons */}
+            {}
             <div className="space-y-3">
               <Button
                 onClick={handleSavePrescription}

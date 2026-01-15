@@ -15,10 +15,10 @@ import {
   ChevronRight,
   ChevronLeft
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card"
+import { Badge } from "../../components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "../../components/ui/dialog"
 import {
   Table,
   TableBody,
@@ -34,13 +34,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "../../components/ui/table"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { toast } from "sonner"
-import AdminSidebar from "@/components/sidebar/admin"
-import { ShiftService, type Shift, type ShiftSchedule } from "@/services/shift.service"
+import AdminSidebar from "../../components/layout/sidebar/admin"
+import { ShiftService, type Shift, type ShiftSchedule } from "../../features/shift/services/shift.service"
 import { format, addDays, startOfToday } from "date-fns"
 import { vi } from "date-fns/locale"
 
@@ -61,7 +61,7 @@ export default function ShiftsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Form states
+  
   const [formData, setFormData] = useState({
     name: "",
     startTime: "",
@@ -69,7 +69,7 @@ export default function ShiftsPage() {
     description: "",
   })
 
-  // Schedule filtering
+  
   const [scheduleSearchQuery, setScheduleSearchQuery] = useState("")
 
   const filteredSchedule = useMemo(() => {
@@ -123,7 +123,7 @@ export default function ShiftsPage() {
       if (error.response?.status === 429) {
         toast.error("Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.")
       } else {
-        // Silent fail for schedule
+        
         console.warn("Failed to fetch shift schedule:", error)
       }
     } finally {
@@ -274,7 +274,7 @@ export default function ShiftsPage() {
       <div className="min-h-screen bg-slate-50/50">
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
           
-          {/* Header Section */}
+          {}
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-indigo-100/50">
             <div className="flex items-start gap-4">
               <div className="hidden lg:flex p-3 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl shadow-lg shadow-indigo-500/30 text-white">
@@ -311,7 +311,7 @@ export default function ShiftsPage() {
             </div>
           </div>
 
-          {/* Stats Cards */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-xl overflow-hidden relative group hover:shadow-md transition-all duration-300">
               <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-violet-600"></div>
@@ -374,7 +374,7 @@ export default function ShiftsPage() {
             </Card>
           </div>
 
-          {/* Main Content */}
+          {}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="flex items-center justify-between mb-4">
               <TabsList className="bg-white/50 backdrop-blur border border-indigo-100 p-1 rounded-xl shadow-sm h-auto">
@@ -484,7 +484,7 @@ export default function ShiftsPage() {
                   )}
                 </CardContent>
 
-                {/* Pagination Component */}
+                {}
                 {filteredShifts.length > 0 && (
                   <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/30">
                     <div className="flex items-center gap-2">
@@ -651,7 +651,7 @@ export default function ShiftsPage() {
             </TabsContent>
           </Tabs>
 
-          {/* Create Dialog */}
+          {}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
@@ -726,7 +726,7 @@ export default function ShiftsPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Edit Dialog */}
+          {}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
@@ -801,7 +801,7 @@ export default function ShiftsPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Delete Dialog */}
+          {}
           <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>

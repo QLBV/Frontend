@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import AdminSidebar from "@/components/sidebar/admin";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import AdminSidebar from "../../components/layout/sidebar/admin";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+} from "../../components/ui/select";
+import { Badge } from "../../components/ui/badge";
 import { 
   AreaChart, 
   Area, 
@@ -33,9 +33,9 @@ import {
   Activity 
 } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/api";
+import api from "../../lib/api";
 
-// --- Interfaces ---
+
 interface RevenueOverTime {
   period: string;
   revenue: number;
@@ -86,7 +86,7 @@ export default function RevenueReport() {
     { value: "12", label: "Tháng 12" },
   ];
 
-  // Fetch revenue report
+  
   const fetchRevenueReport = async () => {
     try {
       setLoading(true);
@@ -111,22 +111,22 @@ export default function RevenueReport() {
     }
   };
 
-  // Load report on mount
+  
   useEffect(() => {
     fetchRevenueReport();
   }, []);
 
-  // Format currency
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
       minimumFractionDigits: 0,
     }).format(value) + " VND";
   };
 
-  // Format chart data
+  
   const chartData = reportData?.overTime || [];
 
-  // Calculate statistics
+  
   const summaryData = reportData?.summary || {
     totalRevenue: 0,
     collectedRevenue: 0,
@@ -196,7 +196,7 @@ export default function RevenueReport() {
     <AdminSidebar>
       <div className="container mx-auto px-6 py-10 bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50 min-h-screen">
         <div className="max-w-[1600px] mx-auto space-y-10">
-          {/* Header Section */}
+          {}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -237,7 +237,7 @@ export default function RevenueReport() {
             </div>
           </div>
 
-          {/* Filter Card */}
+          {}
           <Card className="border-0 shadow-xl shadow-slate-200/40 bg-white/80 backdrop-blur-md rounded-[32px] overflow-hidden">
             <CardHeader className="pb-4 pt-7 px-8 border-b border-slate-50">
               <div className="flex items-center gap-3">
@@ -304,7 +304,7 @@ export default function RevenueReport() {
             </CardContent>
           </Card>
 
-          {/* Summary Cards Grid */}
+          {}
           {reportData && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {[
@@ -371,10 +371,10 @@ export default function RevenueReport() {
             </div>
           )}
 
-          {/* Charts Row */}
+          {}
           {reportData && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Line Chart */}
+              {}
               <Card className="lg:col-span-3 border-0 shadow-xl shadow-slate-200/40 bg-white rounded-[32px] overflow-hidden">
                 <CardHeader className="pb-0 pt-8 px-8 flex flex-row items-center justify-between">
                   <div>
@@ -439,7 +439,7 @@ export default function RevenueReport() {
             </div>
           )}
 
-          {/* Empty/Loading State */}
+          {}
           {!loading && !reportData && (
             <Card className="border-0 shadow-lg bg-white rounded-[32px] p-20 text-center">
               <div className="max-w-md mx-auto space-y-6">
